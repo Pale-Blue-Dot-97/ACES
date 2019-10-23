@@ -15,28 +15,34 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.interpolate
+import scipy.signal as sg
 
 # =====================================================================================================================
 #                                                       MAIN
 # =====================================================================================================================
 
-# Load in data from PDS archive. Column headers come from the LBL meta data
-names = ['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH',
+
+def load_data():
+    """Load in data from PDS archive. Column headers come from the LBL meta data
+    """
+    names = ['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH',
          'RMS_BPH', 'NUM_PTS']
 
-data = pd.read_table('S3_1_92S.TAB', delimiter=',', names=names, na_values=-9999.999)
+    data = pd.read_table('S3_1_92S.TAB', delimiter=',', names=names, na_values=-9999.999)
 
-data_columns = ['BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH', 'NUM_PTS']
+    data_columns = ['BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH', 'NUM_PTS']
+
+    return data, data_columns
 
 
-def calc_variances(data):
+def calc_variances(data, data_columns):
     deleted = []
     for i in data_columns:
         data_min = np.min(data[i])
         data_max = np.max(data[i])
         max_var = 0.5 * np.abs(data_max - data_min)
         for j in range(len(data[i])):
-            if j != 0:
+            if j != 0 and j not in deleted:
                 this_point = data[i][j]
                 k = j-1
                 while k in deleted:
@@ -45,11 +51,22 @@ def calc_variances(data):
                 last_point = data[i][k]
                 var = np.abs(this_point - last_point)
                 if var > max_var:
-                    print('Delete %d' % j)
+                    print('Deleted entry %d' % j)
+                    print('Last point: %d' % k)
                     print(this_point)
                     print(last_point)
                     deleted.append(j)
                     data.drop(j, axis=0, inplace=True)
+
+# def smooth_data()
+
+
+def filter_data(data, data_columns, kernel_size):
+
+    for i in data_columns:
+        data[i] = sg.medfilt(data[i], kernel_size)
+
+    return data
 
 # Interpolate missing data
 # ii = np.arange(1,len(data),1)
@@ -59,19 +76,22 @@ def calc_variances(data):
 
 
 def main():
-    calc_variances(data)
+    #calc_variances(data)
+    data, data_columns = load_data()
 
-    plt.subplot(4, 2, 1)
-    plt.plot(data['BR'])
+    clean_data = filter_data(data, data_columns, 5)
+
+    plt.subplot(5, 2, 1)
+    plt.plot(clean_data['BR'])
     plt.ylabel('B_r [nT]')
-    plt.subplot(4, 2, 2)
-    plt.plot(data['BTH'])
+    plt.subplot(5, 2, 2)
+    plt.plot(clean_data['BTH'])
     plt.ylabel('B_th [nT]')
-    plt.subplot(4, 2, 3)
-    plt.plot(data['BPH'])
+    plt.subplot(5, 2, 3)
+    plt.plot(clean_data['BPH'])
     plt.ylabel('B_ph [nT]')
-    plt.subplot(4, 2, 4)
-    plt.plot(data['BMAG'])
+    plt.subplot(5, 2, 4)
+    plt.plot(clean_data['BMAG'])
     plt.ylabel('|B| [nT]')
     plt.show()
 
