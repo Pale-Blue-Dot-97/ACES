@@ -68,9 +68,26 @@ def filter_data(data, data_columns, kernel_size):
 
     return data
 
-# Interpolate missing data
-# ii = np.arange(1,len(data),1)
-# fun = scipy.interpolate.interp1d(ii[pp_real], data['BR'][pp_real])
+
+def clean_data(data, data_columns, kernel_size):
+    deleted = []
+    for i in data_columns:
+        data_min = np.min(data[i])
+        data_max = np.max(data[i])
+        max_var = 0.1 * np.abs(data_max - data_min)
+
+        noise = sg.find_peaks(data[i], threshold=max_var, width=(1, 5), wlen=kernel_size)
+
+        print(noise[0])
+
+        for j in noise[0]:
+            if j not in deleted:
+                print('Deleted %d' % j)
+                deleted.append(j)
+                data.drop(j, axis=0, inplace=True)
+
+    return data, deleted
+
 
 # datetime.datetime.strptime(time_string, '%Y-%m-DT%h:%....')
 
@@ -79,19 +96,19 @@ def main():
     #calc_variances(data)
     data, data_columns = load_data()
 
-    clean_data = filter_data(data, data_columns, 5)
+    cleaned_data, deleted = clean_data(data, data_columns, 21)
 
     plt.subplot(5, 2, 1)
-    plt.plot(clean_data['BR'])
+    plt.plot(cleaned_data['BR'])
     plt.ylabel('B_r [nT]')
     plt.subplot(5, 2, 2)
-    plt.plot(clean_data['BTH'])
+    plt.plot(cleaned_data['BTH'])
     plt.ylabel('B_th [nT]')
     plt.subplot(5, 2, 3)
-    plt.plot(clean_data['BPH'])
+    plt.plot(cleaned_data['BPH'])
     plt.ylabel('B_ph [nT]')
     plt.subplot(5, 2, 4)
-    plt.plot(clean_data['BMAG'])
+    plt.plot(cleaned_data['BMAG'])
     plt.ylabel('|B| [nT]')
     plt.show()
 
