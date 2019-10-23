@@ -13,7 +13,7 @@ import scipy.interpolate
 names = ['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH',
          'RMS_BPH', 'NUM_PTS']
 
-data = pd.read_table('S3_1_92S.TAB', delimiter=',', names=names, na_values=-999.0)
+data = pd.read_table('S3_1_92S.TAB', delimiter=',', names=names, na_values=-9999.999)
 
 data_columns = ['BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH', 'NUM_PTS']
 
@@ -22,9 +22,9 @@ data_columns = ['BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_
 # Find missing data points
 for i in data_columns:
     for row in data[i]:
-        if row < -999.0:
-            print('REPLACE')
-            data[i].replace(row, '')
+        if row < -9999.0:
+            print('Delete')
+            data[i].__delitem__(row)
 
 # pp_real = data['BR'] > -999.0
 # pp_missing = data['BR']<-999.0
