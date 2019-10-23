@@ -10,12 +10,23 @@ import matplotlib.pyplot as plt
 import scipy.interpolate
 
 # Load in data from PDS archive. Column headers come from the LBL meta data
-data = pd.read_table('S3_1_92S.TAB', delimiter=',',
-                     names=['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG',
-                            'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH', 'NUM_PTS'])
+names = ['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH',
+         'RMS_BPH', 'NUM_PTS']
+
+data = pd.read_table('S3_1_92S.TAB', delimiter=',', names=names, na_values=-999.0)
+
+data_columns = ['BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH', 'NUM_PTS']
+
+#print(data['BR'] < -999.0)
 
 # Find missing data points
-# pp_real = data['BR']>-999.0
+for i in data_columns:
+    for row in data[i]:
+        if row < -999.0:
+            print('REPLACE')
+            data[i].replace(row, '')
+
+# pp_real = data['BR'] > -999.0
 # pp_missing = data['BR']<-999.0
 
 # Interpolate missing data
