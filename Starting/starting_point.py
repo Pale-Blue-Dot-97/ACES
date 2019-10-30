@@ -62,7 +62,7 @@ def calc_variances(data, data_columns):
 
 
 def filter_data(data, data_columns, kernel_size):
-
+    data = data.copy()
     for i in data_columns:
         data[i] = sg.medfilt(data[i], kernel_size)
 
@@ -79,11 +79,11 @@ def clean_data(data, data_columns, kernel_size):
 
         noise = sg.find_peaks(data[i], threshold=max_var, width=(1, 5), wlen=kernel_size)
 
-        print(noise[0])
+        #print(noise[0])
 
         for j in noise[0]:
             if j not in deleted:
-                print('Deleted %d' % j)
+                #print('Deleted %d' % j)
                 deleted.append(j)
                 data.drop(data.index[j], axis=0, inplace=True)
 
@@ -98,11 +98,21 @@ def main():
     data, data_columns = load_data()
 
     raw_data = data.copy()
-    cleaned_data, deleted = clean_data(data, data_columns, 21)
 
-    print("Length of Raw BR: %s" % len(raw_data['BR']))
-    print("Length of Clean BR: %s" % len(cleaned_data['BR']))
+    results = ""
 
+    for i in np.arange(5, 55, 2):
+        cleaned_data, deleted = clean_data(data, data_columns, i)
+        #cleaned_data, deleted = filter_data(data, data_columns, 21)
+
+        results = results + "%s & %s \\\\ \r\n" % (i, len(raw_data['BR']) - len(cleaned_data['BR']))
+
+        #print("Length of Raw BR: %s" % len(raw_data['BR']))
+        #print("Length of Clean BR: %s" % len(cleaned_data['BR']))
+
+    print(results)
+
+    """
     plt.subplot(5, 2, 1)
     plt.plot(cleaned_data['BR'])
     plt.ylabel('B_r [nT]')
@@ -116,7 +126,8 @@ def main():
     plt.plot(cleaned_data['BMAG'])
     plt.ylabel('|B| [nT]')
     plt.show()
-
+    
+    
     plt.subplot(5, 2, 1)
     plt.plot(raw_data['BR'])
     plt.ylabel('RAW_B_r [nT]')
@@ -130,6 +141,7 @@ def main():
     plt.plot(raw_data['BMAG'])
     plt.ylabel('RAW_|B| [nT]')
     plt.show()
+    """
 
 
 if __name__ == '__main__':
