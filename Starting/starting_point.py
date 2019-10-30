@@ -70,6 +70,7 @@ def filter_data(data, data_columns, kernel_size):
 
 
 def clean_data(data, data_columns, kernel_size):
+    data = data.copy()
     deleted = []
     for i in data_columns:
         data_min = np.min(data[i])
@@ -84,7 +85,7 @@ def clean_data(data, data_columns, kernel_size):
             if j not in deleted:
                 print('Deleted %d' % j)
                 deleted.append(j)
-                data.drop(j, axis=0, inplace=True)
+                data.drop(data.index[j], axis=0, inplace=True)
 
     return data, deleted
 
@@ -96,7 +97,11 @@ def main():
     #calc_variances(data)
     data, data_columns = load_data()
 
+    raw_data = data.copy()
     cleaned_data, deleted = clean_data(data, data_columns, 21)
+
+    print("Length of Raw BR: %s" % len(raw_data['BR']))
+    print("Length of Clean BR: %s" % len(cleaned_data['BR']))
 
     plt.subplot(5, 2, 1)
     plt.plot(cleaned_data['BR'])
@@ -110,6 +115,20 @@ def main():
     plt.subplot(5, 2, 4)
     plt.plot(cleaned_data['BMAG'])
     plt.ylabel('|B| [nT]')
+    plt.show()
+
+    plt.subplot(5, 2, 1)
+    plt.plot(raw_data['BR'])
+    plt.ylabel('RAW_B_r [nT]')
+    plt.subplot(5, 2, 2)
+    plt.plot(raw_data['BTH'])
+    plt.ylabel('RAW_B_th [nT]')
+    plt.subplot(5, 2, 3)
+    plt.plot(raw_data['BPH'])
+    plt.ylabel('RAW_B_ph [nT]')
+    plt.subplot(5, 2, 4)
+    plt.plot(raw_data['BMAG'])
+    plt.ylabel('RAW_|B| [nT]')
     plt.show()
 
 
