@@ -62,7 +62,7 @@ def calc_variances(data, data_columns):
 
 
 def filter_data(data, data_columns, kernel_size):
-
+    data = data.copy()
     for i in data_columns:
         data[i] = sg.medfilt(data[i], kernel_size)
 
