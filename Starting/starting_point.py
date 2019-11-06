@@ -71,7 +71,8 @@ def medfilt_data(data, data_columns, kernel_size):
         filtered = []
         for j in np.arange(kernel_size, kernel_size + 20, 2):
             print('Kernel Size: %s' % j)
-            filtered = sg.medfilt(data[i], j)
+            for k in [1, 2, 3]:
+                filtered = sg.medfilt(data[i], j)
 
         cleaned_data_arrays.append(filtered)
     new_data = {}
