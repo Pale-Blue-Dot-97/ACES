@@ -61,14 +61,19 @@ def calc_variances(data, data_columns):
 # def smooth_data()
 
 
-def filter_data(data, data_columns, kernel_size):
+def medfilt_data(data, data_columns, kernel_size):
     data = data.copy()
 
     cleaned_data_arrays = []
 
     for i in data_columns:
-        cleaned_data_arrays.append(sg.medfilt(data[i], kernel_size))
+        print('Filtering %s' % i)
+        filtered = []
+        for j in np.arange(kernel_size, kernel_size + 20, 2):
+            print('Kernel Size: %s' % j)
+            filtered = sg.medfilt(data[i], j)
 
+        cleaned_data_arrays.append(filtered)
     new_data = {}
 
     for i in range(len(data_columns)):
@@ -109,13 +114,13 @@ def main():
 
     raw_data = data.copy()
     #cleaned_data = clean_data(data, data_columns, 21)
-    cleaned_data = filter_data(data, data_columns, 13)
+    med_data = medfilt_data(data, data_columns, 5)
 
-    print("Length of Raw BR: %s" % len(raw_data['BR']))
-    print("Length of Clean BR: %s" % len(cleaned_data['BR']))
+    #print("Length of Raw BR: %s" % len(raw_data['BR']))
+    #print("Length of Clean BR: %s" % len(cleaned_data['BR']))
 
     plt.subplot(5, 2, 1)
-    plt.plot(cleaned_data['BR'])
+    plt.plot(med_data['BR'])
     plt.ylabel('B_r [nT]')
 
     plt.subplot(5, 2, 2)
