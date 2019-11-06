@@ -63,10 +63,20 @@ def calc_variances(data, data_columns):
 
 def filter_data(data, data_columns, kernel_size):
     data = data.copy()
-    for i in data_columns:
-        data[i] = sg.medfilt(data[i], kernel_size)
 
-    return data
+    cleaned_data_arrays = []
+
+    for i in data_columns:
+        cleaned_data_arrays.append(sg.medfilt(data[i], kernel_size))
+
+    new_data = {}
+
+    for i in range(len(data_columns)):
+        new_data.update({data_columns[i]: cleaned_data_arrays[i]})
+
+    cleaned_df = pd.DataFrame(new_data)
+
+    return cleaned_df
 
 
 def clean_data(data, data_columns, kernel_size):
@@ -98,7 +108,8 @@ def main():
     data, data_columns = load_data()
 
     raw_data = data.copy()
-    cleaned_data, deleted = clean_data(data, data_columns, 21)
+    #cleaned_data = clean_data(data, data_columns, 21)
+    cleaned_data = filter_data(data, data_columns, 13)
 
     print("Length of Raw BR: %s" % len(raw_data['BR']))
     print("Length of Clean BR: %s" % len(cleaned_data['BR']))
@@ -106,29 +117,11 @@ def main():
     plt.subplot(5, 2, 1)
     plt.plot(cleaned_data['BR'])
     plt.ylabel('B_r [nT]')
-    plt.subplot(5, 2, 2)
-    plt.plot(cleaned_data['BTH'])
-    plt.ylabel('B_th [nT]')
-    plt.subplot(5, 2, 3)
-    plt.plot(cleaned_data['BPH'])
-    plt.ylabel('B_ph [nT]')
-    plt.subplot(5, 2, 4)
-    plt.plot(cleaned_data['BMAG'])
-    plt.ylabel('|B| [nT]')
-    plt.show()
 
-    plt.subplot(5, 2, 1)
+    plt.subplot(5, 2, 2)
     plt.plot(raw_data['BR'])
     plt.ylabel('RAW_B_r [nT]')
-    plt.subplot(5, 2, 2)
-    plt.plot(raw_data['BTH'])
-    plt.ylabel('RAW_B_th [nT]')
-    plt.subplot(5, 2, 3)
-    plt.plot(raw_data['BPH'])
-    plt.ylabel('RAW_B_ph [nT]')
-    plt.subplot(5, 2, 4)
-    plt.plot(raw_data['BMAG'])
-    plt.ylabel('RAW_|B| [nT]')
+
     plt.show()
 
 
