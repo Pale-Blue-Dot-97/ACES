@@ -29,11 +29,12 @@ def load_data():
     """Load in data from PDS archive. Column headers come from the LBL meta data
     """
     names = ['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH',
-         'RMS_BPH', 'NUM_PTS']
+             'RMS_BPH', 'NUM_PTS']
 
     data = pd.read_table('S3_1_92S.TAB', delimiter=',', names=names, na_values=-9999.999)
 
-    data_columns = ['BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH', 'NUM_PTS']
+    data_columns = ['BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH',
+                    'NUM_PTS']
 
     return data, data_columns
 
@@ -113,25 +114,16 @@ def clean_data(data, data_columns, kernel_size):
 
 
 def main():
-    #calc_variances(data)
     data, data_columns = load_data()
 
     raw_data = data.copy()
-    #cleaned_data = clean_data(data, data_columns, 21)
     med_data = medfilt_data(data, data_columns, 5)
 
-    #print("Length of Raw BR: %s" % len(raw_data['BR']))
-    #print("Length of Clean BR: %s" % len(cleaned_data['BR']))
+    t = np.linspace(start=0, stop=len(raw_data['BR']), num=len(raw_data['BR']))
 
-    plt.subplot(5, 2, 1)
-    plt.plot(med_data['BR'])
-    plt.ylabel('B_r [nT]')
-
-    plt.subplot(5, 2, 2)
-    plt.plot(raw_data['BR'])
-    plt.ylabel('RAW_B_r [nT]')
-
-    plt.show()
+    laplt.create_figure(y=[med_data['BR'], raw_data['BR']], x=[t, t], figure_name='raw_vs_filtered.png',
+                        COLOURS=['r', 'k'], POINTSTYLES=['-'], LABELS=['Filtered Data', 'Raw Data'], x_label='Time',
+                        y_label='B_r [nT]')
 
 
 if __name__ == '__main__':
