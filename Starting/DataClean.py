@@ -31,7 +31,7 @@ def load_data():
     names = ['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH',
              'RMS_BPH', 'NUM_PTS']
 
-    data = pd.read_table('S3_1_92S.TAB', delimiter=',', names=names, na_values=-9999.999)
+    data = pd.read_csv('S3_1_92S.TAB', names=names, na_values=-9999.999)
 
     data_columns = ['BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH',
                     'NUM_PTS']
