@@ -3,6 +3,7 @@
 Script to load Voyager magnetometer data in from file and clean, interpolate and work on
 
 TODO:
+    * Convert to using DataLoad to load data to pandas DataFrame
     * Compute variances between points to clean non-physical data
     * Use variances to calculate transmission priorities/ compression or fitting levels
 """
@@ -121,7 +122,7 @@ def main():
     t = np.linspace(start=0, stop=len(raw_data['BR']), num=len(raw_data['BR']))
 
     laplt.create_figure(y=[med_data['BR'], raw_data['BR']], x=[t, t], figure_name='raw_vs_filtered.png',
-                        COLOURS=['r', 'k'], POINTSTYLES=['-'], LABELS=['Filtered Data', 'Raw Data'], x_label='Time',
+                        COLOURS=['r', 'k'], POINTSTYLES=['-'], DATALABELS=['Filtered Data', 'Raw Data'], x_label='Time',
                         y_label='B_r [nT]')
 
 
