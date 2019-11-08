@@ -1,4 +1,4 @@
-"""starting_point.py
+"""DataClean.py
 
 Script to load Voyager magnetometer data in from file and clean, interpolate and work on
 
