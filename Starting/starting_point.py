@@ -4,7 +4,6 @@ Script to load Voyager magnetometer data in from file and clean, interpolate and
 
 TODO:
     * Compute variances between points to clean non-physical data
-    * Switch to using LancAstro.py's MultFig.py for plotting (may as well make use of it)
     * Use variances to calculate
 """
 
