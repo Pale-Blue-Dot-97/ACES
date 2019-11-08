@@ -4,7 +4,7 @@ Script to load Voyager magnetometer data in from file and clean, interpolate and
 
 TODO:
     * Compute variances between points to clean non-physical data
-    * Use variances to calculate
+    * Use variances to calculate transmission priorities/ compression or fitting levels
 """
 
 # =====================================================================================================================
