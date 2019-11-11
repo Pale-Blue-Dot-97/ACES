@@ -114,13 +114,38 @@ def main():
 
     time = []
 
-    for i in data['TIME']:
-        print(i)
-        t = datetime.datetime.strptime(i, '%Y-%m-%dT%H:%M:%S.%f')
-        #print(t)
-        time.append(t)
+    print('Extracting time from time-stamps')
 
-    print(time)
+    skipped = []
+
+    for i in range(len(data['TIME'])):
+        j = data['TIME'][i]
+        print(j)
+
+        if j[17] == '6':
+            s = list(j)
+            s[17] = '0'
+            s[14:15] = '%s' % str(float(j[14:15])+1)
+
+            if s[14] == '6':
+                s[14] = '0'
+                s[11:12] = '%s' % str(float(j[11:12]) + 1)
+
+                if s[11] == '2' and s[12] == '4':
+                    s[11] = '0'
+                    s[12] = '0'
+                    s[8:9] = '%s' % str(float(j[8:9]) + 1)
+
+        try:
+            t = datetime.datetime.strptime(j, '%Y-%m-%dT%H:%M:%S.%f')
+            time.append(t)
+
+        except ValueError:
+            print('Exception in datestamp: Removing row %d' % i)
+            skipped.append(i)
+            #data.drop(data.index[i], axis=0, inplace=True)
+
+    print(skipped)
 
     raw_data = data.copy()
     med_data = medfilt_data(data, data_columns, 5)
