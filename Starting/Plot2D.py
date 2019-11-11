@@ -419,7 +419,7 @@ axis_range = [x_min, x_max, y_min, y_max]
 x_scale = 'linear'  # Defines x-axis scaling
 y_scale = 'linear'  # Defines y-axis scaling
 
-auto_axis = True  # Auto define dimesions of axises
+auto_axis = False  # Auto define dimensions of axises
 
 both_axis = True  # Places ticks on top and right axes too
 

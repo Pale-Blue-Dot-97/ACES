@@ -73,7 +73,6 @@ def medfilt_data(data, data_columns, kernel_size):
         print('Filtering %s' % i)
         filtered = []
         for j in np.arange(kernel_size, kernel_size + 20, 2):
-            print('Kernel Size: %s' % j)
             for k in [1, 2, 3]:
                 filtered = sg.medfilt(data[i], j)
 
@@ -120,7 +119,6 @@ def main():
 
     for i in range(len(data['TIME'])):
         j = data['TIME'][i]
-        print(j)
 
         if j[17] == '6':
             s = list(j)
@@ -139,18 +137,18 @@ def main():
         try:
             dt = datetime.datetime.strptime(j, '%Y-%m-%dT%H:%M:%S.%f')
             t = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
-            print(t)
             time.append(t)
 
         except ValueError:
             print('Exception in datestamp: Removing row %d' % i)
             skipped.append(i)
 
-    print(skipped)
-
     print('Now removing erroneous times')
     for i in skipped:
         data.drop(data.index[i], axis=0, inplace=True)
+
+    print(time[0])
+    print(time[len(time)-1])
 
     raw_data = data.copy()
 
@@ -158,13 +156,11 @@ def main():
 
     med_data = medfilt_data(data, data_columns, 5)
 
-    #t = np.linspace(start=0, stop=len(raw_data['BR']), num=len(raw_data['BR']))
-
     print('CREATING FIGURE')
 
     laplt.create_figure(y=[med_data['BR'], raw_data['BR']], x=[time, time], figure_name='raw_vs_filtered.png',
-                        COLOURS=['r', 'k'], POINTSTYLES=['-'], DATALABELS=['Filtered Data', 'Raw Data'], x_label='Time',
-                        y_label='B_r [nT]')
+                        COLOURS=['r', 'b'], POINTSTYLES=['-'], DATALABELS=['Filtered Data', 'Raw Data'], x_label='Time',
+                        y_label='B_r [nT]', axis_range=[time[0], time[len(time)-1], -1000, 1000])
 
 
 if __name__ == '__main__':
