@@ -160,9 +160,6 @@ def main():
     for i in skipped:
         data.drop(data.index[i], axis=0, inplace=True)
 
-    print(time[0])
-    print(time[len(time)-1])
-
     raw_data = data.copy()
 
     print('Cleaning data via median filter')
