@@ -114,7 +114,7 @@ def main():
 
     time = []
 
-    print('Extracting time from time-stamps')
+    print('Extracting UNIX time from time-stamps')
 
     skipped = []
 
@@ -137,22 +137,32 @@ def main():
                     s[8:9] = '%s' % str(float(j[8:9]) + 1)
 
         try:
-            t = datetime.datetime.strptime(j, '%Y-%m-%dT%H:%M:%S.%f')
+            dt = datetime.datetime.strptime(j, '%Y-%m-%dT%H:%M:%S.%f')
+            t = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
+            print(t)
             time.append(t)
 
         except ValueError:
             print('Exception in datestamp: Removing row %d' % i)
             skipped.append(i)
-            #data.drop(data.index[i], axis=0, inplace=True)
 
     print(skipped)
 
+    print('Now removing erroneous times')
+    for i in skipped:
+        data.drop(data.index[i], axis=0, inplace=True)
+
     raw_data = data.copy()
+
+    print('Cleaning data via median filter')
+
     med_data = medfilt_data(data, data_columns, 5)
 
-    t = np.linspace(start=0, stop=len(raw_data['BR']), num=len(raw_data['BR']))
+    #t = np.linspace(start=0, stop=len(raw_data['BR']), num=len(raw_data['BR']))
 
-    laplt.create_figure(y=[med_data['BR'], raw_data['BR']], x=[t, t], figure_name='raw_vs_filtered.png',
+    print('CREATING FIGURE')
+
+    laplt.create_figure(y=[med_data['BR'], raw_data['BR']], x=[time, time], figure_name='raw_vs_filtered.png',
                         COLOURS=['r', 'k'], POINTSTYLES=['-'], DATALABELS=['Filtered Data', 'Raw Data'], x_label='Time',
                         y_label='B_r [nT]')
 
