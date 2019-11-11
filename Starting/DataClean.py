@@ -17,6 +17,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.interpolate
 import scipy.signal as sg
+import datetime
 import Plot2D as laplt
 import MultiFig as mf
 
@@ -61,8 +62,6 @@ def calc_variances(data, data_columns):
                     print(last_point)
                     deleted.append(j)
                     data.drop(j, axis=0, inplace=True)
-
-# def smooth_data()
 
 
 def medfilt_data(data, data_columns, kernel_size):
@@ -110,11 +109,17 @@ def clean_data(data, data_columns, kernel_size):
     return data, deleted
 
 
-# datetime.datetime.strptime(time_string, '%Y-%m-DT%h:%....')
-
-
 def main():
     data, data_columns = load_data()
+
+    time = []
+
+    for i in data['TIME']:
+        t = datetime.datetime.strptime(i, '%Y-%m-%dT%H:%M:%S.%f')
+        print(t)
+        time.append(t)
+
+    print(time)
 
     raw_data = data.copy()
     med_data = medfilt_data(data, data_columns, 5)
