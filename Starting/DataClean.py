@@ -115,8 +115,9 @@ def main():
     time = []
 
     for i in data['TIME']:
+        print(i)
         t = datetime.datetime.strptime(i, '%Y-%m-%dT%H:%M:%S.%f')
-        print(t)
+        #print(t)
         time.append(t)
 
     print(time)
