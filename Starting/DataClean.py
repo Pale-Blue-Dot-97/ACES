@@ -29,6 +29,7 @@ import MultiFig as mf
 def load_data():
     """Load in data from PDS archive. Column headers come from the LBL meta data
     """
+
     names = ['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH',
              'RMS_BPH', 'NUM_PTS']
 
@@ -65,6 +66,18 @@ def calc_variances(data, data_columns):
 
 
 def medfilt_data(data, data_columns, kernel_size):
+    """Applies a median filter to the data, varying kernel size from given to 20 increments more
+
+    Args:
+        data (DataFrame):
+        data_columns (array-like):
+        kernel_size (int):
+
+    Returns:
+        Median filtered copy of 'data'
+
+    """
+
     data = data.copy()
 
     cleaned_data_arrays = []
@@ -159,8 +172,9 @@ def main():
     print('CREATING FIGURE')
 
     laplt.create_figure(y=[med_data['BR'], raw_data['BR']], x=[time, time], figure_name='raw_vs_filtered.png',
-                        COLOURS=['r', 'b'], POINTSTYLES=['-'], DATALABELS=['Filtered Data', 'Raw Data'], x_label='Time',
-                        y_label='B_r [nT]', axis_range=[time[0], time[len(time)-1], -1000, 1000])
+                        COLOURS=['r', 'b'], POINTSTYLES=['-'], DATALABELS=['Filtered Data', 'Raw Data'],
+                        x_label='UNIX Time (ms)', y_label='B_r (nT)',
+                        axis_range=[time[0], time[len(time)-1], -1000, 1000])
 
 
 if __name__ == '__main__':
