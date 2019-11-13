@@ -156,7 +156,9 @@ def main():
             print('Exception in datestamp: Removing row %d' % i)
             skipped.append(i)
 
-    print('Now removing erroneous times')
+    print('\nTotal number of exceptions: %s' % len(skipped))
+
+    print('\nNow removing erroneous times')
     for i in skipped:
         data.drop(data.index[i], axis=0, inplace=True)
 
