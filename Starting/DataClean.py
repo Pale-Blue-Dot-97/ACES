@@ -73,8 +73,12 @@ def find_dodgy_data(data, data_columns, kernel, thres):
             except KeyError:
                 print('Key Error in accessing entry %d' % j)
 
+    print('\nNow Deleting non-physical points')
+    print('This make take some time, please be patient!')
+
     indexes_to_keep = set(range(data.shape[0])) - set(deleted)
     cleaned_data = data.take(list(indexes_to_keep))
+
     print('Total deleted points: %s' % len(deleted))
 
     return cleaned_data
@@ -187,6 +191,9 @@ def main():
     for i in skipped:
         data.drop(data.index[i], axis=0, inplace=True)
 
+    # Adds UNIX time to DataFrame
+    data['UNIX TIME'] = time
+
     # Resets index after indices have been dropped to avoid key errors
     data.reset_index(drop=True)
 
@@ -204,10 +211,17 @@ def main():
 
     print('CREATING FIGURE')
 
+    """
     laplt.create_figure(y=[med_data['BR'], raw_data['BR'], cldt['BR']], x=[time, time, time],
                         figure_name='raw_vs_filtered.png', COLOURS=['r', 'b', 'g'], POINTSTYLES=['-'],
                         DATALABELS=['Filtered Data', 'Raw Data', 'Cleaned Data'], x_label='UNIX Time (ms)',
                         y_label='B_r (nT)', axis_range=[time[0], time[len(time)-1], -1000, 1000])
+    """
+    laplt.create_figure(y=[med_data['BR'], raw_data['BR'], cldt['BR']],
+                        x=[med_data['UNIX TIME'], raw_data['UNIX TIME'], cldt['UNIX TIME']],
+                        figure_name='raw_vs_filtered.png', COLOURS=['r', 'b', 'g'], POINTSTYLES=['-'],
+                        DATALABELS=['Filtered Data', 'Raw Data', 'Cleaned Data'], x_label='UNIX Time (ms)',
+                        y_label='B_r (nT)', axis_range=[time[0], time[len(time) - 1], -1000, 1000])
 
 
 if __name__ == '__main__':
