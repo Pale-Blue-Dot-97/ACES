@@ -54,22 +54,30 @@ def find_dodgy_data(data, data_columns, kernel, thres):
         loc_min = sg.argrelmin(np.array(data[i]), order=kernel)
 
         for j in loc_max[0]:
-            if np.abs(j) > max_var:
-                if j not in deleted:
-                    print('Deleted entry %d' % j)
-                    deleted.append(j)
-                    data.drop(j, axis=0, inplace=True)
+            try:
+                if np.abs(data[i][j]) > max_var:
+                    if j not in deleted:
+                        #print('Deleted entry %d' % j)
+                        deleted.append(j)
+                        #data.drop(j, axis=0, inplace=True)
+            except KeyError:
+                print('Key Error in accessing entry %d' % j)
 
         for j in loc_min[0]:
-            if np.abs(j) > max_var:
-                if j not in deleted:
-                    print('Deleted entry %d' % j)
-                    deleted.append(j)
-                    data.drop(j, axis=0, inplace=True)
+            try:
+                if np.abs(data[i][j]) > max_var:
+                    if j not in deleted:
+                        #print('Deleted entry %d' % j)
+                        deleted.append(j)
+                        #data.drop(j, axis=0, inplace=True)
+            except KeyError:
+                print('Key Error in accessing entry %d' % j)
 
+    indexes_to_keep = set(range(data.shape[0])) - set(deleted)
+    cleaned_data = data.take(list(indexes_to_keep))
     print('Total deleted points: %s' % len(deleted))
 
-    return data
+    return cleaned_data
 
 
 def calc_variances(data, data_columns):
@@ -164,20 +172,6 @@ def main():
     for i in range(len(data['TIME'])):
         j = data['TIME'][i]
 
-        if j[17] == '6':
-            s = list(j)
-            s[17] = '0'
-            s[14:15] = '%s' % str(float(j[14:15])+1)
-
-            if s[14] == '6':
-                s[14] = '0'
-                s[11:12] = '%s' % str(float(j[11:12]) + 1)
-
-                if s[11] == '2' and s[12] == '4':
-                    s[11] = '0'
-                    s[12] = '0'
-                    s[8:9] = '%s' % str(float(j[8:9]) + 1)
-
         try:
             dt = datetime.datetime.strptime(j, '%Y-%m-%dT%H:%M:%S.%f')
             t = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
@@ -193,11 +187,14 @@ def main():
     for i in skipped:
         data.drop(data.index[i], axis=0, inplace=True)
 
+    # Resets index after indices have been dropped to avoid key errors
+    data.reset_index(drop=True)
+
     raw_data = data.copy()
 
     print('First removing non-physical data via local extrema')
 
-    cleaned_data = find_dodgy_data(data, data_columns, 3, 0.5)
+    cleaned_data = find_dodgy_data(data, data_columns, 3, 0.1)
 
     cldt = cleaned_data.copy()
 
