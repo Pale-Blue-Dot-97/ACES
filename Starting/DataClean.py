@@ -42,6 +42,17 @@ def load_data():
 
 
 def find_dodgy_data(data, data_columns, kernel, thres):
+    """
+
+    Args:
+        data:
+        data_columns:
+        kernel:
+        thres:
+
+    Returns:
+
+    """
     data = data.copy()
     deleted = []
 
@@ -57,9 +68,7 @@ def find_dodgy_data(data, data_columns, kernel, thres):
             try:
                 if np.abs(data[i][j]) > max_var:
                     if j not in deleted:
-                        #print('Deleted entry %d' % j)
                         deleted.append(j)
-                        #data.drop(j, axis=0, inplace=True)
             except KeyError:
                 print('Key Error in accessing entry %d' % j)
 
@@ -67,9 +76,7 @@ def find_dodgy_data(data, data_columns, kernel, thres):
             try:
                 if np.abs(data[i][j]) > max_var:
                     if j not in deleted:
-                        #print('Deleted entry %d' % j)
                         deleted.append(j)
-                        #data.drop(j, axis=0, inplace=True)
             except KeyError:
                 print('Key Error in accessing entry %d' % j)
 
@@ -79,33 +86,9 @@ def find_dodgy_data(data, data_columns, kernel, thres):
     indexes_to_keep = set(range(data.shape[0])) - set(deleted)
     cleaned_data = data.take(list(indexes_to_keep))
 
-    print('Total deleted points: %s' % len(deleted))
+    print('\nTotal deleted points: %s' % len(deleted))
 
     return cleaned_data
-
-
-def calc_variances(data, data_columns):
-    deleted = []
-    for i in data_columns:
-        data_min = np.min(data[i])
-        data_max = np.max(data[i])
-        max_var = 0.5 * np.abs(data_max - data_min)
-        for j in range(len(data[i])):
-            if j != 0 and j not in deleted:
-                this_point = data[i][j]
-                k = j-1
-                while k in deleted:
-                    k = k-1
-
-                last_point = data[i][k]
-                var = np.abs(this_point - last_point)
-                if var > max_var:
-                    print('Deleted entry %d' % j)
-                    print('Last point: %d' % k)
-                    print(this_point)
-                    print(last_point)
-                    deleted.append(j)
-                    data.drop(j, axis=0, inplace=True)
 
 
 def medfilt_data(data, data_columns, kernel_size):
@@ -133,7 +116,7 @@ def medfilt_data(data, data_columns, kernel_size):
                 filtered = sg.medfilt(data[i], j)
 
         cleaned_data_arrays.append(filtered)
-    new_data = {}
+    new_data = {'UNIX TIME': data['UNIX TIME']}
 
     for i in range(len(data_columns)):
         new_data.update({data_columns[i]: cleaned_data_arrays[i]})
@@ -169,7 +152,7 @@ def main():
 
     time = []
 
-    print('Extracting UNIX time from time-stamps')
+    print('\nExtracting UNIX time from time-stamps')
 
     skipped = []
 
@@ -199,26 +182,26 @@ def main():
 
     raw_data = data.copy()
 
-    print('First removing non-physical data via local extrema')
+    print('Size of raw data: %d' % len(raw_data))
 
-    cleaned_data = find_dodgy_data(data, data_columns, 3, 0.1)
+    print('\nFirst removing non-physical data via local extrema')
+
+    cleaned_data = find_dodgy_data(data, data_columns, 5, 0.1)
+
+    print('Size of cleaned data: %d' % len(cleaned_data))
 
     cldt = cleaned_data.copy()
 
-    print('Cleaning data via median filter')
+    print('\nCleaning data via median filter')
 
     med_data = medfilt_data(cleaned_data, data_columns, 5)
 
-    print('CREATING FIGURE')
+    print('Size of filtered data: %d' % len(med_data))
 
-    """
-    laplt.create_figure(y=[med_data['BR'], raw_data['BR'], cldt['BR']], x=[time, time, time],
-                        figure_name='raw_vs_filtered.png', COLOURS=['r', 'b', 'g'], POINTSTYLES=['-'],
-                        DATALABELS=['Filtered Data', 'Raw Data', 'Cleaned Data'], x_label='UNIX Time (ms)',
-                        y_label='B_r (nT)', axis_range=[time[0], time[len(time)-1], -1000, 1000])
-    """
+    print('\nCREATING FIGURE')
+
     laplt.create_figure(y=[med_data['BR'], raw_data['BR'], cldt['BR']],
-                        x=[med_data['UNIX TIME'], raw_data['UNIX TIME'], cldt['UNIX TIME']],
+                        x=[med_data['UNIX TIME'], raw_data['UNIX TIME'], cldt['UNIX TIME']], LWID=[1],
                         figure_name='raw_vs_filtered.png', COLOURS=['r', 'b', 'g'], POINTSTYLES=['-'],
                         DATALABELS=['Filtered Data', 'Raw Data', 'Cleaned Data'], x_label='UNIX Time (ms)',
                         y_label='B_r (nT)', axis_range=[time[0], time[len(time) - 1], -1000, 1000])
