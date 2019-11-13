@@ -41,6 +41,37 @@ def load_data():
     return data, data_columns
 
 
+def find_dodgy_data(data, data_columns, kernel, thres):
+    data = data.copy()
+    deleted = []
+
+    for i in data_columns:
+        data_min = np.min(data[i])
+        data_max = np.max(data[i])
+        max_var = thres * np.abs(data_max - data_min)
+
+        loc_max = sg.argrelmax(np.array(data[i]), order=kernel)
+        loc_min = sg.argrelmin(np.array(data[i]), order=kernel)
+
+        for j in loc_max[0]:
+            if np.abs(j) > max_var:
+                if j not in deleted:
+                    print('Deleted entry %d' % j)
+                    deleted.append(j)
+                    data.drop(j, axis=0, inplace=True)
+
+        for j in loc_min[0]:
+            if np.abs(j) > max_var:
+                if j not in deleted:
+                    print('Deleted entry %d' % j)
+                    deleted.append(j)
+                    data.drop(j, axis=0, inplace=True)
+
+    print('Total deleted points: %s' % len(deleted))
+
+    return data
+
+
 def calc_variances(data, data_columns):
     deleted = []
     for i in data_columns:
@@ -164,16 +195,22 @@ def main():
 
     raw_data = data.copy()
 
+    print('First removing non-physical data via local extrema')
+
+    cleaned_data = find_dodgy_data(data, data_columns, 3, 0.5)
+
+    cldt = cleaned_data.copy()
+
     print('Cleaning data via median filter')
 
-    med_data = medfilt_data(data, data_columns, 5)
+    med_data = medfilt_data(cleaned_data, data_columns, 5)
 
     print('CREATING FIGURE')
 
-    laplt.create_figure(y=[med_data['BR'], raw_data['BR']], x=[time, time], figure_name='raw_vs_filtered.png',
-                        COLOURS=['r', 'b'], POINTSTYLES=['-'], DATALABELS=['Filtered Data', 'Raw Data'],
-                        x_label='UNIX Time (ms)', y_label='B_r (nT)',
-                        axis_range=[time[0], time[len(time)-1], -1000, 1000])
+    laplt.create_figure(y=[med_data['BR'], raw_data['BR'], cldt['BR']], x=[time, time, time],
+                        figure_name='raw_vs_filtered.png', COLOURS=['r', 'b', 'g'], POINTSTYLES=['-'],
+                        DATALABELS=['Filtered Data', 'Raw Data', 'Cleaned Data'], x_label='UNIX Time (ms)',
+                        y_label='B_r (nT)', axis_range=[time[0], time[len(time)-1], -1000, 1000])
 
 
 if __name__ == '__main__':
