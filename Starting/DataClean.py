@@ -56,15 +56,29 @@ def find_dodgy_data(data, data_columns, kernel, thres):
     data = data.copy()
     deleted = []
 
+    kernels = np.arange(kernel, kernel + 20, 2)
+
     for i in data_columns:
         data_min = np.min(data[i])
         data_max = np.max(data[i])
         max_var = thres * np.abs(data_max - data_min)
 
-        loc_max = sg.argrelmax(np.array(data[i]), order=kernel)
-        loc_min = sg.argrelmin(np.array(data[i]), order=kernel)
+        all_loc_max = []
+        all_loc_min = []
 
-        for j in loc_max[0]:
+        for j in kernels:
+            loc_max = sg.argrelmax(np.array(data[i]), order=j)
+            loc_min = sg.argrelmin(np.array(data[i]), order=j)
+
+            for k in loc_max[0]:
+                if k not in all_loc_max:
+                    all_loc_max.append(k)
+
+            for k in loc_min[0]:
+                if k not in all_loc_min:
+                    all_loc_min.append(k)
+
+        for j in all_loc_max:
             try:
                 if np.abs(data[i][j]) > max_var:
                     if j not in deleted:
@@ -72,7 +86,7 @@ def find_dodgy_data(data, data_columns, kernel, thres):
             except KeyError:
                 print('Key Error in accessing entry %d' % j)
 
-        for j in loc_min[0]:
+        for j in all_loc_min:
             try:
                 if np.abs(data[i][j]) > max_var:
                     if j not in deleted:
@@ -186,7 +200,7 @@ def main():
 
     print('\nFirst removing non-physical data via local extrema')
 
-    cleaned_data = find_dodgy_data(data, data_columns, 5, 0.1)
+    cleaned_data = find_dodgy_data(data, data_columns, 3, 0.05)
 
     print('Size of cleaned data: %d' % len(cleaned_data))
 
