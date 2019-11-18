@@ -42,6 +42,31 @@ def load_data():
     return data, data_columns
 
 
+def calc_variances(data, data_column, peak_indices, kernel, thres):
+    delete = []
+    for i in peak_indices:
+        if i > kernel:
+            window = np.array(data[data_column][int(i-((kernel-1)/2)):int(i+((kernel-1)/2))])
+
+            """
+            rolls_for = [window]
+            rolls_back = [window]
+    
+            for j in range((kernel-1)/2):
+                rolls_for.append(np.roll(window, j))
+                rolls_back.append(np.roll(window, -j))
+    
+            for j in range(len(rolls_for)):
+                for k in range(len(window)):
+                    if np.abs(rolls_for[j][1][k] - rolls_for[j-1][1][k]) > thres:
+            """
+            for j in range(len(window)-1):
+                if np.abs(window[j] - window[j+1]) > thres:
+                    delete.append(np.arange(i-((kernel-1)/2), i+((kernel-1)/2), 1))
+
+        return delete
+
+
 def find_dodgy_data(data, data_columns, kernel, thres):
     """
 
@@ -57,46 +82,45 @@ def find_dodgy_data(data, data_columns, kernel, thres):
     data = data.copy()
     deleted = []
 
-    kernels = np.arange(kernel, kernel + 20, 2)
+    #kernels = np.arange(kernel, kernel + 20, 2)
 
     for i in data_columns:
         data_min = np.min(data[i])
         data_max = np.max(data[i])
         max_var = thres * np.abs(data_max - data_min)
 
-        all_loc_max = []
-        all_loc_min = []
+        loc_max = sg.argrelmax(np.array(data[i]), order=kernel)
+        loc_min = sg.argrelmin(np.array(data[i]), order=kernel)
 
-        for j in kernels:
-            loc_max = sg.argrelmax(np.array(data[i]), order=j)
-            loc_min = sg.argrelmin(np.array(data[i]), order=j)
+        delete = calc_variances(data, i, loc_max[0], kernel, max_var) + calc_variances(data, i, loc_min[0], kernel, max_var)
 
-            for k in loc_max[0]:
-                if k not in all_loc_max:
-                    all_loc_max.append(k)
+        for j in range(len(delete)):
+            if j not in deleted:
+                deleted.append(j)
 
-            for k in loc_min[0]:
-                if k not in all_loc_min:
-                    all_loc_min.append(k)
-
-        for j in all_loc_max:
+        """
+        for j in loc_max[0]:
             try:
-                if np.abs(data[i][j]) > max_var:
+                #print(np.abs(data[i][j] - data[i][j+1]))
+                if np.abs(data[i][j] - data[i][j+1]) > max_var or np.abs(data[i][j] - data[i][j-1]) > max_var:
                     if j not in deleted:
                         deleted.append(j)
             except KeyError:
                 print('Key Error in accessing entry %d' % j)
 
-        for j in all_loc_min:
+        for j in loc_min[0]:
             try:
-                if np.abs(data[i][j]) > max_var:
+                if np.abs(data[i][j]-data[i][j+1]) > max_var or np.abs(data[i][j] - data[i][j-1]) > max_var:
                     if j not in deleted:
                         deleted.append(j)
             except KeyError:
                 print('Key Error in accessing entry %d' % j)
+        """
 
     print('\nNow Deleting non-physical points')
     print('This make take some time, please be patient!')
+
+    print(deleted)
 
     indexes_to_keep = set(range(data.shape[0])) - set(deleted)
     cleaned_data = data.take(list(indexes_to_keep))
@@ -201,7 +225,7 @@ def main():
 
     print('\nFirst removing non-physical data via local extrema')
 
-    cleaned_data = find_dodgy_data(data, data_columns, 3, 0.05)
+    cleaned_data = find_dodgy_data(data, data_columns, 5, 0.1)
 
     print('Size of cleaned data: %d' % len(cleaned_data))
 
