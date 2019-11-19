@@ -62,9 +62,13 @@ def calc_variances(data, data_column, peak_indices, kernel, thres):
             """
             for j in range(len(window)-1):
                 if np.abs(window[j] - window[j+1]) > thres:
-                    delete.append(np.arange(i-((kernel-1)/2), i+((kernel-1)/2), 1))
+                    for k in np.arange(i-((kernel-1)/2), i+((kernel-1)/2), 1):
+                        print('k: %d' % k)
+                        delete.append(k)
 
-        return delete
+    print('Delete:')
+    print(delete)
+    return delete
 
 
 def find_dodgy_data(data, data_columns, kernel, thres):
@@ -94,7 +98,10 @@ def find_dodgy_data(data, data_columns, kernel, thres):
 
         delete = calc_variances(data, i, loc_max[0], kernel, max_var) + calc_variances(data, i, loc_min[0], kernel, max_var)
 
-        for j in range(len(delete)):
+        print('Returned Deletes')
+        print(delete)
+
+        for j in delete:
             if j not in deleted:
                 deleted.append(j)
 
