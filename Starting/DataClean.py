@@ -63,11 +63,8 @@ def calc_variances(data, data_column, peak_indices, kernel, thres):
             for j in range(len(window)-1):
                 if np.abs(window[j] - window[j+1]) > thres:
                     for k in np.arange(i-((kernel-1)/2), i+((kernel-1)/2), 1):
-                        print('k: %d' % k)
                         delete.append(k)
 
-    print('Delete:')
-    print(delete)
     return delete
 
 
@@ -98,9 +95,6 @@ def find_dodgy_data(data, data_columns, kernel, thres):
 
         delete = calc_variances(data, i, loc_max[0], kernel, max_var) + calc_variances(data, i, loc_min[0], kernel, max_var)
 
-        print('Returned Deletes')
-        print(delete)
-
         for j in delete:
             if j not in deleted:
                 deleted.append(j)
@@ -126,8 +120,6 @@ def find_dodgy_data(data, data_columns, kernel, thres):
 
     print('\nNow Deleting non-physical points')
     print('This make take some time, please be patient!')
-
-    print(deleted)
 
     indexes_to_keep = set(range(data.shape[0])) - set(deleted)
     cleaned_data = data.take(list(indexes_to_keep))
@@ -232,7 +224,11 @@ def main():
 
     print('\nFirst removing non-physical data via local extrema')
 
-    cleaned_data = find_dodgy_data(data, data_columns, 5, 0.1)
+    cleaned_data = data.copy()
+
+    for i in np.arange(3, 15, 2):
+        print('Kernel Size: %d' % i)
+        cleaned_data = find_dodgy_data(data, data_columns, i, 0.05)
 
     print('Size of cleaned data: %d' % len(cleaned_data))
 
