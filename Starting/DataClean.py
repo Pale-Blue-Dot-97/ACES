@@ -43,6 +43,66 @@ def load_data():
     return data, data_columns
 
 
+def extract_time(data):
+    new_data = data.copy()
+    times = []
+
+    print('\nExtracting UNIX time from time-stamps')
+
+    skipped = []
+
+    for i in range(len(new_data['TIME'])):
+        j = new_data['TIME'][i]
+
+        try:
+            dt = datetime.datetime.strptime(j, '%Y-%m-%dT%H:%M:%S.%f')
+            t = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
+            times.append(t)
+
+        except ValueError:
+            print('Exception in timestamp extraction in row %d' % i)
+            skipped.append(i)
+
+            # Handling exception by splitting into date and time components
+            # then finding Unix time and adding back together
+            print(j)
+            stamp = list(j)
+
+            date = ""
+            date = date.join(stamp[:10])
+            print('Date: %s' % date)
+
+            hr = ""
+            hr = hr.join(stamp[11:13])
+            print('Hour: %s' % hr)
+
+            mn = ""
+            mn = mn.join(stamp[14:16])
+            print('Minutes: %s' % mn)
+
+            ss = ""
+            ss = ss.join(stamp[17:])
+            print('Seconds: %s' % ss)
+
+            date_time = datetime.datetime.strptime(date, '%Y-%m-%d')
+
+            time_time = datetime.timedelta(hours=int(hr), minutes=int(mn), seconds=float(ss))
+
+            dt = date_time + time_time
+            t = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
+            times.append(t)
+
+    print('\nTotal number of exceptions: %s' % len(skipped))
+
+    # Adds UNIX time to DataFrame
+    new_data['UNIX TIME'] = times
+
+    # Resets index after indices have been dropped to avoid key errors
+    new_data.reset_index(drop=True)
+
+    return new_data
+
+
 def calc_variances(data, data_column, peak_indices, kernel, thres):
     delete = []
     for i in peak_indices:
@@ -173,35 +233,7 @@ def clean_data(data, data_columns, kernel_size):
 def main():
     data, data_columns = load_data()
 
-    time = []
-
-    print('\nExtracting UNIX time from time-stamps')
-
-    skipped = []
-
-    for i in range(len(data['TIME'])):
-        j = data['TIME'][i]
-
-        try:
-            dt = datetime.datetime.strptime(j, '%Y-%m-%dT%H:%M:%S.%f')
-            t = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
-            time.append(t)
-
-        except ValueError:
-            print('Exception in datestamp: Removing row %d' % i)
-            skipped.append(i)
-
-    print('\nTotal number of exceptions: %s' % len(skipped))
-
-    print('\nNow removing erroneous times')
-    for i in skipped:
-        data.drop(data.index[i], axis=0, inplace=True)
-
-    # Adds UNIX time to DataFrame
-    data['UNIX TIME'] = time
-
-    # Resets index after indices have been dropped to avoid key errors
-    data.reset_index(drop=True)
+    data = extract_time(data)
 
     raw_data = data.copy()
 
