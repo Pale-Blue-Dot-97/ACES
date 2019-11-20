@@ -48,7 +48,7 @@ def extract_time(data):
 
     print('\nExtracting UNIX time from time-stamps')
 
-    skipped = []
+    err = []
 
     for i in range(len(new_data['TIME'])):
         j = new_data['TIME'][i]
@@ -60,28 +60,24 @@ def extract_time(data):
 
         except ValueError:
             print('Exception in timestamp extraction in row %d' % i)
-            skipped.append(i)
+            print('Handling exception')
+            err.append(i)
 
             # Handling exception by splitting into date and time components
             # then finding Unix time and adding back together
-            print(j)
             stamp = list(j)
 
             date = ""
             date = date.join(stamp[:10])
-            print('Date: %s' % date)
 
             hr = ""
             hr = hr.join(stamp[11:13])
-            print('Hour: %s' % hr)
 
             mn = ""
             mn = mn.join(stamp[14:16])
-            print('Minutes: %s' % mn)
 
             ss = ""
             ss = ss.join(stamp[17:])
-            print('Seconds: %s' % ss)
 
             date_time = datetime.datetime.strptime(date, '%Y-%m-%d')
 
@@ -91,7 +87,7 @@ def extract_time(data):
             t = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
             times.append(t)
 
-    print('\nTotal number of exceptions: %s' % len(skipped))
+    print('\nTotal number of exceptions: %s' % len(err))
 
     # Adds UNIX time to DataFrame
     new_data['UNIX TIME'] = times
@@ -99,7 +95,7 @@ def extract_time(data):
     # Resets index after indices have been dropped to avoid key errors
     new_data.reset_index(drop=True)
 
-    return new_data
+    return new_data, times
 
 
 def calc_variances(data, data_column, peak_indices, kernel, thres):
@@ -232,7 +228,7 @@ def clean_data(data, data_columns, kernel_size):
 def main():
     data, data_columns = load_data()
 
-    data = extract_time(data)
+    data, time = extract_time(data)
 
     raw_data = data.copy()
 
@@ -240,7 +236,7 @@ def main():
 
     print('\nFirst removing non-physical data via local extrema')
 
-    cleaned_data = find_dodgy_data(data, data_columns, 3, (3, 5, 9, 13, 21), 0.05)
+    cleaned_data = find_dodgy_data(data, data_columns, 3, (3, 5, 11, 19), 0.05)
 
     print('Size of cleaned data: %d' % len(cleaned_data))
 
