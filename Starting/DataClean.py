@@ -22,6 +22,7 @@ import datetime
 import Plot2D as laplt
 import MultiFig as mf
 
+
 # =====================================================================================================================
 #                                                       MAIN
 # =====================================================================================================================
@@ -46,7 +47,7 @@ def calc_variances(data, data_column, peak_indices, kernel, thres):
     delete = []
     for i in peak_indices:
         if i > kernel:
-            window = np.array(data[data_column][int(i-((kernel-1)/2)):int(i+((kernel-1)/2))])
+            window = np.array(data[data_column][int(i - ((kernel - 1) / 2)):int(i + ((kernel - 1) / 2))])
 
             """
             rolls_for = [window]
@@ -60,63 +61,47 @@ def calc_variances(data, data_column, peak_indices, kernel, thres):
                 for k in range(len(window)):
                     if np.abs(rolls_for[j][1][k] - rolls_for[j-1][1][k]) > thres:
             """
-            for j in range(len(window)-1):
-                if np.abs(window[j] - window[j+1]) > thres:
-                    for k in np.arange(i-((kernel-1)/2), i+((kernel-1)/2), 1):
+            for j in range(len(window) - 1):
+                if np.abs(window[j] - window[j + 1]) > thres:
+                    for k in np.arange(i - ((kernel - 1) / 2), i + ((kernel - 1) / 2), 1):
                         delete.append(k)
 
     return delete
 
 
-def find_dodgy_data(data, data_columns, kernel, thres):
-    """
+def find_dodgy_data(data, data_columns, det_kernel, thres_kernel, thres):
+    """Function to find non-physical data points and remove them
 
     Args:
-        data:
-        data_columns:
-        kernel:
-        thres:
+        data (DataFrame): Data to be cleaned of non-physical data
+        data_columns ([str]): List of the heading names of columns containing data in the DataFrame
+        det_kernel (int): Kernel size for the detection of local maxima/ minima. Must be a positive odd integer
+        thres_kernel ([int]): List of kernel sizes to pass over data (must be an integer odd number)
+        thres (float): Fraction of the global min-max range to use as the threshold to determine if a point
+                       is non-physical
 
     Returns:
+
 
     """
     data = data.copy()
     deleted = []
 
-    #kernels = np.arange(kernel, kernel + 20, 2)
-
     for i in data_columns:
+        print('Cleaning %s' % i)
         data_min = np.min(data[i])
         data_max = np.max(data[i])
         max_var = thres * np.abs(data_max - data_min)
 
-        loc_max = sg.argrelmax(np.array(data[i]), order=kernel)
-        loc_min = sg.argrelmin(np.array(data[i]), order=kernel)
+        loc_max = sg.argrelmax(np.array(data[i]), order=det_kernel)
+        loc_min = sg.argrelmin(np.array(data[i]), order=det_kernel)
 
-        delete = calc_variances(data, i, loc_max[0], kernel, max_var) + calc_variances(data, i, loc_min[0], kernel, max_var)
-
-        for j in delete:
-            if j not in deleted:
-                deleted.append(j)
-
-        """
-        for j in loc_max[0]:
-            try:
-                #print(np.abs(data[i][j] - data[i][j+1]))
-                if np.abs(data[i][j] - data[i][j+1]) > max_var or np.abs(data[i][j] - data[i][j-1]) > max_var:
-                    if j not in deleted:
-                        deleted.append(j)
-            except KeyError:
-                print('Key Error in accessing entry %d' % j)
-
-        for j in loc_min[0]:
-            try:
-                if np.abs(data[i][j]-data[i][j+1]) > max_var or np.abs(data[i][j] - data[i][j-1]) > max_var:
-                    if j not in deleted:
-                        deleted.append(j)
-            except KeyError:
-                print('Key Error in accessing entry %d' % j)
-        """
+        for j in thres_kernel:
+            print('Kernel pass: %d' % j)
+            delete = calc_variances(data, i, loc_max[0], j, max_var) + calc_variances(data, i, loc_min[0], j, max_var)
+            for k in delete:
+                if k not in deleted:
+                    deleted.append(k)
 
     print('\nNow Deleting non-physical points')
     print('This make take some time, please be patient!')
@@ -224,11 +209,7 @@ def main():
 
     print('\nFirst removing non-physical data via local extrema')
 
-    cleaned_data = data.copy()
-
-    for i in np.arange(3, 15, 2):
-        print('Kernel Size: %d' % i)
-        cleaned_data = find_dodgy_data(data, data_columns, i, 0.05)
+    cleaned_data = find_dodgy_data(data, data_columns, 3, (3, 5, 9, 13, 21), 0.05)
 
     print('Size of cleaned data: %d' % len(cleaned_data))
 
