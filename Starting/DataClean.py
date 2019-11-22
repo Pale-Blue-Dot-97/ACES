@@ -20,6 +20,7 @@ import scipy.signal as sg
 import datetime
 import Plot2D as laplt
 import MultiFig as mf
+import numba
 
 
 # =====================================================================================================================
@@ -97,32 +98,32 @@ def extract_time(data):
 
     return new_data, times
 
-
 def calc_variances(data, data_column, peak_indices, kernel, thres):
-    delete = []
-    for i in peak_indices:
-        if i > kernel:
-            window = np.array(data[data_column][int(i - ((kernel - 1) / 2)):int(i + ((kernel - 1) / 2))])
+	delete = []
+	for i in peak_indices:
+		if i > kernel:
+			window = np.array(data[data_column][int(i - ((kernel - 1) / 2)):int(i + ((kernel - 1) / 2))])
 
-            """
-            rolls_for = [window]
-            rolls_back = [window]
-    
-            for j in range((kernel-1)/2):
-                rolls_for.append(np.roll(window, j))
-                rolls_back.append(np.roll(window, -j))
-    
-            for j in range(len(rolls_for)):
-                for k in range(len(window)):
-                    if np.abs(rolls_for[j][1][k] - rolls_for[j-1][1][k]) > thres:
-            """
-            for j in range(len(window) - 1):
-                if np.abs(window[j] - window[j + 1]) > thres:
-                    for k in np.arange(i - ((kernel - 1) / 2), i + ((kernel - 1) / 2), 1):
-                        delete.append(k)
+			"""
+			rolls_for = [window]
+			rolls_back = [window]
 
-    return delete
+			for j in range((kernel-1)/2):
+			rolls_for.append(np.roll(window, j))
+			rolls_back.append(np.roll(window, -j))
 
+			for j in range(len(rolls_for)):
+			for k in range(len(window)):
+			if np.abs(rolls_for[j][1][k] - rolls_for[j-1][1][k]) > thres:
+			"""
+			if np.any(np.abs(window[0:-1]-window[1:])>thres):
+				delete += [k for k in np.arange(i - ((kernel - 1) / 2), i + ((kernel - 1) / 2), 1)]
+##			for j in range(len(window) - 1):
+#				if np.abs(window[j] - window[j + 1]) > thres:
+#					delete += [k for k in np.arange(i - ((kernel - 1) / 2), i + ((kernel - 1) / 2), 1)]
+#                    for k in np.arange(i - ((kernel - 1) / 2), i + ((kernel - 1) / 2), 1):
+#                        delete.append(k)
+	return delete
 
 def find_dodgy_data(data, data_columns, det_kernel, thres_kernel, thres):
     """Function to find non-physical data points and remove them
@@ -236,7 +237,7 @@ def main():
 
     print('\nFirst removing non-physical data via local extrema')
 
-    cleaned_data = find_dodgy_data(data, data_columns, 3, (3, 5, 11, 19), 0.05)
+    cleaned_data = find_dodgy_data(data, ['BR','BTH','BPH'], 3, (3, 5, 11, 19), 0.05)
 
     print('Size of cleaned data: %d' % len(cleaned_data))
 
@@ -244,7 +245,7 @@ def main():
 
     print('\nCleaning data via median filter')
 
-    med_data = medfilt_data(cleaned_data, data_columns, 5)
+    med_data = medfilt_data(cleaned_data,  ['BR','BTH','BPH'], 5)
 
     print('Size of filtered data: %d' % len(med_data))
 
