@@ -226,32 +226,17 @@ save_fig = True  # Saves the figure to file if true
 
 print_on = False  # Includes print statements in output if true
 
-# POINTS & FILL PARAMETERS ============================================================================================
-POINTSTYLES = ['*', 'o']  # Point style
-SIZES = [1, 2]  # Point sizes
-COLOURS = ['0.3', 'b']  # Point fill colours
-EDGECOLOURS = ['face', 'g']  # Point edge colours
-
 # AXIS PARAMETERS =====================================================================================================
-# x_min = 0.0                 # Minimum x-axis value to plot
-# x_max = 10.0                # Maximum x-axis value to plot
-# y_min = 0.0                 # Minimum y-axis value to plot
-# y_max = 10.0                # Maximum y-axis value to plot
-
-# axis_range = [x_min,x_max,y_min,y_max]
-
 x_scale = 'linear'  # Defines x-axis scaling
 y_scale = 'linear'  # Defines y-axis scaling
 
-auto_axis = True  # Auto define dimesions of axises
+auto_axis = False  # Auto define dimesions of axises
 
-auto_tick = True # Automatically calculates positions of axis ticks
+auto_tick = True  # Automatically calculates positions of axis ticks
 
 both_axis = True  # Places ticks on top and right axes too
 
 # AXIS LABELS =========================================================================================================
-x_label = "x-label"  # x-axis label
-y_label = "y-label"  # y-axis label
 x_size = 16  # Size of x-axis label
 y_size = 16  # Size of y-axis label
 x_colour = "k"  # Colour of x-axis label

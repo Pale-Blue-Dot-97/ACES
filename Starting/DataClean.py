@@ -236,7 +236,7 @@ def main():
 
     print('\nFirst removing non-physical data via local extrema')
 
-    cleaned_data = find_dodgy_data(data, ['BR', 'BTH', 'BPH'], (3, 5, 10, 15), (3, 5, 7, 9, 11, 19), 0.01)
+    cleaned_data = find_dodgy_data(data, ['BR', 'BTH', 'BPH', 'BMAG'], (3, 5, 10, 15), (3, 5, 7, 9, 11, 19), 0.01)
 
     print('Size of cleaned data: %d' % len(cleaned_data))
 
@@ -244,17 +244,27 @@ def main():
 
     print('\nCleaning data via median filter')
 
-    med_data = medfilt_data(cleaned_data,  ['BR', 'BTH', 'BPH'], 5)
+    #med_data = medfilt_data(cleaned_data,  ['BR', 'BTH', 'BPH'], 5)
 
-    print('Size of filtered data: %d' % len(med_data))
+    #print('Size of filtered data: %d' % len(med_data))
 
     print('\nCREATING FIGURE')
 
-    laplt.create_figure(y=[med_data['BR'], raw_data['BR'], cldt['BR']],
-                        x=[med_data['UNIX TIME'], raw_data['UNIX TIME'], cldt['UNIX TIME']], LWID=[1],
+    laplt.create_figure(y=[raw_data['BR'], cldt['BR']],
+                        x=[raw_data['UNIX TIME'], cldt['UNIX TIME']], LWID=[1],
                         figure_name='raw_vs_filtered.png', COLOURS=['r', 'b', 'g'], POINTSTYLES=['-'],
-                        DATALABELS=['Filtered Data', 'Raw Data', 'Cleaned Data'], x_label='UNIX Time (ms)',
+                        DATALABELS=['Raw Data', 'Cleaned Data'], x_label='UNIX Time (ms)',
                         y_label='B_r (nT)', axis_range=[time[0], time[len(time) - 1], -1000, 1000])
+
+    mf.create_grid(y=[[raw_data['BR'], cldt['BR']], [raw_data['BTH'], cldt['BTH']], [raw_data['BPH'], cldt['BPH']],
+                      [raw_data['BMAG'], cldt['BMAG']]],
+                   x=[[raw_data['UNIX TIME'], cldt['UNIX TIME']], [raw_data['UNIX TIME'], cldt['UNIX TIME']],
+                      [raw_data['UNIX TIME'], cldt['UNIX TIME']], [raw_data['UNIX TIME'], cldt['UNIX TIME']]],
+                   shape=[[1, 2],
+                          [3, 4]],
+                   LWID=[[0.5]], figure_name='GridPlot.png', COLOURS=[['b', 'g']], POINTSTYLES=[['-']],
+                   DATALABELS=[['Raw Data', 'Cleaned Data']], x_label='UNIX Time (ms)', y_label='B_r (nT)',
+                   axis_range=[time[0], time[len(time) - 1], -1000, 1000])
 
 
 if __name__ == '__main__':
