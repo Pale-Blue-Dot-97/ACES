@@ -14,7 +14,6 @@ TODO:
 import os
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import scipy.interpolate
 import scipy.signal as sg
 import datetime
@@ -98,32 +97,20 @@ def extract_time(data):
 
     return new_data, times
 
+
 def calc_variances(data, data_column, peak_indices, kernel, thres):
-	delete = []
-	for i in peak_indices:
-		if i > kernel:
-			window = np.array(data[data_column][int(i - ((kernel - 1) / 2)):int(i + ((kernel - 1) / 2))])
+    delete = []
+    for i in peak_indices:
+        if i > kernel:
+            window = np.array(data[data_column][int(i - ((kernel - 1) / 2)):int(i + ((kernel - 1) / 2))])
 
-			"""
-			rolls_for = [window]
-			rolls_back = [window]
+            for j in range(len(window) - 1):
+                if np.abs(window[j] - window[j + 1]) > thres:
+                    for k in np.arange(i - ((kernel - 1) / 2), i + ((kernel - 1) / 2), 1):
+                        delete.append(k)
 
-			for j in range((kernel-1)/2):
-			rolls_for.append(np.roll(window, j))
-			rolls_back.append(np.roll(window, -j))
+    return delete
 
-			for j in range(len(rolls_for)):
-			for k in range(len(window)):
-			if np.abs(rolls_for[j][1][k] - rolls_for[j-1][1][k]) > thres:
-			"""
-			if np.any(np.abs(window[0:-1]-window[1:])>thres):
-				delete += [k for k in np.arange(i - ((kernel - 1) / 2), i + ((kernel - 1) / 2), 1)]
-##			for j in range(len(window) - 1):
-#				if np.abs(window[j] - window[j + 1]) > thres:
-#					delete += [k for k in np.arange(i - ((kernel - 1) / 2), i + ((kernel - 1) / 2), 1)]
-#                    for k in np.arange(i - ((kernel - 1) / 2), i + ((kernel - 1) / 2), 1):
-#                        delete.append(k)
-	return delete
 
 def find_dodgy_data(data, data_columns, det_kernel, thres_kernel, thres):
     """Function to find non-physical data points and remove them
@@ -131,7 +118,7 @@ def find_dodgy_data(data, data_columns, det_kernel, thres_kernel, thres):
     Args:
         data (DataFrame): Data to be cleaned of non-physical data
         data_columns ([str]): List of the heading names of columns containing data in the DataFrame
-        det_kernel (int): Kernel size for the detection of local maxima/ minima. Must be a positive odd integer
+        det_kernel ([int]): Kernel size for the detection of local maxima/ minima. Must be a positive odd integer
         thres_kernel ([int]): List of kernel sizes to pass over data (must be an integer odd number)
         thres (float): Fraction of the global min-max range to use as the threshold to determine if a point
                        is non-physical
@@ -149,12 +136,24 @@ def find_dodgy_data(data, data_columns, det_kernel, thres_kernel, thres):
         data_max = np.max(data[i])
         max_var = thres * np.abs(data_max - data_min)
 
-        loc_max = sg.argrelmax(np.array(data[i]), order=det_kernel)
-        loc_min = sg.argrelmin(np.array(data[i]), order=det_kernel)
+        loc_max = []
+        loc_min = []
+
+        for j in det_kernel:
+            maxima = sg.argrelmax(np.array(data[i]), order=j)
+            minima = sg.argrelmin(np.array(data[i]), order=j)
+
+            for k in maxima[0]:
+                if k not in loc_max:
+                    loc_max.append(k)
+
+            for k in minima[0]:
+                if k not in loc_min:
+                    loc_min.append(k)
 
         for j in thres_kernel:
             print('Kernel pass: %d' % j)
-            delete = calc_variances(data, i, loc_max[0], j, max_var) + calc_variances(data, i, loc_min[0], j, max_var)
+            delete = calc_variances(data, i, loc_max, j, max_var) + calc_variances(data, i, loc_min, j, max_var)
             for k in delete:
                 if k not in deleted:
                     deleted.append(k)
@@ -237,7 +236,7 @@ def main():
 
     print('\nFirst removing non-physical data via local extrema')
 
-    cleaned_data = find_dodgy_data(data, ['BR','BTH','BPH'], 3, (3, 5, 11, 19), 0.05)
+    cleaned_data = find_dodgy_data(data, ['BR', 'BTH', 'BPH'], (3, 5, 10, 15), (3, 5, 7, 9, 11, 19), 0.01)
 
     print('Size of cleaned data: %d' % len(cleaned_data))
 
@@ -245,7 +244,7 @@ def main():
 
     print('\nCleaning data via median filter')
 
-    med_data = medfilt_data(cleaned_data,  ['BR','BTH','BPH'], 5)
+    med_data = medfilt_data(cleaned_data,  ['BR', 'BTH', 'BPH'], 5)
 
     print('Size of filtered data: %d' % len(med_data))
 
