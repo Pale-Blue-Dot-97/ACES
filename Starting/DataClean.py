@@ -3,6 +3,8 @@
 Script to load Voyager magnetometer data in from file and clean, interpolate and work on
 
 TODO:
+    * Remove NaNs from DataFrame
+    * Normalise data
     * Convert to using DataLoad to load data to pandas DataFrame
     * Use variances to calculate transmission priorities/ compression or fitting levels
 """
