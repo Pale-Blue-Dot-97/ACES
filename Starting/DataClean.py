@@ -97,18 +97,19 @@ def extract_time(data):
     return new_data, times
 
 
-def calc_variances(data, data_column, peak_indices, kernel, thres):
-    delete = []
-    for i in peak_indices:
-        if i > kernel:
-            window = np.array(data[data_column][int(i - ((kernel - 1) / 2)):int(i + ((kernel - 1) / 2))])
+def calc_variances(data, data_column, peak_indices, kernel, thres, deleted):
+    #delete = []
+    half_win = (kernel - 1) / 2
+    for i in peak_indices[kernel:]:
+        window = np.array(data[data_column][int(i - half_win):int(i + half_win)])
 
-            for j in range(len(window) - 1):
-                if np.abs(window[j] - window[j + 1]) > thres:
-                    for k in np.arange(i - ((kernel - 1) / 2), i + ((kernel - 1) / 2), 1):
-                        delete.append(k)
+        for j in range(len(window) - 1):
+            if np.abs(window[j] - window[j + 1]) > thres:
+                for k in np.arange(i - half_win, i + half_win, 1):
+                    if k not in deleted:
+                        deleted.append(k)
 
-    return delete
+    return deleted
 
 
 def find_dodgy_data(data, data_columns, columns_to_clean, det_kernel, thres_kernel, thres):
@@ -118,7 +119,7 @@ def find_dodgy_data(data, data_columns, columns_to_clean, det_kernel, thres_kern
         data (DataFrame): Data to be cleaned of non-physical data
         data_columns ([str]): List of the heading names of columns containing data in the DataFrame
         columns_to_clean ([str]): List of the names of columns of data to clean
-        det_kernel ([int]): Kernel size for the detection of local maxima/ minima. Must be a positive odd integer
+        det_kernel (int): Kernel size for the detection of local maxima/ minima. Must be a positive odd integer
         thres_kernel ([int]): List of kernel sizes to pass over data (must be an integer odd number)
         thres (float): Fraction of the global min-max range to use as the threshold to determine if a point
                        is non-physical
@@ -137,18 +138,18 @@ def find_dodgy_data(data, data_columns, columns_to_clean, det_kernel, thres_kern
 
     for i in data_columns:
         print(i)
-        for j in det_kernel:
-            print(j)
-            maxima = sg.argrelmax(np.array(data[i]), order=j)
-            minima = sg.argrelmin(np.array(data[i]), order=j)
+        maxima = sg.argrelmax(np.array(data[i]), order=det_kernel)
+        minima = sg.argrelmin(np.array(data[i]), order=det_kernel)
 
-            for k in maxima[0]:
-                if k not in loc_max:
-                    loc_max.append(k)
+        loc_max.extend(maxima[0])
+        loc_min.extend(minima[0])
 
-            for k in minima[0]:
-                if k not in loc_min:
-                    loc_min.append(k)
+    print('Now removing duplicates from local extrema lists')
+    loc_min = list(dict.fromkeys(loc_min))
+    loc_max = list(dict.fromkeys(loc_max))
+
+    print(len(loc_min))
+    print(len(loc_max))
 
     for i in columns_to_clean:
         print('Cleaning %s' % i)
@@ -158,13 +159,14 @@ def find_dodgy_data(data, data_columns, columns_to_clean, det_kernel, thres_kern
 
         for j in thres_kernel:
             print('Kernel pass: %d' % j)
-            delete = calc_variances(data, i, loc_max, j, max_var) + calc_variances(data, i, loc_min, j, max_var)
-            for k in delete:
-                if k not in deleted:
-                    deleted.append(k)
+            deleted = calc_variances(data, i, loc_max, j, max_var, deleted) \
+                      + calc_variances(data, i, loc_min, j, max_var, deleted)
+            print('Points to be deleted so far: %d' % len(deleted))
 
-    print('\nNow Deleting non-physical points')
-    print('This make take some time, please be patient!')
+    print('Now removing duplicates from indices to delete list')
+    deleted = list(dict.fromkeys(deleted))
+
+    print('\nNow deleting non-physical points')
 
     indexes_to_keep = set(range(data.shape[0])) - set(deleted)
     cleaned_data = data.take(list(indexes_to_keep))
@@ -241,8 +243,7 @@ def main():
 
     print('\nFirst removing non-physical data via local extrema')
 
-    cleaned_data = find_dodgy_data(data, data_columns, ['BR', 'BTH', 'BPH', 'BMAG'], (3, 5, 10, 15),
-                                   (3, 5, 7, 9, 11, 19), 0.01)
+    cleaned_data = find_dodgy_data(data, data_columns, ['BR', 'BTH', 'BPH', 'BMAG'], 5, (3, 5, 9, 15), 0.01)
 
     print('Size of cleaned data: %d' % len(cleaned_data))
 
