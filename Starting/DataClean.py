@@ -212,27 +212,6 @@ def medfilt_data(data, data_columns, kernel_size):
     return cleaned_df
 
 
-def clean_data(data, data_columns, kernel_size):
-    data = data.copy()
-    deleted = []
-    for i in data_columns:
-        data_min = np.min(data[i])
-        data_max = np.max(data[i])
-        max_var = 0.1 * np.abs(data_max - data_min)
-
-        noise = sg.find_peaks(data[i], threshold=max_var, width=(1, 5), wlen=kernel_size)
-
-        print(noise[0])
-
-        for j in noise[0]:
-            if j not in deleted:
-                print('Deleted %d' % j)
-                deleted.append(j)
-                data.drop(data.index[j], axis=0, inplace=True)
-
-    return data, deleted
-
-
 def main():
     data, data_columns = load_data()
 
