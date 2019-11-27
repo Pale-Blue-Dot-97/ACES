@@ -98,28 +98,30 @@ def extract_time(data):
     return new_data, times
 
 
-def calc_variances(data, data_column, peak_indices, kernel, thres, deleted):
+def calc_variances(data_column, peak_indices, kernel, threshold, deleted):
     """Calculates if any of the differences between points within the kernels about the local extrema supplied cross
     a threshold. Deletes window if this is True
 
     Args:
-        data ([floats]): Column of data to examine
-        data_column: Column heading label
-        peak_indices:
-        kernel:
-        thres:
-        deleted:
+        data_column ([float]): Column of data to examine
+        peak_indices ([int]): Indices of local extrema identified
+        kernel (int): Width of window centered on local extrema to investigate.
+                      Must be a positive integer
+        threshold (float): Fraction of the global min-max range to use as the threshold to determine if a point
+                      is non-physical
+        deleted ([int]): Current array of indexes of points to be deleted
 
     Returns:
-
+        deleted ([int]): Updated array of indexes of points to be deleted
     """
-    #delete = []
+
     half_win = (kernel - 1) / 2
+
     for i in peak_indices[kernel:]:
-        window = np.array(data[data_column][int(i - half_win):int(i + half_win)])
+        window = data_column[int(i - half_win):int(i + half_win)]
 
         for j in range(len(window) - 1):
-            if np.abs(window[j] - window[j + 1]) > thres:
+            if np.abs(window[j] - window[j + 1]) > threshold:
                 for k in np.arange(i - half_win, i + half_win, 1):
                     if k not in deleted:
                         deleted.append(k)
@@ -127,7 +129,7 @@ def calc_variances(data, data_column, peak_indices, kernel, thres, deleted):
     return deleted
 
 
-def find_dodgy_data(data, data_columns, columns_to_clean, det_kernel, thres_kernel, thres):
+def find_dodgy_data(data, data_columns, columns_to_clean, det_kernel, thres_kernel, threshold):
     """Function to find non-physical data points and remove them
 
     Args:
@@ -136,7 +138,7 @@ def find_dodgy_data(data, data_columns, columns_to_clean, det_kernel, thres_kern
         columns_to_clean ([str]): List of the names of columns of data to clean
         det_kernel (int): Kernel size for the detection of local maxima/ minima. Must be a positive odd integer
         thres_kernel ([int]): List of kernel sizes to pass over data (must be an integer odd number)
-        thres (float): Fraction of the global min-max range to use as the threshold to determine if a point
+        threshold (float): Fraction of the global min-max range to use as the threshold to determine if a point
                        is non-physical
 
     Returns:
@@ -170,12 +172,12 @@ def find_dodgy_data(data, data_columns, columns_to_clean, det_kernel, thres_kern
         print('Cleaning %s' % i)
         data_min = np.min(data[i])
         data_max = np.max(data[i])
-        max_var = thres * np.abs(data_max - data_min)
+        max_var = threshold * np.abs(data_max - data_min)
 
         for j in thres_kernel:
             print('Kernel pass: %d' % j)
-            deleted = calc_variances(data, i, loc_max, j, max_var, deleted) \
-                      + calc_variances(data, i, loc_min, j, max_var, deleted)
+            deleted = calc_variances(np.array(data[i]), loc_max, j, max_var, deleted) \
+                      + calc_variances(np.array(data[i]), loc_min, j, max_var, deleted)
             print('Points to be deleted so far: %d' % len(deleted))
 
     print('Now removing duplicates from indices to delete list')
