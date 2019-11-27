@@ -3,7 +3,6 @@
 Script to load Voyager magnetometer data in from file and clean, interpolate and work on
 
 TODO:
-    * Remove NaNs from DataFrame
     * Normalise data
     * Convert to using DataLoad to load data to pandas DataFrame
     * Use variances to calculate transmission priorities/ compression or fitting levels
@@ -38,6 +37,13 @@ def load_data():
 
     data_columns = ['BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH',
                     'NUM_PTS']
+
+    print('Number of NaNs: %d' % data.isnull().sum().sum())
+
+    # Removes any 'NaNs' from the dataframe
+    for i in data_columns:
+        data.drop(data[data.isnull()[i]].index, inplace=True)
+        data.reset_index(inplace=True, drop=True)
 
     return data, data_columns
 
