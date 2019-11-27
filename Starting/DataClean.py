@@ -11,7 +11,6 @@ TODO:
 # =====================================================================================================================
 #                                                     IMPORTS
 # =====================================================================================================================
-import os
 import pandas as pd
 import numpy as np
 import scipy.interpolate
@@ -112,12 +111,13 @@ def calc_variances(data, data_column, peak_indices, kernel, thres):
     return delete
 
 
-def find_dodgy_data(data, data_columns, det_kernel, thres_kernel, thres):
+def find_dodgy_data(data, data_columns, columns_to_clean, det_kernel, thres_kernel, thres):
     """Function to find non-physical data points and remove them
 
     Args:
         data (DataFrame): Data to be cleaned of non-physical data
         data_columns ([str]): List of the heading names of columns containing data in the DataFrame
+        columns_to_clean ([str]): List of the names of columns of data to clean
         det_kernel ([int]): Kernel size for the detection of local maxima/ minima. Must be a positive odd integer
         thres_kernel ([int]): List of kernel sizes to pass over data (must be an integer odd number)
         thres (float): Fraction of the global min-max range to use as the threshold to determine if a point
@@ -130,16 +130,15 @@ def find_dodgy_data(data, data_columns, det_kernel, thres_kernel, thres):
     data = data.copy()
     deleted = []
 
+    loc_max = []
+    loc_min = []
+
+    print('Finding all local minima and maxima')
+
     for i in data_columns:
-        print('Cleaning %s' % i)
-        data_min = np.min(data[i])
-        data_max = np.max(data[i])
-        max_var = thres * np.abs(data_max - data_min)
-
-        loc_max = []
-        loc_min = []
-
+        print(i)
         for j in det_kernel:
+            print(j)
             maxima = sg.argrelmax(np.array(data[i]), order=j)
             minima = sg.argrelmin(np.array(data[i]), order=j)
 
@@ -150,6 +149,12 @@ def find_dodgy_data(data, data_columns, det_kernel, thres_kernel, thres):
             for k in minima[0]:
                 if k not in loc_min:
                     loc_min.append(k)
+
+    for i in columns_to_clean:
+        print('Cleaning %s' % i)
+        data_min = np.min(data[i])
+        data_max = np.max(data[i])
+        max_var = thres * np.abs(data_max - data_min)
 
         for j in thres_kernel:
             print('Kernel pass: %d' % j)
@@ -236,7 +241,8 @@ def main():
 
     print('\nFirst removing non-physical data via local extrema')
 
-    cleaned_data = find_dodgy_data(data, ['BR', 'BTH', 'BPH', 'BMAG'], (3, 5, 10, 15), (3, 5, 7, 9, 11, 19), 0.01)
+    cleaned_data = find_dodgy_data(data, data_columns, ['BR', 'BTH', 'BPH', 'BMAG'], (3, 5, 10, 15),
+                                   (3, 5, 7, 9, 11, 19), 0.01)
 
     print('Size of cleaned data: %d' % len(cleaned_data))
 
@@ -249,12 +255,6 @@ def main():
     #print('Size of filtered data: %d' % len(med_data))
 
     print('\nCREATING FIGURE')
-
-    laplt.create_figure(y=[raw_data['BR'], cldt['BR']],
-                        x=[raw_data['UNIX TIME'], cldt['UNIX TIME']], LWID=[1],
-                        figure_name='raw_vs_filtered.png', COLOURS=['r', 'b', 'g'], POINTSTYLES=['-'],
-                        DATALABELS=['Raw Data', 'Cleaned Data'], x_label='UNIX Time (ms)',
-                        y_label='B_r (nT)', axis_range=[time[0], time[len(time) - 1], -1000, 1000])
 
     mf.create_grid(y=[[raw_data['BR'], cldt['BR']], [raw_data['BTH'], cldt['BTH']], [raw_data['BPH'], cldt['BPH']],
                       [raw_data['BMAG'], cldt['BMAG']]],
