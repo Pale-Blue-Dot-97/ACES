@@ -99,6 +99,20 @@ def extract_time(data):
 
 
 def calc_variances(data, data_column, peak_indices, kernel, thres, deleted):
+    """Calculates if any of the differences between points within the kernels about the local extrema supplied cross
+    a threshold. Deletes window if this is True
+
+    Args:
+        data ([floats]): Column of data to examine
+        data_column: Column heading label
+        peak_indices:
+        kernel:
+        thres:
+        deleted:
+
+    Returns:
+
+    """
     #delete = []
     half_win = (kernel - 1) / 2
     for i in peak_indices[kernel:]:
@@ -126,7 +140,7 @@ def find_dodgy_data(data, data_columns, columns_to_clean, det_kernel, thres_kern
                        is non-physical
 
     Returns:
-
+        cleaned_data (DataFrame): The cleaned data
 
     """
     data = data.copy()
