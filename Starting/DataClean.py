@@ -43,6 +43,16 @@ def load_data():
 
 
 def extract_time(data):
+    """Extracts the time since UNIX Epoch from time-stamp strings
+
+    Args:
+        data (DataFrame): Data containing time-stamp column to extract from
+
+    Returns:
+        new_data (DataFrame): Data with column containing times since UNIX Epoch
+        times ([float]): Array identical to new column added to data
+    """
+
     new_data = data.copy()
     times = []
 
