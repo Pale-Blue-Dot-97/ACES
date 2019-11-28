@@ -244,6 +244,15 @@ def medfilt_data(data, data_columns, kernel_size):
     return cleaned_df
 
 
+def normalise():
+    # Simple dipole normalisation using r^-3
+    # 400r^-3
+    
+    # More complex polynomial approach
+
+    return
+
+
 def main():
     data, data_columns = load_data()
 
