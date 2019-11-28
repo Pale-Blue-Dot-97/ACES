@@ -1,0 +1,93 @@
+PDS_VERSION_ID                = PDS3
+RECORD_TYPE                   = FIXED_LENGTH
+RECORD_BYTES                  = 64
+FILE_RECORDS                  = 24128
+DATA_SET_ID                   = "VG1-J-POS-6-SUMM-S3COORDS-V1.1"
+INSTRUMENT_HOST_NAME          = "VOYAGER 1"
+INSTRUMENT_HOST_ID            = "VG1"
+INSTRUMENT_NAME               = "POS"
+TARGET_NAME                   = "JUPITER"
+START_TIME                    = 1979-03-03T00:00:35.978
+STOP_TIME                     = 1979-03-16T23:59:56.185
+MISSION_PHASE_NAME            = "JUPITER ENCOUNTER"
+PRODUCT_ID                    = "SPICE062_071"
+PRODUCT_CREATION_TIME         = 2010-05-18
+SPACECRAFT_CLOCK_START_COUNT  = "16314:19:001"
+SPACECRAFT_CLOCK_STOP_COUNT   = "16734:18:001"
+
+^TABLE                        = "SPICE062_071.TAB"
+MD5_CHECKSUM                  = "356bc0d1edacabc0d327432e5431e96b"
+
+OBJECT                        = TABLE
+  INTERCHANGE_FORMAT            = ASCII
+  ROWS                          = 24128
+  COLUMNS                       = 5
+  ROW_BYTES                     = 64
+/* The key word "MISSING_CONSTANT" indicates a data value which represents*/
+/* missing or bad data (i.e. the data flag value) for the column.         */
+
+OBJECT                   = COLUMN
+  NAME                     = "TIME"
+  COLUMN_NUMBER            = 1
+  UNIT                     = "SECONDS"
+  DATA_TYPE                = TIME
+  START_BYTE               = 1
+  BYTES                    = 24
+  DESCRIPTION              = "
+    Time column. This field contains time in PDS format: 
+    yyyy-mm-ddThh:mm:ss.sssZ. The individual elements of the 
+    time field can be read using the FORTRAN format statement 
+    (i4,4(1x,i2),1x,f6.3,1x) yr, mon, day, hr, min, sec."
+END_OBJECT               = COLUMN
+OBJECT                   = COLUMN
+  NAME                     = "R"
+  COLUMN_NUMBER            = 2
+  UNIT                     = "RADII"
+  DATA_TYPE                = ASCII_REAL
+  START_BYTE               = 25
+  BYTES                    = 11
+  MISSING_CONSTANT         = -999.99999
+  DESCRIPTION              = "
+    Column contains Jupiter to spacecraft range in units of jovian
+    radii."
+END_OBJECT               = COLUMN
+OBJECT                   = COLUMN
+  NAME                     = "LAT"
+  COLUMN_NUMBER            = 3
+  UNIT                     = "DEGREES"
+  DATA_TYPE                = ASCII_REAL
+  START_BYTE               = 36
+  BYTES                    = 9
+  MISSING_CONSTANT         = -999.999
+  DESCRIPTION              = "
+    Column contains spacecraft jovicentric latitude (positive
+    northward) in degrees."
+END_OBJECT               = COLUMN
+OBJECT                   = COLUMN
+  NAME                     = "LON"
+  COLUMN_NUMBER            = 4
+  UNIT                     = "DEGREES"
+  DATA_TYPE                = ASCII_REAL
+  START_BYTE               = 45
+  BYTES                    = 9
+  MISSING_CONSTANT         = -999.999
+  DESCRIPTION              = "
+    Column contains spacecraft jovicentric east (system III)
+    longitude in degrees."
+END_OBJECT               = COLUMN
+OBJECT                   = COLUMN
+  NAME                     = "LOCTIME"
+  COLUMN_NUMBER            = 5
+  UNIT                     = "HOURS"
+  DATA_TYPE                = ASCII_REAL
+  START_BYTE               = 54
+  BYTES                    = 9
+  MISSING_CONSTANT         = -999.999
+  DESCRIPTION              = "
+    Column contains spacecraft local time in decimal hours."
+END_OBJECT               = COLUMN
+
+
+
+END_OBJECT                    = TABLE
+END
