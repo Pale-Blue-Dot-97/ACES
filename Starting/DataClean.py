@@ -3,18 +3,16 @@
 Script to load Voyager magnetometer data in from file and clean, interpolate and work on
 
 TODO:
+    * Normalise data
     * Convert to using DataLoad to load data to pandas DataFrame
-    * Compute variances between points to clean non-physical data
     * Use variances to calculate transmission priorities/ compression or fitting levels
 """
 
 # =====================================================================================================================
 #                                                     IMPORTS
 # =====================================================================================================================
-import os
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import scipy.interpolate
 import scipy.signal as sg
 import datetime
@@ -40,10 +38,27 @@ def load_data():
     data_columns = ['BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH',
                     'NUM_PTS']
 
+    print('Number of NaNs: %d' % data.isnull().sum().sum())
+
+    # Removes any 'NaNs' from the dataframe
+    for i in data_columns:
+        data.drop(data[data.isnull()[i]].index, inplace=True)
+        data.reset_index(inplace=True, drop=True)
+
     return data, data_columns
 
 
 def extract_time(data):
+    """Extracts the time since UNIX Epoch from time-stamp strings
+
+    Args:
+        data (DataFrame): Data containing time-stamp column to extract from
+
+    Returns:
+        new_data (DataFrame): Data with column containing times since UNIX Epoch
+        times ([float]): Array identical to new column added to data
+    """
+
     new_data = data.copy()
     times = []
 
@@ -98,69 +113,93 @@ def extract_time(data):
 
     return new_data, times
 
-def calc_variances(data, data_column, peak_indices, kernel, thres):
-	delete = []
-	for i in peak_indices:
-		if i > kernel:
-			window = np.array(data[data_column][int(i - ((kernel - 1) / 2)):int(i + ((kernel - 1) / 2))])
 
-			"""
-			rolls_for = [window]
-			rolls_back = [window]
+def calc_variances(data_column, peak_indices, kernel, threshold, deleted):
+    """Calculates if any of the differences between points within the kernels about the local extrema supplied cross
+    a threshold. Deletes window if this is True
 
-			for j in range((kernel-1)/2):
-			rolls_for.append(np.roll(window, j))
-			rolls_back.append(np.roll(window, -j))
+    Args:
+        data_column ([float]): Column of data to examine
+        peak_indices ([int]): Indices of local extrema identified
+        kernel (int): Width of window centered on local extrema to investigate.
+                      Must be a positive integer
+        threshold (float): Fraction of the global min-max range to use as the threshold to determine if a point
+                      is non-physical
+        deleted ([int]): Current array of indexes of points to be deleted
 
-			for j in range(len(rolls_for)):
-			for k in range(len(window)):
-			if np.abs(rolls_for[j][1][k] - rolls_for[j-1][1][k]) > thres:
-			"""
-			if np.any(np.abs(window[0:-1]-window[1:])>thres):
-				delete += [k for k in np.arange(i - ((kernel - 1) / 2), i + ((kernel - 1) / 2), 1)]
-##			for j in range(len(window) - 1):
-#				if np.abs(window[j] - window[j + 1]) > thres:
-#					delete += [k for k in np.arange(i - ((kernel - 1) / 2), i + ((kernel - 1) / 2), 1)]
-#                    for k in np.arange(i - ((kernel - 1) / 2), i + ((kernel - 1) / 2), 1):
-#                        delete.append(k)
-	return delete
+    Returns:
+        deleted ([int]): Updated array of indexes of points to be deleted
+    """
 
-def find_dodgy_data(data, data_columns, det_kernel, thres_kernel, thres):
+    half_win = (kernel - 1) / 2
+
+    for i in peak_indices[kernel:]:
+        window = data_column[int(i - half_win):int(i + half_win)]
+
+        for j in range(len(window) - 1):
+            if np.abs(window[j] - window[j + 1]) > threshold:
+                for k in np.arange(i - half_win, i + half_win, 1):
+                    if k not in deleted:
+                        deleted.append(k)
+
+    return deleted
+
+
+def find_dodgy_data(data, data_columns, columns_to_clean, det_kernel, thres_kernel, threshold):
     """Function to find non-physical data points and remove them
 
     Args:
         data (DataFrame): Data to be cleaned of non-physical data
         data_columns ([str]): List of the heading names of columns containing data in the DataFrame
+        columns_to_clean ([str]): List of the names of columns of data to clean
         det_kernel (int): Kernel size for the detection of local maxima/ minima. Must be a positive odd integer
         thres_kernel ([int]): List of kernel sizes to pass over data (must be an integer odd number)
-        thres (float): Fraction of the global min-max range to use as the threshold to determine if a point
+        threshold (float): Fraction of the global min-max range to use as the threshold to determine if a point
                        is non-physical
 
     Returns:
-
+        cleaned_data (DataFrame): The cleaned data
 
     """
     data = data.copy()
     deleted = []
 
+    loc_max = []
+    loc_min = []
+
+    print('Finding all local minima and maxima')
+
     for i in data_columns:
+        print(i)
+        maxima = sg.argrelmax(np.array(data[i]), order=det_kernel)
+        minima = sg.argrelmin(np.array(data[i]), order=det_kernel)
+
+        loc_max.extend(maxima[0])
+        loc_min.extend(minima[0])
+
+    print('Now removing duplicates from local extrema lists')
+    loc_min = list(dict.fromkeys(loc_min))
+    loc_max = list(dict.fromkeys(loc_max))
+
+    print(len(loc_min))
+    print(len(loc_max))
+
+    for i in columns_to_clean:
         print('Cleaning %s' % i)
         data_min = np.min(data[i])
         data_max = np.max(data[i])
-        max_var = thres * np.abs(data_max - data_min)
-
-        loc_max = sg.argrelmax(np.array(data[i]), order=det_kernel)
-        loc_min = sg.argrelmin(np.array(data[i]), order=det_kernel)
+        max_var = threshold * np.abs(data_max - data_min)
 
         for j in thres_kernel:
             print('Kernel pass: %d' % j)
-            delete = calc_variances(data, i, loc_max[0], j, max_var) + calc_variances(data, i, loc_min[0], j, max_var)
-            for k in delete:
-                if k not in deleted:
-                    deleted.append(k)
+            deleted = calc_variances(np.array(data[i]), loc_max, j, max_var, deleted) \
+                      + calc_variances(np.array(data[i]), loc_min, j, max_var, deleted)
+            print('Points to be deleted so far: %d' % len(deleted))
 
-    print('\nNow Deleting non-physical points')
-    print('This make take some time, please be patient!')
+    print('Now removing duplicates from indices to delete list')
+    deleted = list(dict.fromkeys(deleted))
+
+    print('\nNow deleting non-physical points')
 
     indexes_to_keep = set(range(data.shape[0])) - set(deleted)
     cleaned_data = data.take(list(indexes_to_keep))
@@ -205,25 +244,13 @@ def medfilt_data(data, data_columns, kernel_size):
     return cleaned_df
 
 
-def clean_data(data, data_columns, kernel_size):
-    data = data.copy()
-    deleted = []
-    for i in data_columns:
-        data_min = np.min(data[i])
-        data_max = np.max(data[i])
-        max_var = 0.1 * np.abs(data_max - data_min)
+def normalise():
+    # Simple dipole normalisation using r^-3
+    # 400r^-3
+    
+    # More complex polynomial approach
 
-        noise = sg.find_peaks(data[i], threshold=max_var, width=(1, 5), wlen=kernel_size)
-
-        print(noise[0])
-
-        for j in noise[0]:
-            if j not in deleted:
-                print('Deleted %d' % j)
-                deleted.append(j)
-                data.drop(data.index[j], axis=0, inplace=True)
-
-    return data, deleted
+    return
 
 
 def main():
@@ -237,7 +264,7 @@ def main():
 
     print('\nFirst removing non-physical data via local extrema')
 
-    cleaned_data = find_dodgy_data(data, ['BR','BTH','BPH'], 3, (3, 5, 11, 19), 0.05)
+    cleaned_data = find_dodgy_data(data, data_columns, ['BR', 'BTH', 'BPH', 'BMAG'], 5, (3, 5, 9, 15), 0.01)
 
     print('Size of cleaned data: %d' % len(cleaned_data))
 
@@ -245,17 +272,21 @@ def main():
 
     print('\nCleaning data via median filter')
 
-    med_data = medfilt_data(cleaned_data,  ['BR','BTH','BPH'], 5)
+    #med_data = medfilt_data(cleaned_data,  ['BR', 'BTH', 'BPH'], 5)
 
-    print('Size of filtered data: %d' % len(med_data))
+    #print('Size of filtered data: %d' % len(med_data))
 
     print('\nCREATING FIGURE')
 
-    laplt.create_figure(y=[med_data['BR'], raw_data['BR'], cldt['BR']],
-                        x=[med_data['UNIX TIME'], raw_data['UNIX TIME'], cldt['UNIX TIME']], LWID=[1],
-                        figure_name='raw_vs_filtered.png', COLOURS=['r', 'b', 'g'], POINTSTYLES=['-'],
-                        DATALABELS=['Filtered Data', 'Raw Data', 'Cleaned Data'], x_label='UNIX Time (ms)',
-                        y_label='B_r (nT)', axis_range=[time[0], time[len(time) - 1], -1000, 1000])
+    mf.create_grid(y=[[raw_data['BR'], cldt['BR']], [raw_data['BTH'], cldt['BTH']], [raw_data['BPH'], cldt['BPH']],
+                      [raw_data['BMAG'], cldt['BMAG']]],
+                   x=[[raw_data['UNIX TIME'], cldt['UNIX TIME']], [raw_data['UNIX TIME'], cldt['UNIX TIME']],
+                      [raw_data['UNIX TIME'], cldt['UNIX TIME']], [raw_data['UNIX TIME'], cldt['UNIX TIME']]],
+                   shape=[[1, 2],
+                          [3, 4]],
+                   LWID=[[0.5]], figure_name='GridPlot.png', COLOURS=[['b', 'g']], POINTSTYLES=[['-']],
+                   DATALABELS=[['Raw Data', 'Cleaned Data']], x_label='UNIX Time (ms)', y_label='B_r (nT)',
+                   axis_range=[time[0], time[len(time) - 1], -1000, 1000])
 
 
 if __name__ == '__main__':
