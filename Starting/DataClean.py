@@ -28,10 +28,10 @@ def load_data():
     """Load in data from PDS archive. Column headers come from the LBL meta data
     """
 
-    names = ['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH',
+    data_names = ['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH',
              'RMS_BPH', 'NUM_PTS']
 
-    data = pd.read_csv('S3_1_92S.TAB', names=names, na_values=-9999.999)
+    data = pd.read_csv('S3_1_92S.TAB', names=data_names, na_values=-9999.999)
 
     data_columns = ['BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH',
                     'NUM_PTS']
@@ -43,7 +43,11 @@ def load_data():
         data.drop(data[data.isnull()[i]].index, inplace=True)
         data.reset_index(inplace=True, drop=True)
 
-    return data, data_columns
+    position_names = ['TIME', 'R', 'LAT', 'LON']
+
+    position = pd.read_csv('SPICE062_071.TAB', names=position_names, na_values=-999.999)
+
+    return data, data_columns, position
 
 
 def extract_time(data):
@@ -110,6 +114,11 @@ def extract_time(data):
     new_data.reset_index(drop=True)
 
     return new_data, times
+
+
+def interpolate_positions(positions, data):
+
+    return data
 
 
 def calc_variances(data_column, peak_indices, kernel, threshold, deleted):
@@ -252,7 +261,7 @@ def normalise():
 
 
 def main():
-    data, data_columns = load_data()
+    data, data_columns, position = load_data()
 
     data, time = extract_time(data)
 
