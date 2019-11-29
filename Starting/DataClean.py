@@ -1,11 +1,9 @@
-"""DataClean.py
-
-Script to load Voyager magnetometer data in from file and clean, interpolate and work on
+"""Script to load Voyager magnetometer data in from file and clean, interpolate and work on
+and process ready for training
 
 TODO:
+    * Interpolate positional data
     * Normalise data
-    * Convert to using DataLoad to load data to pandas DataFrame
-    * Use variances to calculate transmission priorities/ compression or fitting levels
 """
 
 # =====================================================================================================================
