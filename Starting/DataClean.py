@@ -11,7 +11,7 @@ TODO:
 # =====================================================================================================================
 import pandas as pd
 import numpy as np
-import scipy.interpolate
+import scipy.interpolate as ip
 import scipy.signal as sg
 import datetime
 import Plot2D as laplt
@@ -28,8 +28,8 @@ def load_data():
     """Load in data from PDS archive. Column headers come from the LBL meta data
     """
 
-    data_names = ['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH',
-             'RMS_BPH', 'NUM_PTS']
+    data_names = ['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR',
+                  'RMS_BTH', 'RMS_BPH', 'NUM_PTS']
 
     data = pd.read_csv('S3_1_92S.TAB', names=data_names, na_values=-9999.999)
 
@@ -43,9 +43,11 @@ def load_data():
         data.drop(data[data.isnull()[i]].index, inplace=True)
         data.reset_index(inplace=True, drop=True)
 
-    position_names = ['TIME', 'R', 'LAT', 'LON']
+    position_names = ['TIME', 'R', 'LAT', 'LON', 'LOCTIME']
 
-    position = pd.read_csv('SPICE062_071.TAB', names=position_names, na_values=-999.999)
+    position = pd.read_table('SPICE062_071.TAB', sep='\t', names=position_names, na_values=-999.999)
+
+    print(position)
 
     return data, data_columns, position
 
@@ -117,8 +119,53 @@ def extract_time(data):
 
 
 def interpolate_positions(positions, data):
+    """Interpolates positional data to match time intervals of main data
 
-    return data
+    Args:
+        positions (DataFrame): Positions of the spacecraft
+        data (DataFrame): Magnetometer data
+
+    Returns:
+        new_data (DataFrame): data with the addition of the positions dataframe interpolated to match 1.92s intervals
+
+    """
+
+    new_data = data.copy
+
+    new_stamps = []
+
+    print(positions)
+
+    print(positions['TIME'])
+
+    for stamp in np.array(positions['TIME']):
+        #print(stamp)
+        #print(str(list(stamp).remove('Z')))
+        new_stamps.append(str(list(stamp).remove('Z')))
+
+    positions['TIME'] = new_stamps
+
+    #positions.replace(to_replace='Z', value='', inplace=True)
+
+    positions, time = extract_time(positions)
+
+    print(positions)
+
+    print('Interpolating positional data to match time intervals of meter data')
+
+    R = ip.interp1d(x=time, y=positions['R'])
+    LAT = ip.interp1d(x=time, y=positions['LAT'])
+    LON = ip.interp1d(x=time, y=positions['LON'])
+
+    new_data['R'] = R(data['UNIX TIME'])
+    new_data['LAT'] = LAT(data['UNIX TIME'])
+    new_data['LON'] = LON(data['UNIX TIME'])
+
+    print(new_data['R'])
+    print(new_data['LAT'])
+    print(new_data['LON'])
+
+    return new_data
 
 
 def calc_variances(data_column, peak_indices, kernel, threshold, deleted):
@@ -264,6 +311,8 @@ def main():
     data, data_columns, position = load_data()
 
     data, time = extract_time(data)
+
+    data = interpolate_positions(position, data)
 
     raw_data = data.copy()
 
