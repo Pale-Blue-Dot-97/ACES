@@ -45,9 +45,7 @@ def load_data():
 
     position_names = ['TIME', 'R', 'LAT', 'LON', 'LOCTIME']
 
-    position = pd.read_table('SPICE062_071.TAB', sep='\t', names=position_names, na_values=-999.999)
-
-    print(position)
+    position = pd.read_table('SPICE062_071.TAB', delim_whitespace=True, names=position_names, na_values=-999.999)
 
     return data, data_columns, position
 
@@ -134,22 +132,17 @@ def interpolate_positions(positions, data):
 
     new_stamps = []
 
-    print(positions)
-
-    print(positions['TIME'])
-
     for stamp in np.array(positions['TIME']):
-        #print(stamp)
-        #print(str(list(stamp).remove('Z')))
-        new_stamps.append(str(list(stamp).remove('Z')))
+        stamp_list = list(stamp)
+        stamp_list.remove('Z')
+        new_stamp = ""
+        for i in stamp_list:
+            new_stamp += i
+        new_stamps.append(new_stamp)
 
     positions['TIME'] = new_stamps
 
-    #positions.replace(to_replace='Z', value='', inplace=True)
-
     positions, time = extract_time(positions)
-
-    print(positions)
 
     print('Interpolating positional data to match time intervals of meter data')
 
