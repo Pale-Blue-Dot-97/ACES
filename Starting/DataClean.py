@@ -209,25 +209,20 @@ def find_dodgy_data(data, data_columns, columns_to_clean, det_kernel, thres_kern
     loc_max = []
     loc_min = []
 
-    print('Finding all local minima and maxima')
+    print('\nFinding all local minima and maxima')
 
     for i in data_columns:
-        print(i)
         maxima = sg.argrelmax(np.array(data[i]), order=det_kernel)
         minima = sg.argrelmin(np.array(data[i]), order=det_kernel)
 
         loc_max.extend(maxima[0])
         loc_min.extend(minima[0])
 
-    print('Now removing duplicates from local extrema lists')
     loc_min = list(dict.fromkeys(loc_min))
     loc_max = list(dict.fromkeys(loc_max))
 
-    print(len(loc_min))
-    print(len(loc_max))
-
     for i in columns_to_clean:
-        print('Cleaning %s' % i)
+        print('\nCleaning %s' % i)
         data_min = np.min(data[i])
         data_max = np.max(data[i])
         max_var = threshold * np.abs(data_max - data_min)
@@ -236,9 +231,7 @@ def find_dodgy_data(data, data_columns, columns_to_clean, det_kernel, thres_kern
             print('Kernel pass: %d' % j)
             deleted = calc_variances(np.array(data[i]), loc_max, j, max_var, deleted) \
                       + calc_variances(np.array(data[i]), loc_min, j, max_var, deleted)
-            print('Points to be deleted so far: %d' % len(deleted))
 
-    print('Now removing duplicates from indices to delete list')
     deleted = list(dict.fromkeys(deleted))
 
     print('\nNow deleting non-physical points')
@@ -287,14 +280,51 @@ def medfilt_data(data, data_columns, kernel_size):
 
 
 def dipole(x, r, a):
+    """Normalises x using simple r^-3 dipole assumption
+
+    Args:
+        x (float, Array-like): Values to be normalised
+        r (float, Array-like): Distance to planet to normalise with
+        a (float): Normalisation parameter
+
+    Returns:
+        Normalised data
+    """
+
     return x / (a * np.power(r, -3))
 
 
 def power_series_norm(x, r, a, b, c):
+    """
+
+    Args:
+        x (float, Array-like): Values to be normalised
+        r (float, Array-like): Distance to planet to normalise with
+        a (float): Normalisation parameter for r^-3 term
+        b (float): Normalisation parameter for r^-2 term
+        c (float): Normalisation parameter for r^-1 term
+
+    Returns:
+        Normalised data
+    """
+
     return x / (a * np.power(r, -3) + b * np.power(r, -2) + c * np.power(r, -1))
 
 
-def normalise(data, a):
+def normalise(data, a=4.0e5, b=200.0, c=35.0):
+    """Normalise data using power series of position
+
+    Args:
+        data (DataFrame): DataFrame containing data to be normalised with contained position
+        a (float): Scalar in power series
+        b (float): Scalar in power series
+        c (float): Scalar in p
+
+    Returns:
+        norm_data (DataFrame): Dataframe with new columns with normalised data
+
+    """
+
     norm_data = data.copy()
 
     # Simple dipole normalisation using r^-3
@@ -338,7 +368,7 @@ def main():
 
     #print('Size of filtered data: %d' % len(med_data))
 
-    norm_data = normalise(cldt, 400.0)
+    norm_data = normalise(cldt, 6.0e5)
 
     print('\nCREATING FIGURE')
 
@@ -358,7 +388,7 @@ def main():
                    x=[[norm_data['UNIX TIME']], [norm_data['UNIX TIME']], [norm_data['UNIX TIME']],
                       [norm_data['UNIX TIME']]], LWID=[[0.5]], figure_name='NormData.png', COLOURS=[['b']],
                    POINTSTYLES=[['-']], DATALABELS=[['Normalised Data']], x_label='UNIX Time (ms)', #y_label='B_r (nT)',
-                   axis_range=[time[0], time[len(time) - 1], -1000, 1000],
+                   axis_range=[time[0], time[len(time) - 1], -1, 1],
                    shape=[[1, 2],
                           [3, 4]]
                    )
