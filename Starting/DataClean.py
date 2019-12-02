@@ -128,7 +128,7 @@ def interpolate_positions(positions, data):
 
     """
 
-    new_data = data.copy
+    new_data = data.copy()
 
     new_stamps = []
 
@@ -144,19 +144,15 @@ def interpolate_positions(positions, data):
 
     positions, time = extract_time(positions)
 
-    print('Interpolating positional data to match time intervals of meter data')
+    print('\nInterpolating positional data to match time intervals of meter data')
 
-    R = ip.interp1d(x=time, y=positions['R'])
-    LAT = ip.interp1d(x=time, y=positions['LAT'])
-    LON = ip.interp1d(x=time, y=positions['LON'])
+    R = ip.interp1d(x=time, y=positions['R'], bounds_error=False, fill_value='extrapolate')
+    LAT = ip.interp1d(x=time, y=positions['LAT'], bounds_error=False, fill_value='extrapolate')
+    LON = ip.interp1d(x=time, y=positions['LON'], bounds_error=False, fill_value='extrapolate')
 
     new_data['R'] = R(data['UNIX TIME'])
     new_data['LAT'] = LAT(data['UNIX TIME'])
     new_data['LON'] = LON(data['UNIX TIME'])
-
-    print(new_data['R'])
-    print(new_data['LAT'])
-    print(new_data['LON'])
 
     return new_data
 
