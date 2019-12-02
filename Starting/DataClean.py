@@ -2,7 +2,6 @@
 and process ready for training
 
 TODO:
-    * Interpolate positional data
     * Normalise data
 """
 
