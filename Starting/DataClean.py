@@ -286,13 +286,27 @@ def medfilt_data(data, data_columns, kernel_size):
     return cleaned_df
 
 
-def normalise():
+def dipole(x, r):
+    return x / 400. * np.power(r, -3)
+
+
+def normalise(data):
+    norm_data = data.copy()
+
     # Simple dipole normalisation using r^-3
-    # 400r^-3
-    
+    print('\nApplying simple dipole normalisation to data')
+    norm_data['BR_norm'] = dipole(data['BR'], data['R'])
+    norm_data['BTH_norm'] = dipole(data['BTH'], data['R'])
+    norm_data['BPH_norm'] = dipole(data['BPH'], data['R'])
+    norm_data['BMAG_norm'] = dipole(data['BMAG'], data['R'])
+
+    print(norm_data.iloc[100])
+
+    print(norm_data['BR_norm'])
+
     # More complex polynomial approach
 
-    return
+    return norm_data
 
 
 def main():
@@ -314,14 +328,17 @@ def main():
 
     cldt = cleaned_data.copy()
 
-    print('\nCleaning data via median filter')
+    #print('\nCleaning data via median filter')
 
     #med_data = medfilt_data(cleaned_data,  ['BR', 'BTH', 'BPH'], 5)
 
     #print('Size of filtered data: %d' % len(med_data))
 
+    norm_data = normalise(cldt)
+
     print('\nCREATING FIGURE')
 
+    """
     mf.create_grid(y=[[raw_data['BR'], cldt['BR']], [raw_data['BTH'], cldt['BTH']], [raw_data['BPH'], cldt['BPH']],
                       [raw_data['BMAG'], cldt['BMAG']]],
                    x=[[raw_data['UNIX TIME'], cldt['UNIX TIME']], [raw_data['UNIX TIME'], cldt['UNIX TIME']],
@@ -331,6 +348,16 @@ def main():
                    LWID=[[0.5]], figure_name='GridPlot.png', COLOURS=[['b', 'g']], POINTSTYLES=[['-']],
                    DATALABELS=[['Raw Data', 'Cleaned Data']], x_label='UNIX Time (ms)', y_label='B_r (nT)',
                    axis_range=[time[0], time[len(time) - 1], -1000, 1000])
+    """
+
+    mf.create_grid(y=[[norm_data['BR_norm']], [norm_data['BTH_norm']], [norm_data['BPH_norm']], [norm_data['BMAG_norm']]],
+                   x=[[norm_data['UNIX TIME']], [norm_data['UNIX TIME']], [norm_data['UNIX TIME']],
+                      [norm_data['UNIX TIME']]], LWID=[[0.5]], figure_name='NormData.png', COLOURS=[['b']],
+                   POINTSTYLES=[['-']], DATALABELS=[['Normalised Data']], x_label='UNIX Time (ms)', #y_label='B_r (nT)',
+                   axis_range=[time[0], time[len(time) - 1], -2, 2],
+                   shape=[[1, 2],
+                          [3, 4]]
+                   )
 
 
 if __name__ == '__main__':
