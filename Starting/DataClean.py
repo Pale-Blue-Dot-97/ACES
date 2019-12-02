@@ -286,19 +286,23 @@ def medfilt_data(data, data_columns, kernel_size):
     return cleaned_df
 
 
-def dipole(x, r):
-    return x / 400. * np.power(r, -3)
+def dipole(x, r, a):
+    return x / (a * np.power(r, -3))
 
 
-def normalise(data):
+def power_series_norm(x, r, a, b, c):
+    return x / (a * np.power(r, -3) + b * np.power(r, -2) + c * np.power(r, -1))
+
+
+def normalise(data, a):
     norm_data = data.copy()
 
     # Simple dipole normalisation using r^-3
     print('\nApplying simple dipole normalisation to data')
-    norm_data['BR_norm'] = dipole(data['BR'], data['R'])
-    norm_data['BTH_norm'] = dipole(data['BTH'], data['R'])
-    norm_data['BPH_norm'] = dipole(data['BPH'], data['R'])
-    norm_data['BMAG_norm'] = dipole(data['BMAG'], data['R'])
+    norm_data['BR_norm'] = dipole(data['BR'], data['R'], a)
+    norm_data['BTH_norm'] = dipole(data['BTH'], data['R'], a)
+    norm_data['BPH_norm'] = dipole(data['BPH'], data['R'], a)
+    norm_data['BMAG_norm'] = dipole(data['BMAG'], data['R'], a)
 
     print(norm_data.iloc[100])
 
@@ -334,7 +338,7 @@ def main():
 
     #print('Size of filtered data: %d' % len(med_data))
 
-    norm_data = normalise(cldt)
+    norm_data = normalise(cldt, 400.0)
 
     print('\nCREATING FIGURE')
 
@@ -354,7 +358,7 @@ def main():
                    x=[[norm_data['UNIX TIME']], [norm_data['UNIX TIME']], [norm_data['UNIX TIME']],
                       [norm_data['UNIX TIME']]], LWID=[[0.5]], figure_name='NormData.png', COLOURS=[['b']],
                    POINTSTYLES=[['-']], DATALABELS=[['Normalised Data']], x_label='UNIX Time (ms)', #y_label='B_r (nT)',
-                   axis_range=[time[0], time[len(time) - 1], -2, 2],
+                   axis_range=[time[0], time[len(time) - 1], -1000, 1000],
                    shape=[[1, 2],
                           [3, 4]]
                    )

@@ -126,3 +126,4 @@ dmypy.json
 *.iml
 Starting/raw_vs_filtered.png
 Starting/GridPlot.png
+Starting/NormData.png
