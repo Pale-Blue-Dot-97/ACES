@@ -363,7 +363,7 @@ def pow_normalise(data, a=4.0e5, b=200.0, c=35.0):
     return norm_data
 
 
-def main():
+if __name__ == '__main__':
     data, data_columns, position = load_data()
 
     data, times = extract_time(data)
@@ -422,7 +422,3 @@ def main():
                    y_label='', axis_range=[times[0], times[len(times) - 1], -1, 1], shape=[[1, 2],
                                                                                         [3, 4]]
                    )
-
-
-if __name__ == '__main__':
-    main()
