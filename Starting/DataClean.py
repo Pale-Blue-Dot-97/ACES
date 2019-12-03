@@ -2,12 +2,14 @@
 and process ready for training
 
 TODO:
-    * Normalise data
+
 """
 
 # =====================================================================================================================
 #                                                     IMPORTS
 # =====================================================================================================================
+import time
+import sys
 import pandas as pd
 import numpy as np
 import scipy.interpolate as ip
@@ -15,10 +17,8 @@ import scipy.signal as sg
 import datetime
 import Plot2D as laplt
 import MultiFig as mf
-import numba
-import time
-import sys
-
+#import numba
+#import pyttsx3
 
 # =====================================================================================================================
 #                                                       MAIN
@@ -366,7 +366,7 @@ def pow_normalise(data, a=4.0e5, b=200.0, c=35.0):
 def main():
     data, data_columns, position = load_data()
 
-    data, time = extract_time(data)
+    data, times = extract_time(data)
 
     data = interpolate_positions(position, data)
 
@@ -401,7 +401,7 @@ def main():
                           [3, 4]],
                    LWID=[[0.5]], figure_name='GridPlot.png', COLOURS=[['b', 'g']], POINTSTYLES=[['-']],
                    DATALABELS=[['Raw Data', 'Cleaned Data']], x_label='UNIX Time (ms)', y_label='B_r (nT)',
-                   axis_range=[time[0], time[len(time) - 1], -1000, 1000])
+                   axis_range=[times[0], times[len(times) - 1], -1000, 1000])
     """
 
     # Alert bell
@@ -411,11 +411,15 @@ def main():
         time.sleep(1)
     sys.stdout.write('\n')
 
+    #engine = pyttsx3.init()
+    #engine.say("I will speak this text")
+    #engine.runAndWait()
+
     mf.create_grid(y=[[norm_data['BR_norm']], [norm_data['BTH_norm']], [norm_data['BPH_norm']], [norm_data['BMAG_norm']]],
                    x=[[norm_data['UNIX TIME']], [norm_data['UNIX TIME']], [norm_data['UNIX TIME']],
                       [norm_data['UNIX TIME']]], LWID=[[0.5]], figure_name='NormData.png', COLOURS=[['b']],
                    POINTSTYLES=[['-']], DATALABELS=[['B_R'], ['B_TH'], ['B_PH'], ['B']], x_label='UNIX Time (ms)',
-                   y_label='', axis_range=[time[0], time[len(time) - 1], -1, 1], shape=[[1, 2],
+                   y_label='', axis_range=[times[0], times[len(times) - 1], -1, 1], shape=[[1, 2],
                                                                                         [3, 4]]
                    )
 
