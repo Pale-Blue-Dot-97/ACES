@@ -16,6 +16,8 @@ import datetime
 import Plot2D as laplt
 import MultiFig as mf
 import numba
+import time
+import sys
 
 
 # =====================================================================================================================
@@ -311,14 +313,12 @@ def power_series_norm(x, r, a, b, c):
     return x / (a * np.power(r, -3) + b * np.power(r, -2) + c * np.power(r, -1))
 
 
-def normalise(data, a=4.0e5, b=200.0, c=35.0):
+def dipole_normalise(data, a=6.0e5):
     """Normalise data using power series of position
 
     Args:
         data (DataFrame): DataFrame containing data to be normalised with contained position
         a (float): Scalar in power series
-        b (float): Scalar in power series
-        c (float): Scalar in p
 
     Returns:
         norm_data (DataFrame): Dataframe with new columns with normalised data
@@ -334,11 +334,31 @@ def normalise(data, a=4.0e5, b=200.0, c=35.0):
     norm_data['BPH_norm'] = dipole(data['BPH'], data['R'], a)
     norm_data['BMAG_norm'] = dipole(data['BMAG'], data['R'], a)
 
-    print(norm_data.iloc[100])
+    return norm_data
 
-    print(norm_data['BR_norm'])
+
+def pow_normalise(data, a=4.0e5, b=200.0, c=35.0):
+    """Normalise data using power series of position
+
+    Args:
+        data (DataFrame): DataFrame containing data to be normalised with contained position
+        a (float): Scalar in power series
+        b (float): Scalar in power series
+        c (float): Scalar in power series
+
+    Returns:
+        norm_data (DataFrame): Dataframe with new columns with normalised data
+
+    """
+
+    norm_data = data.copy()
 
     # More complex polynomial approach
+    print('\nApplying power series normalisation to data')
+    norm_data['BR_norm'] = power_series_norm(data['BR'], data['R'], a, b, c)
+    norm_data['BTH_norm'] = power_series_norm(data['BTH'], data['R'], a, b, c)
+    norm_data['BPH_norm'] = power_series_norm(data['BPH'], data['R'], a, b, c)
+    norm_data['BMAG_norm'] = power_series_norm(data['BMAG'], data['R'], a, b, c)
 
     return norm_data
 
@@ -368,7 +388,7 @@ def main():
 
     #print('Size of filtered data: %d' % len(med_data))
 
-    norm_data = normalise(cldt, 6.0e5)
+    norm_data = pow_normalise(cldt, a=6.0e5, b=5.0e4, c=400.0)
 
     print('\nCREATING FIGURE')
 
@@ -384,13 +404,19 @@ def main():
                    axis_range=[time[0], time[len(time) - 1], -1000, 1000])
     """
 
+    # Alert bell
+    for i in range(1, 6):
+        sys.stdout.write('\r\a{i}'.format(i=i))
+        sys.stdout.flush()
+        time.sleep(1)
+    sys.stdout.write('\n')
+
     mf.create_grid(y=[[norm_data['BR_norm']], [norm_data['BTH_norm']], [norm_data['BPH_norm']], [norm_data['BMAG_norm']]],
                    x=[[norm_data['UNIX TIME']], [norm_data['UNIX TIME']], [norm_data['UNIX TIME']],
                       [norm_data['UNIX TIME']]], LWID=[[0.5]], figure_name='NormData.png', COLOURS=[['b']],
-                   POINTSTYLES=[['-']], DATALABELS=[['Normalised Data']], x_label='UNIX Time (ms)', #y_label='B_r (nT)',
-                   axis_range=[time[0], time[len(time) - 1], -1, 1],
-                   shape=[[1, 2],
-                          [3, 4]]
+                   POINTSTYLES=[['-']], DATALABELS=[['B_R'], ['B_TH'], ['B_PH'], ['B']], x_label='UNIX Time (ms)',
+                   y_label='', axis_range=[time[0], time[len(time) - 1], -1, 1], shape=[[1, 2],
+                                                                                        [3, 4]]
                    )
 
 
