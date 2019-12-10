@@ -2,6 +2,9 @@
 and process ready for training
 
 TODO:
+    * Add system to save processed data to file for future use
+    * Add methods to process data into 4-channel blocks for training
+    * Add method to automatically label data
 
 """
 
