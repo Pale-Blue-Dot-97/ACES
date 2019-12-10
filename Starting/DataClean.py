@@ -18,10 +18,10 @@ import numpy as np
 import scipy.interpolate as ip
 import scipy.signal as sg
 import datetime
+import matplotlib.pyplot as plt
 import Plot2D as laplt
 import MultiFig as mf
-#import numba
-#import pyttsx3
+import pyttsx3 as speech
 
 # =====================================================================================================================
 #                                                       MAIN
@@ -366,17 +366,16 @@ def pow_normalise(data, a=4.0e5, b=200.0, c=35.0):
     return norm_data
 
 
-def make_block(data, data_columns):
+def convolve_block(data, data_columns):
+
     x = np.zeros((4096, 4))
 
     for i in len(range(data_columns)):
         x[:, i] = data['%s' % data_columns[i]][0:4096]
-    x[:, 1] = norm_data.BTH_norm[0:4096]
-    x[:, 2] = norm_data.BPH_norm[0:4096]
-    x[:, 3] = norm_data.BMAG_norm[0:4096]
-    h = np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]])
+
+    #h = np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]])
     h = np.array([1, 1, 1])
-    z = signal.convolve(x[:, 0], h)
+    z = sg.convolve(x[:, 0], h)
 
     ii = np.arange(0, 4096, 1)
     plt.plot(ii, norm_data.BR_norm[0:4096])
@@ -384,6 +383,7 @@ def make_block(data, data_columns):
     plt.show()
 
     return
+
 
 if __name__ == '__main__':
     data, data_columns, position = load_data()
@@ -404,15 +404,7 @@ if __name__ == '__main__':
 
     cldt = cleaned_data.copy()
 
-    #print('\nCleaning data via median filter')
-
-    #med_data = medfilt_data(cleaned_data,  ['BR', 'BTH', 'BPH'], 5)
-
-    #print('Size of filtered data: %d' % len(med_data))
-
     norm_data = pow_normalise(cldt, a=6.0e5, b=5.0e4, c=400.0)
-
-    print('\nCREATING FIGURE')
 
     """
     mf.create_grid(y=[[raw_data['BR'], cldt['BR']], [raw_data['BTH'], cldt['BTH']], [raw_data['BPH'], cldt['BPH']],
@@ -433,14 +425,20 @@ if __name__ == '__main__':
         time.sleep(1)
     sys.stdout.write('\n')
 
-    #engine = pyttsx3.init()
-    #engine.say("I will speak this text")
-    #engine.runAndWait()
+    engine = speech.init()
+    engine.say("Finished")
+    engine.runAndWait()
+
+    print('\nWRITING DATA TO FILE')
+
+    norm_data.to_csv('VOY2_JE_PROC.csv')
+
+    print('\nCREATING FIGURE')
 
     mf.create_grid(y=[[norm_data['BR_norm']], [norm_data['BTH_norm']], [norm_data['BPH_norm']], [norm_data['BMAG_norm']]],
                    x=[[norm_data['UNIX TIME']], [norm_data['UNIX TIME']], [norm_data['UNIX TIME']],
                       [norm_data['UNIX TIME']]], LWID=[[0.5]], figure_name='NormData.png', COLOURS=[['b']],
                    POINTSTYLES=[['-']], DATALABELS=[['B_R'], ['B_TH'], ['B_PH'], ['B']], x_label='UNIX Time (ms)',
                    y_label='', axis_range=[times[0], times[len(times) - 1], -1, 1], shape=[[1, 2],
-                                                                                        [3, 4]]
+                                                                                           [3, 4]]
                    )

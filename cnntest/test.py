@@ -43,7 +43,7 @@ model.summary()
 model.compile(optimizer='adam',
               loss='sparse_categorical_crossentropy',
               metrics=['accuracy'])
-history = model.fit(train_images, train_labels, epochs=10,
+history = model.fit(train_images, train_labels, epochs=50,
                     validation_data=(test_images, test_labels))
 
 
