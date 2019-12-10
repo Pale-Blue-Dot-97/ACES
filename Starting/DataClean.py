@@ -366,6 +366,25 @@ def pow_normalise(data, a=4.0e5, b=200.0, c=35.0):
     return norm_data
 
 
+def make_block(data, data_columns):
+    x = np.zeros((4096, 4))
+
+    for i in len(range(data_columns)):
+        x[:, i] = data['%s' % data_columns[i]][0:4096]
+    x[:, 1] = norm_data.BTH_norm[0:4096]
+    x[:, 2] = norm_data.BPH_norm[0:4096]
+    x[:, 3] = norm_data.BMAG_norm[0:4096]
+    h = np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]])
+    h = np.array([1, 1, 1])
+    z = signal.convolve(x[:, 0], h)
+
+    ii = np.arange(0, 4096, 1)
+    plt.plot(ii, norm_data.BR_norm[0:4096])
+    plt.plot(ii, z[1:4097])
+    plt.show()
+
+    return
+
 if __name__ == '__main__':
     data, data_columns, position = load_data()
 

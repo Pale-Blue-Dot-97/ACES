@@ -13,13 +13,14 @@ train_images, test_images = train_images / 255.0, test_images / 255.0
 class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
                'dog', 'frog', 'horse', 'ship', 'truck']
 
-plt.figure(figsize=(10,10))
+plt.figure(figsize=(10, 10))
 for i in range(25):
-    plt.subplot(5,5,i+1)
+    plt.subplot(5, 5, i+1)
     plt.xticks([])
     plt.yticks([])
     plt.grid(False)
     plt.imshow(train_images[i], cmap=plt.cm.binary)
+
     # The CIFAR labels happen to be arrays,
     # which is why you need the extra index
     plt.xlabel(class_names[train_labels[i][0]])
@@ -42,13 +43,17 @@ model.summary()
 model.compile(optimizer='adam',
               loss='sparse_categorical_crossentropy',
               metrics=['accuracy'])
-history = model.fit(train_images, train_labels, epochs=4,
+history = model.fit(train_images, train_labels, epochs=10,
                     validation_data=(test_images, test_labels))
-plt.plot(history.history['accuracy'], label='accuracy')
-plt.plot(history.history['val_accuracy'], label = 'val_accuracy')
+
+
+plt.plot(history.history['acc'], label='accuracy')
+plt.plot(history.history['val_acc'], label='val_accuracy')
 plt.xlabel('Epoch')
 plt.ylabel('Accuracy')
 plt.ylim([0.5, 1])
 plt.legend(loc='lower right')
+plt.show()
+plt.savefig('cnn_test.png')
 
 test_loss, test_acc = model.evaluate(test_images,  test_labels, verbose=2)
