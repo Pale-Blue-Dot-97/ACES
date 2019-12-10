@@ -37,8 +37,10 @@ def load_data():
 
     data = pd.read_csv('S3_1_92S.TAB', names=data_names, na_values=-9999.999)
 
-    data_columns = ['BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH',
-                    'NUM_PTS']
+    data.drop(columns=['SCLK', 'MAG_ID', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH', 'NUM_PTS'],
+              inplace=True)
+
+    data_columns = ['BR', 'BTH', 'BPH', 'BMAG']
 
     print('Number of NaNs: %d' % data.isnull().sum().sum())
 
@@ -386,9 +388,20 @@ def convolve_block(data, data_columns):
 
 
 if __name__ == '__main__':
+    engine = speech.init()
+
+    engine.say("Loading data")
+    engine.runAndWait()
+
     data, data_columns, position = load_data()
 
+    engine.say("Extracting time stamps")
+    engine.runAndWait()
+
     data, times = extract_time(data)
+
+    engine.say("Interpolating data")
+    engine.runAndWait()
 
     data = interpolate_positions(position, data)
 
@@ -397,12 +410,17 @@ if __name__ == '__main__':
     print('Size of raw data: %d' % len(raw_data))
 
     print('\nFirst removing non-physical data via local extrema')
+    engine.say("Removing non-physical data")
+    engine.runAndWait()
 
     cleaned_data = find_dodgy_data(data, data_columns, ['BR', 'BTH', 'BPH', 'BMAG'], 5, (3, 5, 9, 15), 0.01)
 
     print('Size of cleaned data: %d' % len(cleaned_data))
 
     cldt = cleaned_data.copy()
+
+    engine.say("Normalising data")
+    engine.runAndWait()
 
     norm_data = pow_normalise(cldt, a=6.0e5, b=5.0e4, c=400.0)
 
@@ -418,22 +436,24 @@ if __name__ == '__main__':
                    axis_range=[times[0], times[len(times) - 1], -1000, 1000])
     """
 
+    engine.say("Writing data to file")
+    engine.runAndWait()
+
+    print('\nWRITING DATA TO FILE')
+    norm_data.drop(columns=['TIME', 'R', 'LAT', 'LON'], inplace=True)
+    norm_data.to_csv('VOY2_JE_PROC.csv')
+
+    print('\nCREATING FIGURE')
+
     # Alert bell
-    for i in range(1, 6):
-        sys.stdout.write('\r\a{i}'.format(i=i))
+    for i in range(1, 4):
+        sys.stdout.write('\r\a')
         sys.stdout.flush()
         time.sleep(1)
     sys.stdout.write('\n')
 
-    engine = speech.init()
     engine.say("Finished")
     engine.runAndWait()
-
-    print('\nWRITING DATA TO FILE')
-
-    norm_data.to_csv('VOY2_JE_PROC.csv')
-
-    print('\nCREATING FIGURE')
 
     mf.create_grid(y=[[norm_data['BR_norm']], [norm_data['BTH_norm']], [norm_data['BPH_norm']], [norm_data['BMAG_norm']]],
                    x=[[norm_data['UNIX TIME']], [norm_data['UNIX TIME']], [norm_data['UNIX TIME']],
