@@ -40,22 +40,38 @@ def load_data():
     return data, norm_data
 
 
-def create_block():
-    return
+def create_blocks(data):
+    """Splits the data into 4096 long blocks as numpy arrays
+
+    Args:
+        data (DataFrame): Table containing data to split into blocks
+
+    Returns:
+        blocks ([[[float]]]): 3D array containing blocks of 4096 * 4 values
+
+    """
+
+    blocks = []
+
+    for i in range(int(len(data['BR_norm']) / 4096.0)):
+        block = data[(i-1) * 4096:i * 4096].to_numpy()
+        blocks.append(block)
+
+    return blocks
 
 
 def block_to_image(block):
-    """Takes a 4096 long block of the data and converts to a grayscale image
+    """Takes a 4096 long block of the data and converts to a greyscale image
 
     Args:
         block ([[float]]): 2D numpy array of 4 rows of data 4096 points long
 
     Returns:
-        image (Image): A 4096 x 4 grayscale Image
+        image (Image): A 4096 x 4 greyscale Image
 
     """
 
-    image = Image.fromarray(block, mode=1)
+    image = Image.fromarray(block, mode='1')
     return image
 
 
@@ -69,6 +85,21 @@ def main():
     engine.runAndWait()
 
     data, norm_data = load_data()
+
+    engine.say("Creating blocks")
+    engine.runAndWait()
+
+    blocks = create_blocks(norm_data)
+
+    engine.say("Converting blocks to images")
+    engine.runAndWait()
+
+    image = block_to_image(blocks[10])
+
+    engine.say("Saving test image")
+    engine.runAndWait()
+
+    image.save('test_block.png')
 
     # Alert bell
     for i in range(1, 4):
