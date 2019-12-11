@@ -2,9 +2,6 @@
 and process ready for training
 
 TODO:
-    * Add system to save processed data to file for future use
-    * Add methods to process data into 4-channel blocks for training
-    * Add method to automatically label data
 
 """
 
@@ -23,7 +20,7 @@ import MultiFig as mf
 import pyttsx3 as speech
 
 # =====================================================================================================================
-#                                                       MAIN
+#                                                     METHODS
 # =====================================================================================================================
 
 
@@ -367,6 +364,9 @@ def pow_normalise(data, a=4.0e5, b=200.0, c=35.0):
     return norm_data
 
 
+# =====================================================================================================================
+#                                                       MAIN
+# =====================================================================================================================
 def main():
     engine = speech.init()
 
