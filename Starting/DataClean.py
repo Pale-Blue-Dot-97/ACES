@@ -26,6 +26,12 @@ import pyttsx3 as speech
 
 def load_data():
     """Load in data from PDS archive. Column headers come from the LBL meta data
+
+    Returns:
+        data (DataFrame): Table of the magnetometer data time-series
+        data_columns ([str]): List of the header names of columns containing important data
+        position (DataFrame): Table of the position of the spacecraft in R, LON, LAT
+
     """
 
     data_names = ['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR',
