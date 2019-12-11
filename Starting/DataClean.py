@@ -46,7 +46,7 @@ def load_data():
 
     print('Number of NaNs: %d' % data.isnull().sum().sum())
 
-    # Removes any 'NaNs' from the dataframe
+    # Removes any 'NaNs' from the DataFrame
     for i in data_columns:
         data.drop(data[data.isnull()[i]].index, inplace=True)
         data.reset_index(inplace=True, drop=True)
@@ -180,6 +180,7 @@ def calc_variances(data_column, peak_indices, kernel, threshold, deleted):
 
     Returns:
         deleted ([int]): Updated array of indexes of points to be deleted
+
     """
 
     half_win = (kernel - 1) / 2
@@ -212,6 +213,7 @@ def find_dodgy_data(data, data_columns, columns_to_clean, det_kernel, thres_kern
         cleaned_data (DataFrame): The cleaned data
 
     """
+
     data = data.copy()
     deleted = []
 
