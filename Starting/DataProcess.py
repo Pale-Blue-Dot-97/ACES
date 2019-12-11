@@ -32,7 +32,7 @@ def load_data():
 
     data_names = ['BR', 'BTH', 'BPH', 'BMAG', 'UNIX TIME', 'BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm']
 
-    data = pd.read_csv('VOY2_JE_PROC.csv', names=data_names)
+    data = pd.read_csv('VOY2_JE_PROC.csv', names=data_names, dtype=float, header=0)
 
     norm_data = data.drop(columns=['BR', 'BTH', 'BPH', 'BMAG'])
 
