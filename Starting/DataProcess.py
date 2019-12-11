@@ -35,7 +35,7 @@ def load_data():
 
     data = pd.read_csv('VOY2_JE_PROC.csv', names=data_names, dtype=float, header=0)
 
-    norm_data = data.drop(columns=['BR', 'BTH', 'BPH', 'BMAG'])
+    norm_data = data.drop(columns=['BR', 'BTH', 'BPH', 'BMAG', 'UNIX TIME'])
 
     return data, norm_data
 
@@ -54,8 +54,14 @@ def create_blocks(data):
     blocks = []
 
     for i in range(int(len(data['BR_norm']) / 4096.0)):
-        block = data[(i-1) * 4096:i * 4096].to_numpy()
-        blocks.append(block)
+        block_slice = data[(i-1) * 4096: (i * 4096) - 1]
+
+        block = []
+
+        for j in ['BR_norm', 'BPH_norm', 'BTH_norm', 'BMAG_norm']:
+            block.append(np.array(block_slice[j]))
+
+        blocks.append(np.array(block))
 
     return blocks
 
@@ -71,7 +77,7 @@ def block_to_image(block):
 
     """
 
-    image = Image.fromarray(block, mode='1')
+    image = Image.fromarray(block, mode='L')
     return image
 
 
@@ -93,6 +99,8 @@ def main():
 
     engine.say("Converting blocks to images")
     engine.runAndWait()
+
+    print(blocks[10])
 
     image = block_to_image(blocks[10])
 
