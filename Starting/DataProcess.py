@@ -23,13 +23,20 @@ import pyttsx3 as speech
 
 def load_data():
     """Load in cleaned and normalised data from file
+
+    Returns:
+        data (DataFrame): Table of all the cleaned and normalised data from file
+        norm_data (DataFrame): Table of just the normalised data
+
     """
 
-    data_names = ['BR', 'BTH', 'BPH', 'BMAG', 'UNIX TIME', 'BR_norm', 'BTH_norm', 'BPH_norm']
+    data_names = ['BR', 'BTH', 'BPH', 'BMAG', 'UNIX TIME', 'BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm']
 
     data = pd.read_csv('VOY2_JE_PROC.csv', names=data_names)
 
-    return data
+    norm_data = data.drop(columns=['BR', 'BTH', 'BPH', 'BMAG'])
+
+    return data, norm_data
 
 
 # =====================================================================================================================
@@ -41,7 +48,7 @@ def main():
     engine.say("Loading data")
     engine.runAndWait()
 
-    data = load_data()
+    data, norm_data = load_data()
 
     # Alert bell
     for i in range(1, 4):
