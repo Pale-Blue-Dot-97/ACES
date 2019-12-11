@@ -18,7 +18,6 @@ import numpy as np
 import scipy.interpolate as ip
 import scipy.signal as sg
 import datetime
-import matplotlib.pyplot as plt
 import Plot2D as laplt
 import MultiFig as mf
 import pyttsx3 as speech
@@ -368,26 +367,7 @@ def pow_normalise(data, a=4.0e5, b=200.0, c=35.0):
     return norm_data
 
 
-def convolve_block(data, data_columns):
-
-    x = np.zeros((4096, 4))
-
-    for i in len(range(data_columns)):
-        x[:, i] = data['%s' % data_columns[i]][0:4096]
-
-    #h = np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]])
-    h = np.array([1, 1, 1])
-    z = sg.convolve(x[:, 0], h)
-
-    ii = np.arange(0, 4096, 1)
-    plt.plot(ii, norm_data.BR_norm[0:4096])
-    plt.plot(ii, z[1:4097])
-    plt.show()
-
-    return
-
-
-if __name__ == '__main__':
+def main():
     engine = speech.init()
 
     engine.say("Loading data")
@@ -424,18 +404,6 @@ if __name__ == '__main__':
 
     norm_data = pow_normalise(cldt, a=6.0e5, b=5.0e4, c=400.0)
 
-    """
-    mf.create_grid(y=[[raw_data['BR'], cldt['BR']], [raw_data['BTH'], cldt['BTH']], [raw_data['BPH'], cldt['BPH']],
-                      [raw_data['BMAG'], cldt['BMAG']]],
-                   x=[[raw_data['UNIX TIME'], cldt['UNIX TIME']], [raw_data['UNIX TIME'], cldt['UNIX TIME']],
-                      [raw_data['UNIX TIME'], cldt['UNIX TIME']], [raw_data['UNIX TIME'], cldt['UNIX TIME']]],
-                   shape=[[1, 2],
-                          [3, 4]],
-                   LWID=[[0.5]], figure_name='GridPlot.png', COLOURS=[['b', 'g']], POINTSTYLES=[['-']],
-                   DATALABELS=[['Raw Data', 'Cleaned Data']], x_label='UNIX Time (ms)', y_label='B_r (nT)',
-                   axis_range=[times[0], times[len(times) - 1], -1000, 1000])
-    """
-
     engine.say("Writing data to file")
     engine.runAndWait()
 
@@ -443,7 +411,7 @@ if __name__ == '__main__':
     norm_data.drop(columns=['TIME', 'R', 'LAT', 'LON'], inplace=True)
     norm_data.to_csv('VOY2_JE_PROC.csv')
 
-    print('\nCREATING FIGURE')
+    #print('\nCREATING FIGURE')
 
     # Alert bell
     for i in range(1, 4):
@@ -455,6 +423,7 @@ if __name__ == '__main__':
     engine.say("Finished")
     engine.runAndWait()
 
+    """
     mf.create_grid(y=[[norm_data['BR_norm']], [norm_data['BTH_norm']], [norm_data['BPH_norm']], [norm_data['BMAG_norm']]],
                    x=[[norm_data['UNIX TIME']], [norm_data['UNIX TIME']], [norm_data['UNIX TIME']],
                       [norm_data['UNIX TIME']]], LWID=[[0.5]], figure_name='NormData.png', COLOURS=[['b']],
@@ -462,3 +431,9 @@ if __name__ == '__main__':
                    y_label='', axis_range=[times[0], times[len(times) - 1], -1, 1], shape=[[1, 2],
                                                                                            [3, 4]]
                    )
+    """
+
+
+if __name__ == '__main__':
+    main()
+
