@@ -14,6 +14,7 @@ import time
 import sys
 import pandas as pd
 import numpy as np
+from PIL import Image
 import pyttsx3 as speech
 
 # =====================================================================================================================
@@ -37,6 +38,25 @@ def load_data():
     norm_data = data.drop(columns=['BR', 'BTH', 'BPH', 'BMAG'])
 
     return data, norm_data
+
+
+def create_block():
+    return
+
+
+def block_to_image(block):
+    """Takes a 4096 long block of the data and converts to a grayscale image
+
+    Args:
+        block ([[float]]): 2D numpy array of 4 rows of data 4096 points long
+
+    Returns:
+        image (Image): A 4096 x 4 grayscale Image
+
+    """
+
+    image = Image.fromarray(block, mode=1)
+    return image
 
 
 # =====================================================================================================================
