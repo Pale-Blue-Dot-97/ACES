@@ -16,6 +16,7 @@ import pandas as pd
 import numpy as np
 from PIL import Image
 import pyttsx3 as speech
+import webbrowser
 
 # =====================================================================================================================
 #                                                     METHODS
@@ -100,8 +101,6 @@ def main():
     engine.say("Converting blocks to images")
     engine.runAndWait()
 
-    print(blocks[10])
-
     image = block_to_image(blocks[10])
 
     engine.say("Saving test image")
@@ -118,6 +117,8 @@ def main():
 
     engine.say("Finished")
     engine.runAndWait()
+
+    webbrowser.open('https://www.youtube.com/watch?v=Sg14jNbBb-8')
 
 
 if __name__ == '__main__':
