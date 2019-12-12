@@ -17,6 +17,7 @@ import numpy as np
 from PIL import Image
 import pyttsx3 as speech
 import webbrowser
+import random
 
 # =====================================================================================================================
 #                                                     METHODS
@@ -67,6 +68,55 @@ def create_blocks(data):
     return blocks
 
 
+def mirror_data(data):
+    """
+
+    Args:
+        data (DataFrame): Table of data
+
+    Returns:
+        data(DataFrame): Backwards ordering of data
+
+    """
+    return data[::-1].reset_index(drop=True)
+
+
+def smooth_data(data):
+    return
+
+
+def sharpen_data(data):
+    return
+
+
+def shift_data(data):
+    return
+
+
+def multiply_data(data):
+    return
+
+
+def data_perturb(data, mode):
+
+    # mirror data
+    if mode == 'mirror':
+        return mirror_data(data)
+
+    # smooth data
+    # sharpen data
+    # raise data
+    # lower data
+    # increase data
+    # decrease data
+
+    return
+
+
+def label_data():
+    return
+
+
 def block_to_image(block):
     """Takes a 4096 long block of the data and converts to a greyscale image
 
@@ -93,20 +143,27 @@ def main():
 
     data, norm_data = load_data()
 
+    engine.say("Perturbing data")
+    engine.runAndWait()
+    mir_dat = data_perturb(norm_data, 'mirror')
+
     engine.say("Creating blocks")
     engine.runAndWait()
 
+    mir_blocks = create_blocks(mir_dat)
     blocks = create_blocks(norm_data)
 
     engine.say("Converting blocks to images")
     engine.runAndWait()
 
     image = block_to_image(blocks[10])
+    mir_image = block_to_image(mir_blocks[10])
 
     engine.say("Saving test image")
     engine.runAndWait()
 
     image.save('test_block.png')
+    mir_image.save('mir_test_block.png')
 
     # Alert bell
     for i in range(1, 4):
@@ -118,7 +175,13 @@ def main():
     engine.say("Finished")
     engine.runAndWait()
 
-    webbrowser.open('https://www.youtube.com/watch?v=Sg14jNbBb-8')
+    STWRs_memes = ('https://www.youtube.com/watch?v=QiZNSzWIaLo', 'https://www.youtube.com/watch?v=Sg14jNbBb-8',
+                   'https://www.youtube.com/watch?v=lCscYsICvoA')
+
+    TTOI_memes = ('https://www.youtube.com/watch?v=KFkJLlU-3GI', 'https://www.youtube.com/watch?v=M9spU_T9Oys',
+                  'https://www.youtube.com/watch?v=dP4cKky7WC8', 'https://www.youtube.com/watch?v=YhOUaYzO0dE',
+                  'https://www.youtube.com/watch?v=xM8DfCgVWx8', 'https://www.youtube.com/watch?v=28YEH--rX3c')
+    webbrowser.open(random.choice(TTOI_memes))
 
 
 if __name__ == '__main__':
