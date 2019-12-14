@@ -52,9 +52,15 @@ def create_blocks(data):
         blocks ([[[float]]]): 3D array containing blocks of 4096 * 4 values
 
     """
+    data = data.copy()
+
+    # Re-normalises data from -1<x<1 to 0<x<1
+    for i in ['BR_norm', 'BPH_norm', 'BTH_norm', 'BMAG_norm']:
+        data[i] = (data[i] + 1.0).multiply(0.5)
 
     blocks = []
 
+    # Slices DataFrame into 4096 long blocks
     for i in range(int(len(data['BR_norm']) / 4096.0)):
         block_slice = data[(i-1) * 4096: (i * 4096) - 1]
 
@@ -68,8 +74,8 @@ def create_blocks(data):
     return blocks
 
 
-def mirror_data(data):
-    """
+def reverse_data(data):
+    """Reverses the order of the DataFrame
 
     Args:
         data (DataFrame): Table of data
@@ -78,7 +84,28 @@ def mirror_data(data):
         data(DataFrame): Backwards ordering of data
 
     """
+    data = data.copy()
+
     return data[::-1].reset_index(drop=True)
+
+
+def mirror_data(data):
+    """Switches sign of data (excluding magnitude and time of course)
+
+        Args:
+            data (DataFrame): Table of data
+
+        Returns:
+            data(DataFrame): Data mirrored in x-axis
+
+    """
+    data = data.copy()
+
+    data['BR_norm'] = data['BR_norm'].multiply(-1)
+    data['BTH_norm'] = data['BTH_norm'].multiply(-1)
+    data['BPH_norm'] = data['BPH_norm'].multiply(-1)
+
+    return data
 
 
 def smooth_data(data):
@@ -98,6 +125,10 @@ def multiply_data(data):
 
 
 def data_perturb(data, mode):
+
+    # reverse data
+    if mode == 'reverse':
+        return reverse_data(data)
 
     # mirror data
     if mode == 'mirror':
@@ -127,8 +158,7 @@ def block_to_image(block):
         image (Image): A 4096 x 4 greyscale Image
 
     """
-
-    image = Image.fromarray(block, mode='L')
+    image = Image.fromarray((block * 255).astype(np.uint8), mode='L')
     return image
 
 
@@ -175,12 +205,17 @@ def main():
     engine.say("Finished")
     engine.runAndWait()
 
+    # A little something to cheer up anyone's day
+    # List of Star Wars memes
     STWRs_memes = ('https://www.youtube.com/watch?v=QiZNSzWIaLo', 'https://www.youtube.com/watch?v=Sg14jNbBb-8',
                    'https://www.youtube.com/watch?v=lCscYsICvoA')
 
+    # List of The Thick Of It memes
     TTOI_memes = ('https://www.youtube.com/watch?v=KFkJLlU-3GI', 'https://www.youtube.com/watch?v=M9spU_T9Oys',
                   'https://www.youtube.com/watch?v=dP4cKky7WC8', 'https://www.youtube.com/watch?v=YhOUaYzO0dE',
                   'https://www.youtube.com/watch?v=xM8DfCgVWx8', 'https://www.youtube.com/watch?v=28YEH--rX3c')
+
+    # Randomly selects a meme from the list selected
     webbrowser.open(random.choice(TTOI_memes))
 
 
