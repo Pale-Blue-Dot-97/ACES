@@ -196,10 +196,10 @@ def main():
     mir_image.save('mir_test_block.png')
 
     # Alert bell
-    for i in range(1, 4):
+    for i in range(1, 3):
         sys.stdout.write('\r\a')
         sys.stdout.flush()
-        time.sleep(1)
+        time.sleep(0.5)
     sys.stdout.write('\n')
 
     engine.say("Finished")
@@ -208,7 +208,9 @@ def main():
     # A little something to cheer up anyone's day
     # List of Star Wars memes
     STWRs_memes = ('https://www.youtube.com/watch?v=QiZNSzWIaLo', 'https://www.youtube.com/watch?v=Sg14jNbBb-8',
-                   'https://www.youtube.com/watch?v=lCscYsICvoA')
+                   'https://www.youtube.com/watch?v=lCscYsICvoA', 'https://www.youtube.com/watch?v=sNjWpZmxDgg',
+                   'https://www.youtube.com/watch?v=r0zj3Ap74Vw', 'https://www.youtube.com/watch?v=LRXm2zFAmwc',
+                   'https://www.youtube.com/watch?v=J0BciHfsU7k')
 
     # List of The Thick Of It memes
     TTOI_memes = ('https://www.youtube.com/watch?v=KFkJLlU-3GI', 'https://www.youtube.com/watch?v=M9spU_T9Oys',
@@ -216,7 +218,7 @@ def main():
                   'https://www.youtube.com/watch?v=xM8DfCgVWx8', 'https://www.youtube.com/watch?v=28YEH--rX3c')
 
     # Randomly selects a meme from the list selected
-    webbrowser.open(random.choice(TTOI_memes))
+    webbrowser.open(random.choice(STWRs_memes))
 
 
 if __name__ == '__main__':
