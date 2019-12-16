@@ -101,11 +101,12 @@ def create_random_blocks(data, n):
     """
 
     blocks = []
+    indices = range(len(data['BR_norm'] - 4096))
 
     # Slices DataFrame into 4096 long blocks
     for i in range(n):
-        j = random.choice(np.linspace(0, len(data['BR_norm'] - 4096), 1))
-        block_slice = data[j : j + 4096]
+        j = random.choice(indices)
+        block_slice = data[j: j + 4095]
 
         block = []
 
@@ -191,9 +192,9 @@ def label_data():
     return
 
 
-def blocks_to_images(blocks):
+def blocks_to_images(blocks, name):
     for i in range(len(blocks)):
-        Image.fromarray((blocks[i] * 255).astype(np.uint8), mode='L').save('Blocks/%s.png' % i)
+        Image.fromarray((blocks[i] * 255).astype(np.uint8), mode='L').save('Blocks/%s_%s.png' % (i, name))
 
     return
 
@@ -219,41 +220,78 @@ def main():
     engine = speech.init()
 
     n = 10000  # Number of blocks to create for each data perturbation
+    print('*************************** WELCOME TO DATAPROCESS *************************************')
 
+    print('\nLOADING DATA')
     engine.say("Loading data")
     engine.runAndWait()
 
     data, norm_data = load_data()
 
+    print('\nRE-NORMALISING DATA')
     engine.say("Re-normalising data")
     engine.runAndWait()
 
     norm_data = renormalise(norm_data)
 
+    print('\nPERTURBING DATA:')
     engine.say("Perturbing data")
+    engine.runAndWait()
+
+    print('\t-MIRRORING DATA')
+    engine.say("Mirroring data")
     engine.runAndWait()
     mir_dat = data_perturb(norm_data, 'mirror')
 
+    print('\t-REVERSING DATA')
+    engine.say("Reversing data")
+    engine.runAndWait()
+    rev_dat = data_perturb(norm_data, 'reverse')
+
+    print('\t-MIRRORING AND REVERSING DATA')
+    engine.say("Mirroring and reversing data")
+    engine.runAndWait()
+    mir_rev_dat = data_perturb(mir_dat, 'reverse')
+
+    print('\nCREATING RANDOMISED BLOCKS:')
     engine.say("Creating randomised blocks")
     engine.runAndWait()
 
+    print('\t-STANDARD DATA')
+    engine.say("Standard data")
+    engine.runAndWait()
     blocks = create_random_blocks(norm_data, n)
+
+    print('\t-MIRRORED DATA')
+    engine.say("Mirrored data")
+    engine.runAndWait()
     mir_blocks = create_random_blocks(mir_dat, n)
 
-    #mir_blocks = create_blocks(mir_dat)
-    #blocks = create_blocks(norm_data)
+    print('\t-REVERSED DATA')
+    engine.say("Reversed data")
+    engine.runAndWait()
+    rev_blocks = create_random_blocks(rev_dat, n)
 
+    print('\t-MIRRORED AND REVERSED DATA')
+    engine.say("Mirrored and reversed data")
+    engine.runAndWait()
+    mir_rev_blocks = create_random_blocks(mir_rev_dat, n)
+
+    print('\nCONVERTING BLOCKS TO IMAGES:')
     engine.say("Converting blocks to images")
     engine.runAndWait()
 
-    blocks_to_images(blocks)
-    blocks_to_images(mir_blocks)
+    print('\t-STANDARD DATA')
+    blocks_to_images(blocks, 'OG')
 
-    #engine.say("Saving test image")
-    #engine.runAndWait()
+    print('\t-MIRRORED DATA')
+    blocks_to_images(mir_blocks, 'MIR')
 
-    #image.save('test_block.png')
-    #mir_image.save('mir_test_block.png')
+    print('\t-REVERSED DATA')
+    blocks_to_images(rev_blocks, 'REV')
+
+    print('\t-MIRRORED AND REVERSED DATA')
+    blocks_to_images(mir_rev_blocks, 'MIR_REV')
 
     # Alert bell
     for i in range(1, 3):
@@ -262,6 +300,7 @@ def main():
         time.sleep(0.5)
     sys.stdout.write('\n')
 
+    print('\nFINISHED')
     engine.say("Finished")
     engine.runAndWait()
 
