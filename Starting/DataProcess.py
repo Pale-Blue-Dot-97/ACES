@@ -211,6 +211,8 @@ def block_to_image(block):
 def main():
     engine = speech.init()
 
+    n = 10000  # Number of blocks to create for each data perturbation
+
     engine.say("Loading data")
     engine.runAndWait()
 
@@ -225,11 +227,13 @@ def main():
     engine.runAndWait()
     mir_dat = data_perturb(norm_data, 'mirror')
 
-    engine.say("Creating blocks")
+    engine.say("Creating randomised blocks")
     engine.runAndWait()
 
-    mir_blocks = create_blocks(mir_dat)
-    blocks = create_blocks(norm_data)
+    blocks = create_random_blocks(norm_data, n)
+    mir_blocks = create_random_blocks(norm_data, n)
+    #mir_blocks = create_blocks(mir_dat)
+    #blocks = create_blocks(norm_data)
 
     engine.say("Converting blocks to images")
     engine.runAndWait()
