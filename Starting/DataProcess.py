@@ -191,6 +191,13 @@ def label_data():
     return
 
 
+def blocks_to_images(blocks):
+    for i in range(len(blocks)):
+        Image.fromarray((blocks[i] * 255).astype(np.uint8), mode='L').save('Blocks/%s.png' % i)
+
+    return
+
+
 def block_to_image(block):
     """Takes a 4096 long block of the data and converts to a greyscale image
 
@@ -231,21 +238,22 @@ def main():
     engine.runAndWait()
 
     blocks = create_random_blocks(norm_data, n)
-    mir_blocks = create_random_blocks(norm_data, n)
+    mir_blocks = create_random_blocks(mir_dat, n)
+
     #mir_blocks = create_blocks(mir_dat)
     #blocks = create_blocks(norm_data)
 
     engine.say("Converting blocks to images")
     engine.runAndWait()
 
-    image = block_to_image(blocks[10])
-    mir_image = block_to_image(mir_blocks[10])
+    blocks_to_images(blocks)
+    blocks_to_images(mir_blocks)
 
-    engine.say("Saving test image")
-    engine.runAndWait()
+    #engine.say("Saving test image")
+    #engine.runAndWait()
 
-    image.save('test_block.png')
-    mir_image.save('mir_test_block.png')
+    #image.save('test_block.png')
+    #mir_image.save('mir_test_block.png')
 
     # Alert bell
     for i in range(1, 3):
