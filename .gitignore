@@ -127,4 +127,6 @@ dmypy.json
 Starting/raw_vs_filtered.png
 Starting/GridPlot.png
 Starting/NormData.png
-*.png
+Starting/raw_vs_filtered.png
+
+cnntest/cnn_test.png
