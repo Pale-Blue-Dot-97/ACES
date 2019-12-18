@@ -417,9 +417,8 @@ def main():
 
     print('\nWRITING DATA TO FILE')
     norm_data.drop(columns=['TIME', 'R', 'LAT', 'LON'], inplace=True)
+    norm_data.reset_index(drop=True)
     norm_data.to_csv('VOY2_JE_PROC.csv')
-
-    #print('\nCREATING FIGURE')
 
     # Alert bell
     for i in range(1, 4):

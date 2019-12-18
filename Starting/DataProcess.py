@@ -39,6 +39,9 @@ def load_data():
 
     norm_data = data.drop(columns=['BR', 'BTH', 'BPH', 'BMAG', 'UNIX TIME'])
 
+    norm_data.reset_index(drop=True)
+    data.reset_index(drop=True)
+
     return data, norm_data
 
 
@@ -53,12 +56,12 @@ def renormalise(data):
 
     """
 
-    data = data.copy()
+    new_data = data.copy()
 
     for i in ['BR_norm', 'BPH_norm', 'BTH_norm', 'BMAG_norm']:
-        data[i] = (data[i] + 1.0).multiply(0.5)
+        new_data[i] = (data[i] + 1.0).multiply(0.5)
 
-    return data
+    return new_data.reset_index(drop=True)
 
 
 def create_blocks(data):
@@ -99,19 +102,25 @@ def create_random_blocks(data, n):
             blocks ([[[float]]]): 3D array containing blocks of 4096 * 4 values
 
     """
+    data = data.copy()
+    data.reset_index(drop=True)
 
     blocks = []
-    indices = range(len(data['BR_norm'] - 4096))
+
+    indices = range(len(data['BR_norm']) - 4096)
 
     # Slices DataFrame into 4096 long blocks
     for i in range(n):
         j = random.choice(indices)
-        block_slice = data[j: j + 4095]
+        block_slice = data[j: (j + 4096)]
 
         block = []
 
-        for j in ['BR_norm', 'BPH_norm', 'BTH_norm', 'BMAG_norm']:
-            block.append(np.array(block_slice[j]))
+        for k in ['BR_norm', 'BPH_norm', 'BTH_norm', 'BMAG_norm']:
+            channel = np.array(block_slice['%s' % k])
+            block.append(channel)
+            if len(channel) != 4096:
+                print('%s: %s' % (k, len(channel)))
 
         blocks.append(np.array(block))
 
@@ -149,7 +158,7 @@ def mirror_data(data):
     data['BTH_norm'] = data['BTH_norm'].multiply(-1)
     data['BPH_norm'] = data['BPH_norm'].multiply(-1)
 
-    return data
+    return data.reset_index(drop=True)
 
 
 def smooth_data(data):
@@ -232,7 +241,7 @@ def main():
     engine.say("Re-normalising data")
     engine.runAndWait()
 
-    norm_data = renormalise(norm_data)
+    re_norm_data = renormalise(norm_data)
 
     print('\nPERTURBING DATA:')
     engine.say("Perturbing data")
@@ -241,12 +250,12 @@ def main():
     print('\t-MIRRORING DATA')
     engine.say("Mirroring data")
     engine.runAndWait()
-    mir_dat = data_perturb(norm_data, 'mirror')
+    mir_dat = data_perturb(re_norm_data, 'mirror')
 
     print('\t-REVERSING DATA')
     engine.say("Reversing data")
     engine.runAndWait()
-    rev_dat = data_perturb(norm_data, 'reverse')
+    rev_dat = data_perturb(re_norm_data, 'reverse')
 
     print('\t-MIRRORING AND REVERSING DATA')
     engine.say("Mirroring and reversing data")
@@ -260,7 +269,7 @@ def main():
     print('\t-STANDARD DATA')
     engine.say("Standard data")
     engine.runAndWait()
-    blocks = create_random_blocks(norm_data, n)
+    blocks = create_random_blocks(re_norm_data, n)
 
     print('\t-MIRRORED DATA')
     engine.say("Mirrored data")
@@ -299,14 +308,14 @@ def main():
         sys.stdout.flush()
         time.sleep(0.5)
     sys.stdout.write('\n')
-
+    
     print('\nFINISHED')
     engine.say("Finished")
     engine.runAndWait()
 
     # A little something to cheer up anyone's day
     # List of Star Wars memes
-    STWRs_memes = ('https://www.youtube.com/watch?v=QiZNSzWIaLo', 'https://www.youtube.com/watch?v=Sg14jNbBb-8',
+    STWRs_memes = ('https://www.youtube.com/watch?v=v_YozYt8l-g', 'https://www.youtube.com/watch?v=Sg14jNbBb-8',
                    'https://www.youtube.com/watch?v=lCscYsICvoA', 'https://www.youtube.com/watch?v=sNjWpZmxDgg',
                    'https://www.youtube.com/watch?v=r0zj3Ap74Vw', 'https://www.youtube.com/watch?v=LRXm2zFAmwc',
                    'https://www.youtube.com/watch?v=J0BciHfsU7k')
@@ -317,7 +326,7 @@ def main():
                   'https://www.youtube.com/watch?v=xM8DfCgVWx8', 'https://www.youtube.com/watch?v=28YEH--rX3c')
 
     # Randomly selects a meme from the list selected
-    webbrowser.open(random.choice(STWRs_memes))
+    webbrowser.open(random.choice(TTOI_memes))
 
 
 if __name__ == '__main__':
