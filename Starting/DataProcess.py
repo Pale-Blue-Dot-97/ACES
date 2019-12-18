@@ -14,6 +14,9 @@ import time
 import sys
 import pandas as pd
 import numpy as np
+import Plot2D as laplt
+import matplotlib.pyplot as plt
+import scipy.signal as sg
 from PIL import Image
 import pyttsx3 as speech
 import webbrowser
@@ -37,7 +40,7 @@ def load_data():
 
     data = pd.read_csv('VOY2_JE_PROC.csv', names=data_names, dtype=float, header=0)
 
-    norm_data = data.drop(columns=['BR', 'BTH', 'BPH', 'BMAG', 'UNIX TIME'])
+    norm_data = data.drop(columns=['BR', 'BTH', 'BPH', 'BMAG'])
 
     norm_data.reset_index(drop=True)
     data.reset_index(drop=True)
@@ -197,12 +200,36 @@ def data_perturb(data, mode):
     return
 
 
-def label_data(data):
+def label_data(data, data_columns, kernel_size=4096, pad=250):
+    labelled_data = data.copy()
+
+    labels = []
+    interesting = []
 
     # Performs a rolling average along each column
-    data.rolling()
+    roll = data.rolling(window=kernel_size, win_type=None, min_periods=1)
 
-    return
+    for i in data_columns:
+        # Finds the peaks in the rolling mean to identify interesting spots
+        peaks = sg.find_peaks(x=roll[i].mean().tolist(), width=1000)[0]
+
+        # Adds the padding about each peak in mean found
+        for j in peaks:
+            interesting += range(j - pad, j + pad)
+
+    # Eliminate duplicates in interesting
+    interesting = list(dict.fromkeys(interesting))
+
+    labelled_data['LABELS'] = float('NaN')
+    labelled_data['LABELS'][interesting] = True
+    labelled_data['LABELS'].fillna(False, inplace=True)
+
+    # Plots results of test
+    #plt.plot(data['BR_norm'], 'b-')
+    #plt.plot(interesting, [0.7]*len(interesting), color='orange', markersize=8.0, marker='|')
+    #plt.show()
+
+    return labelled_data
 
 
 def blocks_to_images(blocks, name):
@@ -243,6 +270,9 @@ def main():
     engine = speech.init()
 
     n = 10000  # Number of blocks to create for each data perturbation
+
+    data_columns = ['BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm']
+
     print('*************************** WELCOME TO DATAPROCESS *************************************')
 
     print('\nLOADING DATA')
@@ -275,6 +305,30 @@ def main():
     engine.say("Mirroring and reversing data")
     engine.runAndWait()
     mir_rev_dat = data_perturb(mir_dat, 'reverse')
+
+    print('\nLABELLING DATA:')
+    engine.say("Labelling data")
+    engine.runAndWait()
+
+    print('\tSTANDARD DATA')
+    engine.say("Standard data")
+    engine.runAndWait()
+    stan_data = label_data(norm_data, data_columns)
+
+    print('\tMIRRORED DATA')
+    engine.say("Mirrored data")
+    engine.runAndWait()
+    mir_dat = label_data(mir_dat, data_columns)
+
+    print('\tREVERSED DATA')
+    engine.say("Reversed data")
+    engine.runAndWait()
+    rev_dat = label_data(rev_dat, data_columns)
+
+    print('\tMIRRORED AND REVERSED DATA')
+    engine.say("Mirrored and reversed data")
+    engine.runAndWait()
+    mir_rev_dat = label_data(mir_rev_dat, data_columns)
 
     print('\nCREATING RANDOMISED BLOCKS:')
     engine.say("Creating randomised blocks")

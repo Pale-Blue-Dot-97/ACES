@@ -229,6 +229,7 @@ def find_dodgy_data(data, data_columns, columns_to_clean, det_kernel, thres_kern
         loc_max.extend(maxima[0])
         loc_min.extend(minima[0])
 
+    # Eliminates duplicates from loc_min and loc_max
     loc_min = list(dict.fromkeys(loc_min))
     loc_max = list(dict.fromkeys(loc_max))
 
