@@ -197,11 +197,25 @@ def data_perturb(data, mode):
     return
 
 
-def label_data():
+def label_data(data):
+
+    # Performs a rolling average along each column
+    data.rolling()
+
     return
 
 
 def blocks_to_images(blocks, name):
+    """Converts each block in a series to 8-bit greyscale png images and saves to file
+
+    Args:
+        blocks: Series of blocks of data
+        name: Name of the series to identify images with
+
+    Returns:
+        None
+    """
+
     for i in range(len(blocks)):
         Image.fromarray((blocks[i] * 255).astype(np.uint8), mode='L').save('Blocks/%s_%s.png' % (i, name))
 
@@ -323,7 +337,8 @@ def main():
     # List of The Thick Of It memes
     TTOI_memes = ('https://www.youtube.com/watch?v=KFkJLlU-3GI', 'https://www.youtube.com/watch?v=M9spU_T9Oys',
                   'https://www.youtube.com/watch?v=dP4cKky7WC8', 'https://www.youtube.com/watch?v=YhOUaYzO0dE',
-                  'https://www.youtube.com/watch?v=xM8DfCgVWx8', 'https://www.youtube.com/watch?v=28YEH--rX3c')
+                  'https://www.youtube.com/watch?v=xM8DfCgVWx8', 'https://www.youtube.com/watch?v=28YEH--rX3c',
+                  'https://www.youtube.com/watch?v=pF3a-DQdDJI')
 
     # Randomly selects a meme from the list selected
     webbrowser.open(random.choice(TTOI_memes))
