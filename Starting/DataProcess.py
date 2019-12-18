@@ -94,11 +94,12 @@ def create_blocks(data):
     return blocks
 
 
-def create_random_blocks(data, n):
+def create_random_blocks(data, data_columns, n):
     """Selects n number of random 4096 long blocks from the data as numpy arrays
 
         Args:
             data (DataFrame): Table containing data to split into blocks
+            data_columns (list): List of column names containing the data
             n (int): Number of blocks to randomly select
 
         Returns:
@@ -108,9 +109,12 @@ def create_random_blocks(data, n):
     data = data.copy()
     data.reset_index(drop=True)
 
+    # Sets seed number at 42 to produce same selection of indices every run
+    random.seed(42)
+
     blocks = []
 
-    indices = range(len(data['BR_norm']) - 4096)
+    indices = range(len(data[data_columns[0]]) - 4096)
 
     # Slices DataFrame into 4096 long blocks
     for i in range(n):
@@ -119,13 +123,14 @@ def create_random_blocks(data, n):
 
         block = []
 
-        for k in ['BR_norm', 'BPH_norm', 'BTH_norm', 'BMAG_norm']:
+        for k in data_columns:
             channel = np.array(block_slice['%s' % k])
             block.append(channel)
             if len(channel) != 4096:
                 print('%s: %s' % (k, len(channel)))
 
-        blocks.append(np.array(block))
+        # Adds tuple of the first index of the block, and the block
+        blocks.append((j, np.array(block)))
 
     return blocks
 
@@ -201,9 +206,20 @@ def data_perturb(data, mode):
 
 
 def label_data(data, data_columns, kernel_size=4096, pad=250):
+    """
+
+    Args:
+        data:
+        data_columns:
+        kernel_size:
+        pad:
+
+    Returns:
+
+    """
+
     labelled_data = data.copy()
 
-    labels = []
     interesting = []
 
     # Performs a rolling average along each column
@@ -220,16 +236,12 @@ def label_data(data, data_columns, kernel_size=4096, pad=250):
     # Eliminate duplicates in interesting
     interesting = list(dict.fromkeys(interesting))
 
+    # Creates new column in DataFrame to hold True for interesting points and False if not
     labelled_data['LABELS'] = float('NaN')
     labelled_data['LABELS'][interesting] = True
     labelled_data['LABELS'].fillna(False, inplace=True)
 
-    # Plots results of test
-    #plt.plot(data['BR_norm'], 'b-')
-    #plt.plot(interesting, [0.7]*len(interesting), color='orange', markersize=8.0, marker='|')
-    #plt.show()
-
-    return labelled_data
+    return labelled_data.reset_index(drop=True)
 
 
 def blocks_to_images(blocks, name):
@@ -243,8 +255,8 @@ def blocks_to_images(blocks, name):
         None
     """
 
-    for i in range(len(blocks)):
-        Image.fromarray((blocks[i] * 255).astype(np.uint8), mode='L').save('Blocks/%s_%s.png' % (i, name))
+    for block in blocks:
+        Image.fromarray((block[1] * 255).astype(np.uint8), mode='L').save('Blocks/%s_%s.png' % (block[0], name))
 
     return
 
@@ -310,22 +322,22 @@ def main():
     engine.say("Labelling data")
     engine.runAndWait()
 
-    print('\tSTANDARD DATA')
+    print('\t-STANDARD DATA')
     engine.say("Standard data")
     engine.runAndWait()
     stan_data = label_data(norm_data, data_columns)
 
-    print('\tMIRRORED DATA')
+    print('\t-MIRRORED DATA')
     engine.say("Mirrored data")
     engine.runAndWait()
     mir_dat = label_data(mir_dat, data_columns)
 
-    print('\tREVERSED DATA')
+    print('\t-REVERSED DATA')
     engine.say("Reversed data")
     engine.runAndWait()
     rev_dat = label_data(rev_dat, data_columns)
 
-    print('\tMIRRORED AND REVERSED DATA')
+    print('\t-MIRRORED AND REVERSED DATA')
     engine.say("Mirrored and reversed data")
     engine.runAndWait()
     mir_rev_dat = label_data(mir_rev_dat, data_columns)
@@ -337,22 +349,22 @@ def main():
     print('\t-STANDARD DATA')
     engine.say("Standard data")
     engine.runAndWait()
-    blocks = create_random_blocks(re_norm_data, n)
+    blocks = create_random_blocks(stan_data, data_columns, n)
 
     print('\t-MIRRORED DATA')
     engine.say("Mirrored data")
     engine.runAndWait()
-    mir_blocks = create_random_blocks(mir_dat, n)
+    mir_blocks = create_random_blocks(mir_dat, data_columns, n)
 
     print('\t-REVERSED DATA')
     engine.say("Reversed data")
     engine.runAndWait()
-    rev_blocks = create_random_blocks(rev_dat, n)
+    rev_blocks = create_random_blocks(rev_dat, data_columns, n)
 
     print('\t-MIRRORED AND REVERSED DATA')
     engine.say("Mirrored and reversed data")
     engine.runAndWait()
-    mir_rev_blocks = create_random_blocks(mir_rev_dat, n)
+    mir_rev_blocks = create_random_blocks(mir_rev_dat, data_columns, n)
 
     print('\nCONVERTING BLOCKS TO IMAGES:')
     engine.say("Converting blocks to images")
