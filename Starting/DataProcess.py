@@ -374,21 +374,28 @@ def main():
     engine.runAndWait()
     mir_rev_blocks = create_random_blocks(mir_rev_dat, data_columns, n)
 
-    """
     print('\nCONVERTING BLOCKS TO IMAGES:')
     engine.say("Converting blocks to images")
     engine.runAndWait()
 
     print('\t-STANDARD DATA')
+    engine.say("Standard data")
+    engine.runAndWait()
     blocks_to_images(blocks, 'OG')
 
     print('\t-MIRRORED DATA')
+    engine.say("Mirrored data")
+    engine.runAndWait()
     blocks_to_images(mir_blocks, 'MIR')
 
     print('\t-REVERSED DATA')
+    engine.say("Reversed data")
+    engine.runAndWait()
     blocks_to_images(rev_blocks, 'REV')
 
     print('\t-MIRRORED AND REVERSED DATA')
+    engine.say("Mirrored and reversed data")
+    engine.runAndWait()
     blocks_to_images(mir_rev_blocks, 'MIR_REV')
 
     # Alert bell
@@ -417,7 +424,7 @@ def main():
 
     # Randomly selects a meme from the list selected
     webbrowser.open(random.choice(TTOI_memes))
-    """
+
 
 if __name__ == '__main__':
     main()
