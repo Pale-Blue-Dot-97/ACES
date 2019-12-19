@@ -10,9 +10,32 @@ TODO:
 #                                                     IMPORTS
 # =====================================================================================================================
 
-from __future__ import absolute_import, division, print_function, unicode_literals
+#from __future__ import absolute_import, division, print_function, unicode_literals
 from tensorflow.keras import layers, models
 import matplotlib.pyplot as plt
+import pandas as pd
+from PIL import Image
+import numpy as np
+import glob
+
+
+# =====================================================================================================================
+#                                                     METHODS
+# =====================================================================================================================
+def load_images(path):
+
+    images = []
+    names = []
+
+    for name in glob.glob('%s*.png' % path):
+        images.append(np.array(Image.open(name).getdata()))
+        names.append(name.replace('Blocks\\\\', ''))
+
+    return images, names
+
+
+def load_labels():
+    return
 
 
 # =====================================================================================================================
@@ -20,9 +43,15 @@ import matplotlib.pyplot as plt
 # =====================================================================================================================
 def main():
     # Load in images
+    images, names = load_images('Blocks/')
 
+    data = pd.DataFrame([[names], [images]], columns=['NAME', 'IMAGE'])
+
+    print(data)
+    """
     # Load in accompanying labels
-
+    labels = load_labels()
+    
     # Split images into test and train
 
     # Normalize pixel values to be between 0 and 1
@@ -62,6 +91,7 @@ def main():
     test_loss, test_acc = model.evaluate(test_images,  test_labels, verbose=2)
 
     print('Test accuracy: %s' % test_acc)
+    """
 
 if __name__ == '__main__':
     main()

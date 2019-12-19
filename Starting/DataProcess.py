@@ -2,8 +2,6 @@
 validation data for neural networks
 
 TODO:
-    * Add methods to process data into 4-channel blocks for training
-    * Add method to automatically label data
 
 """
 
