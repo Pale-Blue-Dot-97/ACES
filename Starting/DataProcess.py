@@ -121,6 +121,9 @@ def create_random_blocks(data, data_columns, n):
         j = random.choice(indices)
         block_slice = data[j: (j + 4096)]
 
+        # Labels block based on mode of point labels in block slice
+        label = block_slice['LABELS'].mode()[0]
+
         block = []
 
         for k in data_columns:
@@ -130,7 +133,7 @@ def create_random_blocks(data, data_columns, n):
                 print('%s: %s' % (k, len(channel)))
 
         # Adds tuple of the first index of the block, and the block
-        blocks.append((j, np.array(block)))
+        blocks.append((j, label, np.array(block)))
 
     return blocks
 
@@ -227,14 +230,18 @@ def label_data(data, data_columns, kernel_size=4096, pad=250):
 
     for i in data_columns:
         # Finds the peaks in the rolling mean to identify interesting spots
-        peaks = sg.find_peaks(x=roll[i].mean().tolist(), width=1000)[0]
+        peaks = sg.find_peaks(x=np.abs(roll[i].mean().tolist()), width=200)[0]
 
         # Adds the padding about each peak in mean found
         for j in peaks:
             interesting += range(j - pad, j + pad)
 
     # Eliminate duplicates in interesting
-    interesting = list(dict.fromkeys(interesting))
+    interesting = np.array(list(dict.fromkeys(interesting)))
+
+    # Removes out-of-bound indexes from interesting
+    interesting = interesting[0 <= interesting]
+    interesting = interesting[interesting < len(data[data_columns[0]])]
 
     # Creates new column in DataFrame to hold True for interesting points and False if not
     labelled_data['LABELS'] = float('NaN')
@@ -256,7 +263,8 @@ def blocks_to_images(blocks, name):
     """
 
     for block in blocks:
-        Image.fromarray((block[1] * 255).astype(np.uint8), mode='L').save('Blocks/%s_%s.png' % (block[0], name))
+        Image.fromarray((block[2] * 255).astype(np.uint8), mode='L')\
+            .save('Blocks/%s_%s_%s.png' % (block[0], name, block[1]))
 
     return
 
@@ -366,6 +374,7 @@ def main():
     engine.runAndWait()
     mir_rev_blocks = create_random_blocks(mir_rev_dat, data_columns, n)
 
+    """
     print('\nCONVERTING BLOCKS TO IMAGES:')
     engine.say("Converting blocks to images")
     engine.runAndWait()
@@ -408,7 +417,7 @@ def main():
 
     # Randomly selects a meme from the list selected
     webbrowser.open(random.choice(TTOI_memes))
-
+    """
 
 if __name__ == '__main__':
     main()
