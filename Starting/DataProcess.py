@@ -2,7 +2,6 @@
 validation data for neural networks
 
 TODO:
-    * Export labels to file
     * Fully comment and docstring
 
 """
@@ -283,6 +282,24 @@ def block_to_image(block):
     return image
 
 
+def labels_to_file(all_blocks, all_names):
+
+    names = []
+    labels = []
+
+    for i in range(4):
+        for block in all_blocks[i]:
+            names.append('%s_%s_%s' % (block[0], all_names[i], block[1]))
+            labels.append(block[1])
+
+    data = pd.DataFrame()
+    data['NAME'] = names
+    data['LABEL'] = labels
+    data.to_csv('VOY2_JE_LABELS.csv')
+
+    return
+
+
 # =====================================================================================================================
 #                                                       MAIN
 # =====================================================================================================================
@@ -397,6 +414,11 @@ def main():
     engine.say("Mirrored and reversed data")
     engine.runAndWait()
     blocks_to_images(mir_rev_blocks, 'MIR_REV')
+
+    print('\nEXPORTING LABELS TO FILE')
+    engine.say("EXPORTING LABELS TO FILE")
+    engine.runAndWait()
+    labels_to_file((blocks, mir_blocks, rev_blocks, mir_rev_blocks), ('OG', 'MIR', 'REV', 'MIR_REV'))
 
     # Alert bell
     for i in range(1, 3):

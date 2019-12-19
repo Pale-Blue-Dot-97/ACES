@@ -1,7 +1,9 @@
 """Script run simple CNN on Voyager 2 magnetometer data for binary classification
 
 TODO:
-    * Extract labels from file
+    * Convert boolean labels to binary
+    * Split data into train and test
+    * Construct model
 
 """
 
@@ -28,13 +30,15 @@ def load_images(path):
 
     for name in glob.glob('%s*.png' % path):
         images.append(np.array(Image.open(name).getdata()))
-        names.append(name.replace('Blocks\\\\', ''))
+        names.append(name.replace('Blocks\\', '').replace('.png', ''))
 
     return images, names
 
 
 def load_labels():
-    return
+
+    labels = pd.read_csv('VOY2_JE_LABELS.csv', names=('NAME', 'LABEL'), header=0)
+    return labels
 
 
 # =====================================================================================================================
@@ -49,10 +53,12 @@ def main():
     data['IMAGE'] = images
 
     print(data)
-    """
+
     # Load in accompanying labels
     labels = load_labels()
-    
+
+    print(labels)
+    """
     # Split images into test and train
 
     # Normalize pixel values to be between 0 and 1
