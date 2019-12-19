@@ -1,7 +1,6 @@
 """Script run simple CNN on Voyager 2 magnetometer data for binary classification
 
 TODO:
-    * Convert boolean labels to binary
     * Split data into train and test
     * Construct model
 
@@ -37,7 +36,16 @@ def load_images(path):
 
 def load_labels():
 
-    labels = pd.read_csv('VOY2_JE_LABELS.csv', names=('NAME', 'LABEL'), header=0)
+    labels = pd.read_csv('VOY2_JE_LABELS.csv', names=('NAME', 'LABEL'), dtype=str, header=0)
+
+    def bool_to_binary(label):
+        if label == 'True':
+            return 1
+        if label == 'False':
+            return 0
+
+    labels['LABEL'] = labels['LABEL'].apply(bool_to_binary)
+
     return labels
 
 
@@ -45,6 +53,7 @@ def load_labels():
 #                                                       MAIN
 # =====================================================================================================================
 def main():
+
     # Load in images
     images, names = load_images('Blocks/')
 
@@ -52,12 +61,9 @@ def main():
     data['NAME'] = names
     data['IMAGE'] = images
 
-    print(data)
-
     # Load in accompanying labels
     labels = load_labels()
 
-    print(labels)
     """
     # Split images into test and train
 
