@@ -2,6 +2,8 @@
 validation data for neural networks
 
 TODO:
+    * Export labels to file
+    * Fully comment and docstring
 
 """
 

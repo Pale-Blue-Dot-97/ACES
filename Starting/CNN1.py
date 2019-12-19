@@ -1,7 +1,6 @@
 """Script run simple CNN on Voyager 2 magnetometer data for binary classification
 
 TODO:
-    * Extract images from file
     * Extract labels from file
 
 """
@@ -45,7 +44,9 @@ def main():
     # Load in images
     images, names = load_images('Blocks/')
 
-    data = pd.DataFrame([[names], [images]], columns=['NAME', 'IMAGE'])
+    data = pd.DataFrame()
+    data['NAME'] = names
+    data['IMAGE'] = images
 
     print(data)
     """
