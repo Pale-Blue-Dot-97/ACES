@@ -197,13 +197,6 @@ def data_perturb(data, mode):
     if mode == 'mirror':
         return mirror_data(data)
 
-    # smooth data
-    # sharpen data
-    # raise data
-    # lower data
-    # increase data
-    # decrease data
-
     return
 
 
@@ -305,6 +298,8 @@ def labels_to_file(all_blocks, all_names):
 # =====================================================================================================================
 def main():
     engine = speech.init()
+    speech_on = False
+    memes_on = False
 
     n = 10000  # Number of blocks to create for each data perturbation
 
@@ -313,139 +308,162 @@ def main():
     print('*************************** WELCOME TO DATAPROCESS *************************************')
 
     print('\nLOADING DATA')
-    engine.say("Loading data")
-    engine.runAndWait()
-
+    if speech_on:
+        engine.say("Loading data")
+        engine.runAndWait()
     data, norm_data = load_data()
 
     print('\nRE-NORMALISING DATA')
-    engine.say("Re-normalising data")
-    engine.runAndWait()
-
+    if speech_on:
+        engine.say("Re-normalising data")
+        engine.runAndWait()
     re_norm_data = renormalise(norm_data)
 
     print('\nPERTURBING DATA:')
-    engine.say("Perturbing data")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Perturbing data")
+        engine.runAndWait()
 
     print('\t-MIRRORING DATA')
-    engine.say("Mirroring data")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Mirroring data")
+        engine.runAndWait()
     mir_dat = data_perturb(re_norm_data, 'mirror')
 
     print('\t-REVERSING DATA')
-    engine.say("Reversing data")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Reversing data")
+        engine.runAndWait()
     rev_dat = data_perturb(re_norm_data, 'reverse')
 
     print('\t-MIRRORING AND REVERSING DATA')
-    engine.say("Mirroring and reversing data")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Mirroring and reversing data")
+        engine.runAndWait()
     mir_rev_dat = data_perturb(mir_dat, 'reverse')
 
     print('\nLABELLING DATA:')
-    engine.say("Labelling data")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Labelling data")
+        engine.runAndWait()
 
     print('\t-STANDARD DATA')
-    engine.say("Standard data")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Standard data")
+        engine.runAndWait()
     stan_data = label_data(norm_data, data_columns)
 
     print('\t-MIRRORED DATA')
-    engine.say("Mirrored data")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Mirrored data")
+        engine.runAndWait()
     mir_dat = label_data(mir_dat, data_columns)
 
     print('\t-REVERSED DATA')
-    engine.say("Reversed data")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Reversed data")
+        engine.runAndWait()
     rev_dat = label_data(rev_dat, data_columns)
 
     print('\t-MIRRORED AND REVERSED DATA')
-    engine.say("Mirrored and reversed data")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Mirrored and reversed data")
+        engine.runAndWait()
     mir_rev_dat = label_data(mir_rev_dat, data_columns)
 
     print('\nCREATING RANDOMISED BLOCKS:')
-    engine.say("Creating randomised blocks")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Creating randomised blocks")
+        engine.runAndWait()
 
     print('\t-STANDARD DATA')
-    engine.say("Standard data")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Standard data")
+        engine.runAndWait()
     blocks = create_random_blocks(stan_data, data_columns, n)
 
     print('\t-MIRRORED DATA')
-    engine.say("Mirrored data")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Mirrored data")
+        engine.runAndWait()
     mir_blocks = create_random_blocks(mir_dat, data_columns, n)
 
     print('\t-REVERSED DATA')
-    engine.say("Reversed data")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Reversed data")
+        engine.runAndWait()
     rev_blocks = create_random_blocks(rev_dat, data_columns, n)
 
     print('\t-MIRRORED AND REVERSED DATA')
-    engine.say("Mirrored and reversed data")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Mirrored and reversed data")
+        engine.runAndWait()
     mir_rev_blocks = create_random_blocks(mir_rev_dat, data_columns, n)
 
     print('\nCONVERTING BLOCKS TO IMAGES:')
-    engine.say("Converting blocks to images")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Converting blocks to images")
+        engine.runAndWait()
 
     print('\t-STANDARD DATA')
-    engine.say("Standard data")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Standard data")
+        engine.runAndWait()
     blocks_to_images(blocks, 'OG')
 
     print('\t-MIRRORED DATA')
-    engine.say("Mirrored data")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Mirrored data")
+        engine.runAndWait()
     blocks_to_images(mir_blocks, 'MIR')
 
     print('\t-REVERSED DATA')
-    engine.say("Reversed data")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Reversed data")
+        engine.runAndWait()
     blocks_to_images(rev_blocks, 'REV')
 
     print('\t-MIRRORED AND REVERSED DATA')
-    engine.say("Mirrored and reversed data")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Mirrored and reversed data")
+        engine.runAndWait()
     blocks_to_images(mir_rev_blocks, 'MIR_REV')
 
     print('\nEXPORTING LABELS TO FILE')
-    engine.say("EXPORTING LABELS TO FILE")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("EXPORTING LABELS TO FILE")
+        engine.runAndWait()
     labels_to_file((blocks, mir_blocks, rev_blocks, mir_rev_blocks), ('OG', 'MIR', 'REV', 'MIR_REV'))
 
-    # Alert bell
-    for i in range(1, 3):
-        sys.stdout.write('\r\a')
-        sys.stdout.flush()
-        time.sleep(0.5)
-    sys.stdout.write('\n')
+    if speech_on:
+        # Alert bell
+        for i in range(1, 3):
+            sys.stdout.write('\r\a')
+            sys.stdout.flush()
+            time.sleep(0.5)
+        sys.stdout.write('\n')
     
     print('\nFINISHED')
-    engine.say("Finished")
-    engine.runAndWait()
+    if speech_on:
+        engine.say("Finished")
+        engine.runAndWait()
 
-    # A little something to cheer up anyone's day
-    # List of Star Wars memes
-    STWRs_memes = ('https://www.youtube.com/watch?v=v_YozYt8l-g', 'https://www.youtube.com/watch?v=Sg14jNbBb-8',
-                   'https://www.youtube.com/watch?v=lCscYsICvoA', 'https://www.youtube.com/watch?v=sNjWpZmxDgg',
-                   'https://www.youtube.com/watch?v=r0zj3Ap74Vw', 'https://www.youtube.com/watch?v=LRXm2zFAmwc',
-                   'https://www.youtube.com/watch?v=J0BciHfsU7k')
+    if memes_on:
+        # A little something to cheer up anyone's day
+        # List of Star Wars memes
+        STWRs_memes = ('https://www.youtube.com/watch?v=v_YozYt8l-g', 'https://www.youtube.com/watch?v=Sg14jNbBb-8',
+                       'https://www.youtube.com/watch?v=lCscYsICvoA', 'https://www.youtube.com/watch?v=sNjWpZmxDgg',
+                       'https://www.youtube.com/watch?v=r0zj3Ap74Vw', 'https://www.youtube.com/watch?v=LRXm2zFAmwc',
+                       'https://www.youtube.com/watch?v=J0BciHfsU7k')
 
-    # List of The Thick Of It memes
-    TTOI_memes = ('https://www.youtube.com/watch?v=KFkJLlU-3GI', 'https://www.youtube.com/watch?v=M9spU_T9Oys',
-                  'https://www.youtube.com/watch?v=dP4cKky7WC8', 'https://www.youtube.com/watch?v=YhOUaYzO0dE',
-                  'https://www.youtube.com/watch?v=xM8DfCgVWx8', 'https://www.youtube.com/watch?v=28YEH--rX3c',
-                  'https://www.youtube.com/watch?v=pF3a-DQdDJI')
+        # List of The Thick Of It memes
+        TTOI_memes = ('https://www.youtube.com/watch?v=KFkJLlU-3GI', 'https://www.youtube.com/watch?v=M9spU_T9Oys',
+                      'https://www.youtube.com/watch?v=dP4cKky7WC8', 'https://www.youtube.com/watch?v=YhOUaYzO0dE',
+                      'https://www.youtube.com/watch?v=xM8DfCgVWx8', 'https://www.youtube.com/watch?v=28YEH--rX3c',
+                      'https://www.youtube.com/watch?v=pF3a-DQdDJI')
 
-    # Randomly selects a meme from the list selected
-    webbrowser.open(random.choice(TTOI_memes))
+        # Randomly selects a meme from the list selected
+        webbrowser.open(random.choice(TTOI_memes))
 
 
 if __name__ == '__main__':
