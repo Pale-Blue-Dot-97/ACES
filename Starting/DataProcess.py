@@ -204,12 +204,13 @@ def label_data(data, data_columns, kernel_size=4096, pad=250):
     """
 
     Args:
-        data:
-        data_columns:
-        kernel_size:
-        pad:
+        data (DataFrame): Table of data to be labelled
+        data_columns ([str]): List of the names of columns containing data
+        kernel_size (int): Size of the kernel for scipy.signal.find_peaks() to use
+        pad (int): Number of points either side of a detection to include as `interesting'
 
     Returns:
+        labelled_data (DataFrame): data with the addition of column `LABELS' with labels of True/ False for each point
 
     """
 

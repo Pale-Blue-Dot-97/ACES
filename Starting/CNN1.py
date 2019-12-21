@@ -57,9 +57,9 @@ def load_labels():
 
     def bool_to_binary(label):
         if label == 'True':
-            return 1
+            return [0, 1]
         if label == 'False':
-            return 0
+            return [1, 0]
 
     labels['LABEL'] = labels['LABEL'].apply(bool_to_binary)
 
@@ -67,17 +67,35 @@ def load_labels():
 
 
 def split_data(data, labels, n):
+    """Splits data into training and testing data
+
+    Args:
+        data (DataFrame): Table of images with filenames
+        labels (DataFrame): Table of labels for images with filenames
+        n (int): Number of training images desired
+
+    Returns:
+        train_images (Series): All training images
+        test_images (Series): All testing images
+        train_labels (Series): All accompanying training labels
+        test_labels (Series): All accompanying testing labels
+
+    """
+    # Fixes seed number so results are replicable
     random.seed(42)
 
     names = data['NAME']
 
     train_names = []
 
+    # Randomly selects the desired number of training images
     for i in range(n):
         train_names.append(random.choice(names))
 
+    # Takes the difference of lists to find remaining names must be for testing
     test_names = list(set(names).difference(set(train_names)))
 
+    # Uses these to find those names in data to make cut
     train_images = data.loc[data['NAME'].isin(train_names)]['IMAGE']
     test_images = data.loc[data['NAME'].isin(test_names)]['IMAGE']
 
