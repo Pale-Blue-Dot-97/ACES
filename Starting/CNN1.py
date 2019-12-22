@@ -9,8 +9,7 @@ TODO:
 # =====================================================================================================================
 #                                                     IMPORTS
 # =====================================================================================================================
-
-#from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 from tensorflow.keras import layers, models
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -40,7 +39,7 @@ def load_images(path):
 
     for name in glob.glob('%s*.png' % path):
         # Normalize pixel values to be between 0 and 1
-        images.append([np.array(Image.open(name).getdata()) / 255.0])
+        images.append(np.array(Image.open(name).getdata()) / 255.0)
         names.append(name.replace('Blocks\\', '').replace('.png', ''))
 
     return images, names
@@ -127,11 +126,11 @@ def main():
     # *********** BROKEN DUE TO INCORRECT SHAPES OF CONV LAYERS! NEED 1D CONV LAYERS *******************************
     # Build convolutional layers
     model = models.Sequential()
-    model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(1, 4, 4096), data_format='channels_first'))
-    model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-    model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+    model.add(layers.Conv1D(32, 3, activation='relu', input_shape=(4, 4096), data_format='channels_first'))
+    model.add(layers.MaxPooling1D(2))
+    model.add(layers.Conv1D(64, 3, activation='relu'))
+    model.add(layers.MaxPooling1D(2))
+    model.add(layers.Conv1D(64, 3, activation='relu'))
 
     # Build detection layers
     model.summary()
