@@ -49,6 +49,7 @@ def load_labels():
     """
 
     Returns:
+        labels (DataFrame):
 
     """
 
@@ -74,10 +75,10 @@ def split_data(data, labels, n):
         n (int): Number of training images desired
 
     Returns:
-        train_images (Series): All training images
-        test_images (Series): All testing images
-        train_labels (Series): All accompanying training labels
-        test_labels (Series): All accompanying testing labels
+        train_images ([[[float]]]): All training images
+        test_images ([[[float]]]): All testing images
+        train_labels ([[int]]): All accompanying training labels
+        test_labels ([[int]]): All accompanying testing labels
 
     """
     # Fixes seed number so results are replicable
@@ -95,11 +96,11 @@ def split_data(data, labels, n):
     test_names = list(set(names).difference(set(train_names)))
 
     # Uses these to find those names in data to make cut
-    train_images = data.loc[data['NAME'].isin(train_names)]['IMAGE']
-    test_images = data.loc[data['NAME'].isin(test_names)]['IMAGE']
+    train_images = np.array(data.loc[data['NAME'].isin(train_names)]['IMAGE'].tolist())
+    test_images = np.array(data.loc[data['NAME'].isin(test_names)]['IMAGE'].tolist())
 
-    train_labels = labels.loc[labels['NAME'].isin(train_names)]['LABEL']
-    test_labels = labels.loc[labels['NAME'].isin(test_names)]['LABEL']
+    train_labels = np.array(labels.loc[labels['NAME'].isin(train_names)]['LABEL'].tolist())
+    test_labels = np.array(labels.loc[labels['NAME'].isin(test_names)]['LABEL'].tolist())
 
     return train_images, test_images, train_labels, test_labels
 
@@ -109,6 +110,9 @@ def split_data(data, labels, n):
 # =====================================================================================================================
 def main():
 
+    print('***************************** CNN1 ********************************************')
+
+    print('\nLOAD IMAGES')
     # Load in images
     images, names = load_images('Blocks/')
 
@@ -117,12 +121,15 @@ def main():
     data['NAME'] = names
     data['IMAGE'] = images
 
+    print('\nLOAD LABELS')
     # Load in accompanying labels into separate randomly ordered DataFrame
     labels = load_labels()
 
+    print('\nSPLIT DATA INTO TRAIN AND TEST')
     # Split images into test and train
     train_images, test_images, train_labels, test_labels = split_data(data, labels, 8000)
 
+    print('\nBEGIN MODEL CONSTRUCTION')
     # *********** BROKEN DUE TO INCORRECT SHAPES OF CONV LAYERS! NEED 1D CONV LAYERS *******************************
     # Build convolutional layers
     model = models.Sequential()
