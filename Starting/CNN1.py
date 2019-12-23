@@ -38,13 +38,15 @@ def load_images(path, n_images):
     images = []
     names = []
 
-    i = 0
-    while i < n_images:
-        for name in os.listdir(path):
-            # Normalize pixel values to be between 0 and 1
-            images.append([image.imread(fname=(path + name), format='PNG') / 255.0])
-            names.append(name.replace('Blocks\\', '').replace('.png', ''))
-        i += 1
+    filenames = os.listdir(path)
+
+    random.seed(42)
+
+    for i in range(n_images):
+        name = random.choice(filenames)
+        # Normalize pixel values to be between 0 and 1
+        images.append([image.imread(fname=(path + name), format='PNG') / 255.0])
+        names.append(name.replace('Blocks\\', '').replace('.png', ''))
 
     return images, names
 
@@ -106,19 +108,19 @@ def split_data(data, labels, n):
     train_labels = np.array(labels.loc[labels['NAME'].isin(train_names)]['LABEL'].tolist())
     test_labels = np.array(labels.loc[labels['NAME'].isin(test_names)]['LABEL'].tolist())
 
-    return train_images, test_images, train_labels, test_labels
+    return train_images.reshape((len(train_images), 4, 4096)), test_images.reshape((len(test_images), 4, 4096)), \
+           train_labels, test_labels
 
 
 # =====================================================================================================================
 #                                                       MAIN
 # =====================================================================================================================
 def main():
-
     print('***************************** CNN1 ********************************************')
 
     print('\nLOAD IMAGES')
     # Load in images
-    images, names = load_images('Blocks/', 5000)
+    images, names = load_images('Blocks/', 3000)
 
     # Construct DataFrame matching images to their names
     data = pd.DataFrame()
@@ -134,15 +136,14 @@ def main():
 
     print('\nSPLIT DATA INTO TRAIN AND TEST')
     # Split images into test and train
-    train_images, test_images, train_labels, test_labels = split_data(data, labels, 1000)
+    train_images, test_images, train_labels, test_labels = split_data(data, labels, 500)
 
     # Deletes variables no longer neeeded
     del data, labels
 
     print(train_images.shape)
 
-    print(train_images[0])
-    print(train_images[0][0])
+    print(train_labels.shape)
 
     print('\nBEGIN MODEL CONSTRUCTION')
 
@@ -150,30 +151,35 @@ def main():
     model = models.Sequential()
     model.add(layers.Conv1D(filters=32, kernel_size=9, activation='relu', input_shape=(4, 4096),
                             data_format='channels_first'))
+    print('\nConv Layer 1:')
     print('Input shape:')
     print(model.input_shape)
     print('Output shape:')
     print(model.output_shape)
 
+    print('\nMax Pooling 1:')
     model.add(layers.MaxPooling1D(2))
     print('Input shape:')
     print(model.input_shape)
     print('Output shape:')
     print(model.output_shape)
 
+    print('\nConv Layer 2:')
     model.add(layers.Conv1D(64, 9, activation='relu'))
     print('Input shape:')
     print(model.input_shape)
     print('Output shape:')
     print(model.output_shape)
 
+    print('\nMax Pooling 2:')
     model.add(layers.MaxPooling1D(2))
     print('Input shape:')
     print(model.input_shape)
     print('Output shape:')
     print(model.output_shape)
 
-    model.add(layers.Conv1D(64, 9, activation='relu'))
+    print('\nConv Layer 3:')
+    model.add(layers.Conv1D(64, 3, activation='relu'))
     print('Input shape:')
     print(model.input_shape)
     print('Output shape:')
@@ -183,7 +189,7 @@ def main():
     model.summary()
     model.add(layers.Flatten())
     model.add(layers.Dense(128, activation='relu'))
-    model.add(layers.Dense(10, activation='softmax'))
+    model.add(layers.Dense(2, activation='softmax'))
     model.summary()
 
     # Define algorithms
@@ -202,7 +208,7 @@ def main():
     plt.show()
     plt.savefig('cnn_test.png')
 
-    test_loss, test_acc = model.evaluate(test_images,  test_labels, verbose=2)
+    test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
 
     print('Test accuracy: %s' % test_acc)
 
