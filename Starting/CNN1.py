@@ -1,7 +1,6 @@
 """Script run simple CNN on Voyager 2 magnetometer data for binary classification
 
 TODO:
-    * Split data into train and test
     * Construct model
 
 """
@@ -12,17 +11,19 @@ TODO:
 from __future__ import absolute_import, division, print_function, unicode_literals
 from tensorflow.keras import layers, models
 import matplotlib.pyplot as plt
+from matplotlib import image
 import pandas as pd
 from PIL import Image
 import numpy as np
 import glob
 import random
+import os
 
 
 # =====================================================================================================================
 #                                                     METHODS
 # =====================================================================================================================
-def load_images(path):
+def load_images(path, n_images):
     """Loads in images and their names from file
 
     Args:
@@ -37,10 +38,13 @@ def load_images(path):
     images = []
     names = []
 
-    for name in glob.glob('%s*.png' % path):
-        # Normalize pixel values to be between 0 and 1
-        images.append(np.array(Image.open(name).getdata()) / 255.0)
-        names.append(name.replace('Blocks\\', '').replace('.png', ''))
+    i = 0
+    while i < n_images:
+        for name in os.listdir(path):
+            # Normalize pixel values to be between 0 and 1
+            images.append([image.imread(fname=(path + name), format='PNG') / 255.0])
+            names.append(name.replace('Blocks\\', '').replace('.png', ''))
+        i += 1
 
     return images, names
 
@@ -114,12 +118,15 @@ def main():
 
     print('\nLOAD IMAGES')
     # Load in images
-    images, names = load_images('Blocks/')
+    images, names = load_images('Blocks/', 5000)
 
     # Construct DataFrame matching images to their names
     data = pd.DataFrame()
     data['NAME'] = names
     data['IMAGE'] = images
+
+    # Deletes variables no longer needed from memory
+    del names, images
 
     print('\nLOAD LABELS')
     # Load in accompanying labels into separate randomly ordered DataFrame
@@ -127,17 +134,50 @@ def main():
 
     print('\nSPLIT DATA INTO TRAIN AND TEST')
     # Split images into test and train
-    train_images, test_images, train_labels, test_labels = split_data(data, labels, 8000)
+    train_images, test_images, train_labels, test_labels = split_data(data, labels, 1000)
+
+    # Deletes variables no longer neeeded
+    del data, labels
+
+    print(train_images.shape)
+
+    print(train_images[0])
+    print(train_images[0][0])
 
     print('\nBEGIN MODEL CONSTRUCTION')
-    # *********** BROKEN DUE TO INCORRECT SHAPES OF CONV LAYERS! NEED 1D CONV LAYERS *******************************
+
     # Build convolutional layers
     model = models.Sequential()
-    model.add(layers.Conv1D(32, 3, activation='relu', input_shape=(4, 4096), data_format='channels_first'))
+    model.add(layers.Conv1D(filters=32, kernel_size=9, activation='relu', input_shape=(4, 4096),
+                            data_format='channels_first'))
+    print('Input shape:')
+    print(model.input_shape)
+    print('Output shape:')
+    print(model.output_shape)
+
     model.add(layers.MaxPooling1D(2))
-    model.add(layers.Conv1D(64, 3, activation='relu'))
+    print('Input shape:')
+    print(model.input_shape)
+    print('Output shape:')
+    print(model.output_shape)
+
+    model.add(layers.Conv1D(64, 9, activation='relu'))
+    print('Input shape:')
+    print(model.input_shape)
+    print('Output shape:')
+    print(model.output_shape)
+
     model.add(layers.MaxPooling1D(2))
-    model.add(layers.Conv1D(64, 3, activation='relu'))
+    print('Input shape:')
+    print(model.input_shape)
+    print('Output shape:')
+    print(model.output_shape)
+
+    model.add(layers.Conv1D(64, 9, activation='relu'))
+    print('Input shape:')
+    print(model.input_shape)
+    print('Output shape:')
+    print(model.output_shape)
 
     # Build detection layers
     model.summary()
