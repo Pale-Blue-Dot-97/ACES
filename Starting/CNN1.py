@@ -42,8 +42,9 @@ def load_images(path, n_images):
 
     random.seed(42)
 
-    for i in range(n_images):
-        name = random.choice(filenames)
+    ran_indices = random.sample(range(0, len(filenames)), n_images)
+    for i in ran_indices:
+        name = filenames[i]
         # Normalize pixel values to be between 0 and 1
         images.append([image.imread(fname=(path + name), format='PNG') / 255.0])
         names.append(name.replace('Blocks\\', '').replace('.png', ''))
@@ -90,16 +91,27 @@ def split_data(data, labels, n):
     # Fixes seed number so results are replicable
     random.seed(42)
 
-    names = data['NAME']
+    names = data['NAME'].tolist()
+
+    print('Length of names: %s' % len(names))
+
+    if len(names) != len(set(names)):
+        print(len(set(names)))
 
     train_names = []
 
     # Randomly selects the desired number of training images
-    for i in range(n):
-        train_names.append(random.choice(names))
+    for i in random.sample(range(0, len(names)), n):
+        train_names.append(names[i])
+
+    print('length of train names: %s' % len(train_names))
+
+    if len(train_names) != len(set(train_names)):
+        print(len(set(train_names)))
 
     # Takes the difference of lists to find remaining names must be for testing
     test_names = list(set(names).difference(set(train_names)))
+    print('Length of test names: %s' % len(test_names))
 
     # Uses these to find those names in data to make cut
     train_images = np.array(data.loc[data['NAME'].isin(train_names)]['IMAGE'].tolist())
@@ -122,6 +134,7 @@ def main():
     # Load in images
     images, names = load_images('Blocks/', 3000)
 
+    print(len(images))
     # Construct DataFrame matching images to their names
     data = pd.DataFrame()
     data['NAME'] = names
@@ -141,6 +154,8 @@ def main():
     # Deletes variables no longer neeeded
     del data, labels
 
+    print(len(train_labels))
+    print(len(test_images))
     print(train_images.shape)
 
     print(train_labels.shape)
@@ -193,7 +208,7 @@ def main():
     model.summary()
 
     # Define algorithms
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     # Train and test model
     history = model.fit(train_images, train_labels, epochs=10, validation_data=(test_images, test_labels))

@@ -113,12 +113,11 @@ def create_random_blocks(data, data_columns, n):
 
     blocks = []
 
-    indices = range(len(data[data_columns[0]]) - 4096)
+    ran_indices = random.sample(range(len(data[data_columns[0]]) - 4096), n)
 
     # Slices DataFrame into 4096 long blocks
-    for i in range(n):
-        j = random.choice(indices)
-        block_slice = data[j: (j + 4096)]
+    for i in ran_indices:
+        block_slice = data[i: (i + 4096)]
 
         # Labels block based on mode of point labels in block slice
         label = block_slice['LABELS'].mode()[0]
@@ -132,7 +131,7 @@ def create_random_blocks(data, data_columns, n):
                 print('%s: %s' % (k, len(channel)))
 
         # Adds tuple of the first index of the block, and the block
-        blocks.append((j, label, np.array(block)))
+        blocks.append((i, label, np.array(block)))
 
     return blocks
 
