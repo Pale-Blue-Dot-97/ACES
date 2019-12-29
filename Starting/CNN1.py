@@ -162,39 +162,10 @@ def main():
     model = models.Sequential()
     model.add(layers.Conv1D(filters=32, kernel_size=9, activation='relu', input_shape=(4096, 4)))
 
-    print('\nConv Layer 1:')
-    print('Input shape:')
-    print(model.input_shape)
-    print('Output shape:')
-    print(model.output_shape)
-
-    print('\nMax Pooling 1:')
     model.add(layers.MaxPooling1D(2))
-    print('Input shape:')
-    print(model.input_shape)
-    print('Output shape:')
-    print(model.output_shape)
-
-    print('\nConv Layer 2:')
     model.add(layers.Conv1D(64, 9, activation='relu'))
-    print('Input shape:')
-    print(model.input_shape)
-    print('Output shape:')
-    print(model.output_shape)
-
-    print('\nMax Pooling 2:')
     model.add(layers.MaxPooling1D(2))
-    print('Input shape:')
-    print(model.input_shape)
-    print('Output shape:')
-    print(model.output_shape)
-
-    print('\nConv Layer 3:')
     model.add(layers.Conv1D(64, 3, activation='relu'))
-    print('Input shape:')
-    print(model.input_shape)
-    print('Output shape:')
-    print(model.output_shape)
 
     # Build detection layers
     model.summary()
