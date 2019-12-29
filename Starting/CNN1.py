@@ -132,9 +132,8 @@ def main():
 
     print('\nLOAD IMAGES')
     # Load in images
-    images, names = load_images('Blocks/', 3000)
+    images, names = load_images('Blocks/', 10000)
 
-    print(len(images))
     # Construct DataFrame matching images to their names
     data = pd.DataFrame()
     data['NAME'] = names
@@ -149,23 +148,20 @@ def main():
 
     print('\nSPLIT DATA INTO TRAIN AND TEST')
     # Split images into test and train
-    train_images, test_images, train_labels, test_labels = split_data(data, labels, 500)
+    train_images, test_images, train_labels, test_labels = split_data(data, labels, 2000)
 
     # Deletes variables no longer neeeded
     del data, labels
 
-    print(len(train_labels))
-    print(len(test_images))
-    print(train_images.shape)
-
-    print(train_labels.shape)
+    train_images = np.swapaxes(train_images, 1, 2)
+    test_images = np.swapaxes(test_images, 1, 2)
 
     print('\nBEGIN MODEL CONSTRUCTION')
 
     # Build convolutional layers
     model = models.Sequential()
-    model.add(layers.Conv1D(filters=32, kernel_size=9, activation='relu', input_shape=(4, 4096),
-                            data_format='channels_first'))
+    model.add(layers.Conv1D(filters=32, kernel_size=9, activation='relu', input_shape=(4096, 4)))
+
     print('\nConv Layer 1:')
     print('Input shape:')
     print(model.input_shape)
@@ -211,11 +207,11 @@ def main():
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     # Train and test model
-    history = model.fit(train_images, train_labels, epochs=10, validation_data=(test_images, test_labels))
+    history = model.fit(train_images, train_labels, epochs=25, validation_data=(test_images, test_labels))
 
     # Plot history of model train and testing
-    plt.plot(history.history['acc'], label='accuracy')
-    plt.plot(history.history['val_acc'], label='val_accuracy')
+    plt.plot(history.history['accuracy'], label='accuracy')
+    plt.plot(history.history['val_accuracy'], label='val_accuracy')
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.ylim([0.5, 1])
@@ -227,6 +223,8 @@ def main():
 
     print('Test accuracy: %s' % test_acc)
 
+
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 if __name__ == '__main__':
     main()
