@@ -132,7 +132,7 @@ def main():
 
     print('\nLOAD IMAGES')
     # Load in images
-    images, names = load_images('Blocks/', 10000)
+    images, names = load_images('Blocks/', 40000)
 
     # Construct DataFrame matching images to their names
     data = pd.DataFrame()
@@ -148,7 +148,7 @@ def main():
 
     print('\nSPLIT DATA INTO TRAIN AND TEST')
     # Split images into test and train
-    train_images, test_images, train_labels, test_labels = split_data(data, labels, 2000)
+    train_images, test_images, train_labels, test_labels = split_data(data, labels, 8000)
 
     # Deletes variables no longer neeeded
     del data, labels
@@ -161,7 +161,6 @@ def main():
     # Build convolutional layers
     model = models.Sequential()
     model.add(layers.Conv1D(filters=32, kernel_size=9, activation='relu', input_shape=(4096, 4)))
-
     model.add(layers.MaxPooling1D(2))
     model.add(layers.Conv1D(64, 9, activation='relu'))
     model.add(layers.MaxPooling1D(2))
@@ -171,6 +170,7 @@ def main():
     model.summary()
     model.add(layers.Flatten())
     model.add(layers.Dense(128, activation='relu'))
+    model.add(layers.Dense(64, activation='relu'))
     model.add(layers.Dense(2, activation='softmax'))
     model.summary()
 
@@ -178,11 +178,11 @@ def main():
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     # Train and test model
-    history = model.fit(train_images, train_labels, epochs=25, validation_data=(test_images, test_labels))
+    history = model.fit(train_images, train_labels, epochs=10, validation_data=(test_images, test_labels))
 
     # Plot history of model train and testing
-    plt.plot(history.history['accuracy'], label='accuracy')
-    plt.plot(history.history['val_accuracy'], label='val_accuracy')
+    plt.plot(history.history['acc'], label='accuracy')
+    plt.plot(history.history['val_acc'], label='val_accuracy')
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.ylim([0.5, 1])
