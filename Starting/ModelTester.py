@@ -126,38 +126,36 @@ def split_data(data, labels, n):
            train_labels, test_labels
 
 
-def build_model(train_images, test_images, train_labels, test_labels):
+def build_model(train_images, test_images, train_labels, test_labels, kernel=(3, 3, 3), activation='relu',
+                loss='categorical_crossentropy', optomiser='adam', filters=(64, 64, 128), n_conv=3, n_den=3,
+                den_wid=(512, 256, 128), n_epochs=5):
+
     print('\nBEGIN MODEL CONSTRUCTION')
 
     # Build convolutional layers
     model = models.Sequential()
-    model.add(layers.Conv1D(filters=64, kernel_size=9, activation='relu', input_shape=(4096, 4)))
+    model.add(layers.Conv1D(filters=filters[0], kernel_size=kernel, activation=activation, input_shape=(4096, 4)))
     model.add(layers.MaxPooling1D(2))
-    model.add(layers.Conv1D(64, 9, activation='relu'))
-    model.add(layers.MaxPooling1D(2))
-    model.add(layers.Conv1D(128, 9, activation='relu'))
-    model.add(layers.MaxPooling1D(2))
-    model.add(layers.Conv1D(256, 9, activation='relu'))
-    model.add(layers.MaxPooling1D(2))
-    model.add(layers.Conv1D(512, 9, activation='relu'))
-    model.add(layers.MaxPooling1D(2))
+
+    for i in range(n_conv - 1):
+        model.add(layers.Conv1D(filters[i + 1], kernel[i + 1], activation=activation))
+        model.add(layers.MaxPooling1D(2))
 
     # Build detection layers
     model.summary()
     model.add(layers.Flatten())
-    model.add(layers.Dense(512, activation='relu'))
-    model.add(layers.Dense(256, activation='relu'))
-    model.add(layers.Dense(128, activation='relu'))
-    model.add(layers.Dense(64, activation='relu'))
-    model.add(layers.Dense(32, activation='relu'))
+
+    for i in range(n_den):
+        model.add(layers.Dense(den_wid[i], activation=activation))
+
     model.add(layers.Dense(2, activation='softmax'))
     model.summary()
 
     # Define algorithms
-    model.compile(optimizer='adadelta', loss='categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer=optomiser, loss=loss, metrics=['accuracy'])
 
     # Train and test model
-    history = model.fit(train_images, train_labels, epochs=5, validation_data=(test_images, test_labels))
+    history = model.fit(train_images, train_labels, epochs=n_epochs, validation_data=(test_images, test_labels))
 
     # Plot history of model train and testing
     plt.plot(history.history['accuracy'], label='accuracy')
