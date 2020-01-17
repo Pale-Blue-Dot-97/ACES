@@ -9,6 +9,7 @@ TODO:
 #                                                     IMPORTS
 # =====================================================================================================================
 from __future__ import absolute_import, division, print_function, unicode_literals
+import tensorflow as tf
 from tensorflow.keras import layers, models
 import matplotlib.pyplot as plt
 from matplotlib import image
@@ -130,9 +131,11 @@ def split_data(data, labels, n):
 def main():
     print('***************************** CNN1 ********************************************')
 
+    print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
+
     print('\nLOAD IMAGES')
     # Load in images
-    images, names = load_images('Blocks/', 40000)
+    images, names = load_images('Blocks/', 10000)
 
     # Construct DataFrame matching images to their names
     data = pd.DataFrame()
@@ -183,7 +186,7 @@ def main():
     model.summary()
 
     # Define algorithms
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='adadelta', loss='categorical_crossentropy', metrics=['accuracy'])
 
     # Train and test model
     history = model.fit(train_images, train_labels, epochs=5, validation_data=(test_images, test_labels))
