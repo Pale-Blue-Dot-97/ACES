@@ -134,7 +134,7 @@ def build_model(train_images, test_images, train_labels, test_labels, kernel=(3,
 
     # Build convolutional layers
     model = models.Sequential()
-    model.add(layers.Conv1D(filters=filters[0], kernel_size=kernel, activation=activation, input_shape=(4096, 4)))
+    model.add(layers.Conv1D(filters=filters[0], kernel_size=kernel[0], activation=activation, input_shape=(4096, 4)))
     model.add(layers.MaxPooling1D(2))
 
     for i in range(n_conv - 1):
