@@ -20,7 +20,7 @@ import numpy as np
 import glob
 import random
 import os
-
+import json
 
 # =====================================================================================================================
 #                                                     METHODS
@@ -128,7 +128,7 @@ def split_data(data, labels, n):
 
 def build_model(train_images, test_images, train_labels, test_labels, kernel=(3, 3, 3), activation='relu',
                 loss='categorical_crossentropy', optomiser='adam', filters=(64, 64, 128), n_conv=3, n_den=3,
-                den_wid=(512, 256, 128), n_epochs=5):
+                n_epochs=5):
 
     print('\nBEGIN MODEL CONSTRUCTION')
 
@@ -146,7 +146,7 @@ def build_model(train_images, test_images, train_labels, test_labels, kernel=(3,
     model.add(layers.Flatten())
 
     for i in range(n_den):
-        model.add(layers.Dense(den_wid[i], activation=activation))
+        model.add(layers.Dense(filters[i], activation=activation))
 
     model.add(layers.Dense(2, activation='softmax'))
     model.summary()
@@ -158,31 +158,58 @@ def build_model(train_images, test_images, train_labels, test_labels, kernel=(3,
     history = model.fit(train_images, train_labels, epochs=n_epochs, validation_data=(test_images, test_labels))
 
     # Plot history of model train and testing
-    plt.plot(history.history['accuracy'], label='accuracy')
-    plt.plot(history.history['val_accuracy'], label='val_accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.ylim([0.5, 1])
-    plt.legend(loc='lower right')
-    plt.show()
-    plt.savefig('cnn_test.png')
+    #plt.plot(history.history['accuracy'], label='accuracy')
+    #plt.plot(history.history['val_accuracy'], label='val_accuracy')
+    #plt.xlabel('Epoch')
+    #plt.ylabel('Accuracy')
+    #plt.ylim([0.5, 1])
+    #plt.legend(loc='lower right')
 
     test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
 
     print('Test accuracy: %s' % test_acc)
+
+    log = {'NCONV': n_conv,
+           'NDEN': n_den,
+           'NEPOCH': n_epochs,
+           'KERNELS': kernel,
+           'FILTERS': filters,
+           'LOSS': loss,
+           'ACTIVATE': activation,
+           'OPT': optomiser,
+           'VAL_ACC': test_acc}
+
+    return log
 
 
 # =====================================================================================================================
 #                                                       MAIN
 # =====================================================================================================================
 def main():
-    print('***************************** CNN1 ********************************************')
+    print('***************************** MODELTESTER ********************************************')
 
     print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
 
+    train_frac = 0.4
+    kernels = ((21, 19, 17, 15, 13, 11, 9, 7, 5, 3), (3, 5, 7, 9, 11, 13, 15, 17, 19, 21),
+               (21, 15, 15, 9,  9,  5,  5, 3, 3, 3), (9, 9, 9, 9, 9,  9,  9,  9,  9,  9),
+               (3, 3, 3, 3, 3,  3,  3,  3, 3, 3, 3))
+
+    filters = ((32, 64, 64, 64, 128, 128, 128, 256, 256, 512), (64, 64, 128, 128, 128, 128, 256, 256, 512, 512),
+               (4096, 4096, 4096, 4096, 4096, 4096, 4096, 4096, 4096, 4096),
+               (512, 512, 1024, 1024, 2048, 2048, 2048, 4096, 4096, 4096),
+               (128, 512, 1024, 2048, 4096, 2048, 1024, 512, 128, 32))
+
+    activation = 'relu'
+    loss = 'categorical_crossentropy'
+    optomiser = 'adam'
+    n_conv = 10
+    n_den = 10
+    n_epochs = 5
+
     print('\nLOAD IMAGES')
     # Load in images
-    images, names = load_images('Blocks/', 10000)
+    images, names = load_images('Blocks/', 1000)
 
     # Construct DataFrame matching images to their names
     data = pd.DataFrame()
@@ -198,7 +225,7 @@ def main():
 
     print('\nSPLIT DATA INTO TRAIN AND TEST')
     # Split images into test and train
-    train_images, test_images, train_labels, test_labels = split_data(data, labels, 8000)
+    train_images, test_images, train_labels, test_labels = split_data(data, labels, 500)
 
     # Deletes variables no longer needed
     del data, labels
@@ -206,7 +233,23 @@ def main():
     train_images = np.swapaxes(train_images, 1, 2)
     test_images = np.swapaxes(test_images, 1, 2)
 
-    build_model(train_images, test_images, train_labels, test_labels)
+    log = {}
+
+    i = 0 # Logs model number
+    for a in kernels:
+        for b in filters:
+            for c in range(n_conv):
+                for d in range(n_den):
+                    for e in range(n_epochs):
+                        i = i + 1
+                        log['%s' % i] = build_model(train_images, test_images, train_labels, test_labels, kernel=a,
+                                                    filters=b, n_conv=c, n_den=d, n_epochs=e, activation=activation,
+                                                    loss=loss, optomiser=optomiser)
+                        print('MODEL %s COMPLETE' % i)
+
+    # Writes output to JSON file
+    with open('test.json', 'w') as fp:
+        json.dump(log, fp)
 
 
 if __name__ == '__main__':
