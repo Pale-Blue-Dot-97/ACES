@@ -10,7 +10,7 @@ TODO:
 # =====================================================================================================================
 from __future__ import absolute_import, division, print_function, unicode_literals
 import tensorflow as tf
-from tensorflow.keras import layers, models
+from tensorflow.keras import layers, models, backend
 import matplotlib.pyplot as plt
 from matplotlib import image
 import pandas as pd
@@ -125,6 +125,10 @@ def split_data(data, labels, n):
            train_labels, test_labels
 
 
+def test_metric(y_true, y_pred):
+    return backend.mean(y_pred)
+
+
 # =====================================================================================================================
 #                                                       MAIN
 # =====================================================================================================================
@@ -169,34 +173,29 @@ def main():
     model.add(layers.MaxPooling1D(2))
     model.add(layers.Conv1D(128, 9, activation='relu'))
     model.add(layers.MaxPooling1D(2))
-    model.add(layers.Conv1D(256, 9, activation='relu'))
-    model.add(layers.MaxPooling1D(2))
-    model.add(layers.Conv1D(512, 9, activation='relu'))
-    model.add(layers.MaxPooling1D(2))
 
     # Build detection layers
     model.summary()
     model.add(layers.Flatten())
-    model.add(layers.Dense(512, activation='relu'))
-    model.add(layers.Dense(256, activation='relu'))
     model.add(layers.Dense(128, activation='relu'))
     model.add(layers.Dense(64, activation='relu'))
     model.add(layers.Dense(32, activation='relu'))
-    model.add(layers.Dense(2, activation='softmax'))
+    model.add(layers.Dense(2, activation='sigmoid'))
     model.summary()
 
     # Define algorithms
-    model.compile(optimizer='adadelta', loss='categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='sgd', loss='binary_crossentropy', metrics=['binary_accuracy'])
 
     # Train and test model
     history = model.fit(train_images, train_labels, epochs=5, validation_data=(test_images, test_labels))
 
     # Plot history of model train and testing
-    plt.plot(history.history['accuracy'], label='accuracy')
-    plt.plot(history.history['val_accuracy'], label='val_accuracy')
+    plt.plot(history.history['loss'], label='loss')
+    plt.plot(history.history['binary_accuracy'], label='accuracy')
+    plt.plot(history.history['val_binary_accuracy'], label='val_accuracy')
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
-    plt.ylim([0.5, 1])
+    plt.ylim([0, 1])
     plt.legend(loc='lower right')
     plt.show()
     plt.savefig('cnn_test.png')
