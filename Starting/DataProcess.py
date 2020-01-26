@@ -93,13 +93,14 @@ def create_blocks(data):
     return blocks
 
 
-def create_random_blocks(data, data_columns, n):
+def create_random_blocks(data, data_columns, n, block_length):
     """Selects n number of random 4096 long blocks from the data as numpy arrays
 
         Args:
             data (DataFrame): Table containing data to split into blocks
             data_columns (list): List of column names containing the data
             n (int): Number of blocks to randomly select
+            block_length (int): Length of each block
 
         Returns:
             blocks ([[[float]]]): 3D array containing blocks of 4096 * 4 values
@@ -113,11 +114,11 @@ def create_random_blocks(data, data_columns, n):
 
     blocks = []
 
-    ran_indices = random.sample(range(len(data[data_columns[0]]) - 4096), n)
+    ran_indices = random.sample(range(len(data[data_columns[0]]) - block_length), n)
 
     # Slices DataFrame into 4096 long blocks
     for i in ran_indices:
-        block_slice = data[i: (i + 4096)]
+        block_slice = data[i: (i + block_length)]
 
         # Labels block based on mode of point labels in block slice
         label = block_slice['LABELS'].mode()[0]
@@ -127,7 +128,7 @@ def create_random_blocks(data, data_columns, n):
         for k in data_columns:
             channel = np.array(block_slice['%s' % k])
             block.append(channel)
-            if len(channel) != 4096:
+            if len(channel) != block_length:
                 print('%s: %s' % (k, len(channel)))
 
         # Adds tuple of the first index of the block, and the block
@@ -199,7 +200,7 @@ def data_perturb(data, mode):
     return
 
 
-def label_data(data, data_columns, kernel_size=4096, pad=250):
+def label_data(data, data_columns, kernel_size=255, pad=50):
     """
 
     Args:
@@ -217,12 +218,13 @@ def label_data(data, data_columns, kernel_size=4096, pad=250):
 
     interesting = []
 
-    # Performs a rolling average along each column
+    # Creates a rolling window along each column
     roll = data.rolling(window=kernel_size, win_type=None, min_periods=1)
 
     for i in data_columns:
         # Finds the peaks in the rolling mean to identify interesting spots
-        peaks = sg.find_peaks(x=np.abs(roll[i].mean().tolist()), width=200)[0]
+        #peaks = sg.find_peaks(x=np.abs(roll[i].mean().tolist()), width=200)[0]
+        peaks = sg.find_peaks(x=np.abs(roll[i].std().tolist()), width=251)[0]
 
         # Adds the padding about each peak in mean found
         for j in peaks:
@@ -234,6 +236,11 @@ def label_data(data, data_columns, kernel_size=4096, pad=250):
     # Removes out-of-bound indexes from interesting
     interesting = interesting[0 <= interesting]
     interesting = interesting[interesting < len(data[data_columns[0]])]
+
+    #plt.plot(labelled_data['BR_norm'])
+    #plt.plot(interesting, [0]*len(interesting), '|')
+    #plt.plot(roll['BR_norm'].std().tolist())
+    #plt.show()
 
     # Creates new column in DataFrame to hold True for interesting points and False if not
     labelled_data['LABELS'] = float('NaN')
@@ -255,8 +262,7 @@ def blocks_to_images(blocks, name):
     """
 
     for block in blocks:
-        Image.fromarray((block[2] * 255).astype(np.uint8), mode='L')\
-            .save('Blocks/%s_%s_%s.png' % (block[0], name, block[1]))
+        Image.fromarray((block[2] * 255).astype(np.uint8), mode='L').save('Blocks/%s_%s.png' % (block[0], name))
 
     return
 
@@ -282,7 +288,7 @@ def labels_to_file(all_blocks, all_names):
 
     for i in range(4):
         for block in all_blocks[i]:
-            names.append('%s_%s_%s' % (block[0], all_names[i], block[1]))
+            names.append('%s_%s' % (block[0], all_names[i]))
             labels.append(block[1])
 
     data = pd.DataFrame()
@@ -302,6 +308,7 @@ def main():
     memes_on = False
 
     n = 10000  # Number of blocks to create for each data perturbation
+    block_length = 1024
 
     data_columns = ['BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm']
 
@@ -380,25 +387,25 @@ def main():
     if speech_on:
         engine.say("Standard data")
         engine.runAndWait()
-    blocks = create_random_blocks(stan_data, data_columns, n)
+    blocks = create_random_blocks(stan_data, data_columns, n, block_length)
 
     print('\t-MIRRORED DATA')
     if speech_on:
         engine.say("Mirrored data")
         engine.runAndWait()
-    mir_blocks = create_random_blocks(mir_dat, data_columns, n)
+    mir_blocks = create_random_blocks(mir_dat, data_columns, n, block_length)
 
     print('\t-REVERSED DATA')
     if speech_on:
         engine.say("Reversed data")
         engine.runAndWait()
-    rev_blocks = create_random_blocks(rev_dat, data_columns, n)
+    rev_blocks = create_random_blocks(rev_dat, data_columns, n, block_length)
 
     print('\t-MIRRORED AND REVERSED DATA')
     if speech_on:
         engine.say("Mirrored and reversed data")
         engine.runAndWait()
-    mir_rev_blocks = create_random_blocks(mir_rev_dat, data_columns, n)
+    mir_rev_blocks = create_random_blocks(mir_rev_dat, data_columns, n, block_length)
 
     print('\nCONVERTING BLOCKS TO IMAGES:')
     if speech_on:

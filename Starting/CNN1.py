@@ -74,13 +74,15 @@ def load_labels():
     return labels
 
 
-def split_data(data, labels, n):
+def split_data(data, labels, n, image_length, n_channels):
     """Splits data into training and testing data
 
     Args:
         data (DataFrame): Table of images with filenames
         labels (DataFrame): Table of labels for images with filenames
         n (int): Number of training images desired
+        image_length (int): Length of each image
+        n_channels (int): Number of channels of each image
 
     Returns:
         train_images ([[[float]]]): All training images
@@ -121,8 +123,13 @@ def split_data(data, labels, n):
     train_labels = np.array(labels.loc[labels['NAME'].isin(train_names)]['LABEL'].tolist())
     test_labels = np.array(labels.loc[labels['NAME'].isin(test_names)]['LABEL'].tolist())
 
-    return train_images.reshape((len(train_images), 4, 4096)), test_images.reshape((len(test_images), 4, 4096)), \
-           train_labels, test_labels
+    print('Length of train images: %s' % len(train_images))
+    print('Length of train labels: %s' % len(train_labels))
+    print('Length of test images: %s' % len(test_images))
+    print('Length of test labels: %s' % len(test_labels))
+
+    return train_images.reshape((len(train_images), n_channels, image_length)), \
+           test_images.reshape((len(test_images), n_channels, image_length)), train_labels, test_labels
 
 
 def test_metric(y_true, y_pred):
@@ -134,6 +141,8 @@ def test_metric(y_true, y_pred):
 # =====================================================================================================================
 def main():
     print('***************************** CNN1 ********************************************')
+    image_length = 1024
+    n_channels = 4
 
     print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
 
@@ -155,7 +164,7 @@ def main():
 
     print('\nSPLIT DATA INTO TRAIN AND TEST')
     # Split images into test and train
-    train_images, test_images, train_labels, test_labels = split_data(data, labels, 8000)
+    train_images, test_images, train_labels, test_labels = split_data(data, labels, 3000, image_length, n_channels)
 
     # Deletes variables no longer needed
     del data, labels
@@ -167,7 +176,7 @@ def main():
 
     # Build convolutional layers
     model = models.Sequential()
-    model.add(layers.Conv1D(filters=64, kernel_size=9, activation='relu', input_shape=(4096, 4)))
+    model.add(layers.Conv1D(filters=64, kernel_size=9, activation='relu', input_shape=(image_length, n_channels)))
     model.add(layers.MaxPooling1D(2))
     model.add(layers.Conv1D(64, 9, activation='relu'))
     model.add(layers.MaxPooling1D(2))
