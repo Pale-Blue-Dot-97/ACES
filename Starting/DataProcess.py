@@ -93,7 +93,7 @@ def create_blocks(data):
     return blocks
 
 
-def create_random_blocks(data, data_columns, n, block_length):
+def create_random_blocks(data, data_columns, n, block_length, thres_frac=0.2):
     """Selects n number of random 4096 long blocks from the data as numpy arrays
 
         Args:
@@ -101,6 +101,7 @@ def create_random_blocks(data, data_columns, n, block_length):
             data_columns (list): List of column names containing the data
             n (int): Number of blocks to randomly select
             block_length (int): Length of each block
+            thres_frac (float): Fraction of block_length above which it can be considered interesting
 
         Returns:
             blocks ([[[float]]]): 3D array containing blocks of 4096 * 4 values
@@ -109,6 +110,9 @@ def create_random_blocks(data, data_columns, n, block_length):
     data = data.copy()
     data.reset_index(drop=True)
 
+    # Threshold number of interesting points in block to be considered interesting
+    thres = int(thres_frac * block_length)
+
     # Sets seed number at 42 to produce same selection of indices every run
     random.seed(42)
 
@@ -116,12 +120,18 @@ def create_random_blocks(data, data_columns, n, block_length):
 
     ran_indices = random.sample(range(len(data[data_columns[0]]) - block_length), n)
 
-    # Slices DataFrame into 4096 long blocks
+    # Slices DataFrame into blocks
     for i in ran_indices:
         block_slice = data[i: (i + block_length)]
 
         # Labels block based on mode of point labels in block slice
         label = block_slice['LABELS'].mode()[0]
+
+        label = False
+
+        # Labels blocks which have more interesting points than threshold as True
+        if block_slice['LABELS'].tolist().count(True) > thres:
+            label = True
 
         block = []
 
