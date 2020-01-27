@@ -191,25 +191,25 @@ def main():
     print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
 
     train_frac = 0.4
-    kernels = ((21, 19, 17, 15, 13, 11, 9, 7, 5, 3), (3, 5, 7, 9, 11, 13, 15, 17, 19, 21),
-               (21, 15, 15, 9,  9,  5,  5, 3, 3, 3), (9, 9, 9, 9, 9,  9,  9,  9,  9,  9),
+    kernels = ((21, 19, 17, 15, 13, 11, 9, 7, 5, 3), #(3, 5, 7, 9, 11, 13, 15, 17, 19, 21),
+               #(21, 15, 15, 9,  9,  5,  5, 3, 3, 3), #(9, 9, 9, 9, 9,  9,  9,  9,  9,  9),
                (3, 3, 3, 3, 3,  3,  3,  3, 3, 3, 3))
 
-    filters = ((32, 64, 64, 64, 128, 128, 128, 256, 256, 512), (64, 64, 128, 128, 128, 128, 256, 256, 512, 512),
-               (4096, 4096, 4096, 4096, 4096, 4096, 4096, 4096, 4096, 4096),
-               (512, 512, 1024, 1024, 2048, 2048, 2048, 4096, 4096, 4096),
+    filters = ((32, 64, 64, 64, 128, 128, 128, 256, 256, 512), #(64, 64, 128, 128, 128, 128, 256, 256, 512, 512),
+               #(4096, 4096, 4096, 4096, 4096, 4096, 4096, 4096, 4096, 4096),
+               #(512, 512, 1024, 1024, 2048, 2048, 2048, 4096, 4096, 4096),
                (128, 512, 1024, 2048, 4096, 2048, 1024, 512, 128, 32))
 
     activation = 'relu'
     loss = 'categorical_crossentropy'
     optomiser = 'adam'
-    n_conv = 10
-    n_den = 10
+    n_conv = 3
+    n_den = 3
     n_epochs = 5
 
     print('\nLOAD IMAGES')
     # Load in images
-    images, names = load_images('Blocks/', 1000)
+    images, names = load_images('Blocks/', 500)
 
     # Construct DataFrame matching images to their names
     data = pd.DataFrame()
@@ -225,7 +225,7 @@ def main():
 
     print('\nSPLIT DATA INTO TRAIN AND TEST')
     # Split images into test and train
-    train_images, test_images, train_labels, test_labels = split_data(data, labels, 500)
+    train_images, test_images, train_labels, test_labels = split_data(data, labels, 200)
 
     # Deletes variables no longer needed
     del data, labels

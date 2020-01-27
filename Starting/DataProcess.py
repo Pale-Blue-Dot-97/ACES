@@ -17,7 +17,7 @@ import Plot2D as laplt
 import matplotlib.pyplot as plt
 import scipy.signal as sg
 from PIL import Image
-import pyttsx3 as speech
+#import pyttsx3 as speech
 import webbrowser
 import random
 
@@ -313,7 +313,8 @@ def labels_to_file(all_blocks, all_names):
 #                                                       MAIN
 # =====================================================================================================================
 def main():
-    engine = speech.init()
+    engine = 1
+    #engine = speech.init()
     speech_on = False
     memes_on = False
 
