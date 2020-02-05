@@ -21,6 +21,7 @@ import random
 import os
 import tensorflow.keras
 
+
 # =====================================================================================================================
 #                                                     METHODS
 # =====================================================================================================================
@@ -42,6 +43,9 @@ def load_images(path, n_images):
     filenames = os.listdir(path)
 
     random.seed(42)
+
+    print('Random selection of all image indices: ')
+    print(random.sample(range(0, len(filenames)), n_images)[0:19])
 
     ran_indices = random.sample(range(0, len(filenames)), n_images)
     for i in ran_indices:
@@ -96,6 +100,9 @@ def split_data(data, labels, n, image_length, n_channels):
 
     names = data['NAME'].tolist()
 
+    print('Names of images selected:')
+    print(names[0:19])
+
     print('Length of names: %s' % len(names))
 
     if len(names) != len(set(names)):
@@ -113,7 +120,7 @@ def split_data(data, labels, n, image_length, n_channels):
         print(len(set(train_names)))
 
     # Takes the difference of lists to find remaining names must be for testing
-    test_names = list(set(names).difference(set(train_names)))
+    test_names = sorted(list(set(names).difference(set(train_names))))
     print('Length of test names: %s' % len(test_names))
 
     # Uses these to find those names in data to make cut
@@ -129,7 +136,8 @@ def split_data(data, labels, n, image_length, n_channels):
     print('Length of test labels: %s' % len(test_labels))
 
     return train_images.reshape((len(train_images), n_channels, image_length)), \
-           test_images.reshape((len(test_images), n_channels, image_length)), train_labels, test_labels
+           test_images.reshape((len(test_images), n_channels, image_length)), train_labels, test_labels, train_names, \
+           test_names
 
 
 def test_metric(y_true, y_pred):
@@ -145,7 +153,7 @@ def test_metric(y_true, y_pred):
 if __name__ == '__main__':
     # np.random.seed(1)
     # tf.set_random_seed(42)
-    print('***************************** CNN1 ********************************************')
+    print('***************************** CNN2 ********************************************')
     image_length = 1024
     n_channels = 4
 
@@ -169,7 +177,8 @@ if __name__ == '__main__':
 
     print('\nSPLIT DATA INTO TRAIN AND TEST')
     # Split images into test and train
-    train_images, test_images, train_labels, test_labels = split_data(data, labels, 3000, image_length, n_channels)
+    train_images, test_images, train_labels, test_labels, train_names, test_names = split_data(data, labels, 3000,
+                                                                                               image_length, n_channels)
 
     # Deletes variables no longer needed
     del data, labels
@@ -223,6 +232,28 @@ if __name__ == '__main__':
     pred_labels = model.predict(test_images)
     pred_labels[pred_labels>0.5] = 1.0
     pred_labels[pred_labels<0.5] = 0.0
-    print('Mean of pred/test label equality - should be same as test_acc = {}'.format(np.mean(pred_labels==test_labels)))
-    pp = np.where(np.sum(pred_labels==test_labels,axis=1)==0)[0]
+
+    pp = np.where(np.sum(pred_labels == test_labels, axis=1) == 0)[0]
     print(pp[0:9])
+
+    bad_image_names = []
+    for i in pp:
+        bad_image_names.append(test_names[i-1])
+
+    print(bad_image_names[0:9])
+
+    data_names = ['BR', 'BTH', 'BPH', 'BMAG', 'UNIX TIME', 'BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm']
+    data = pd.read_csv('VOY2_JE_PROC.csv', names=data_names, dtype=float, header=0)
+
+    bad_images = []
+
+    print('Test_names:')
+    print(test_names[0:19])
+
+    for name in bad_image_names:
+        bad_images.append(float(name.split('_')[0]))
+
+    plt.plot(data['BR_norm'])
+    plt.plot(bad_images, [0]*len(bad_images), '|')
+    # plt.plot(roll['BR_norm'].std().tolist())
+    plt.show()
