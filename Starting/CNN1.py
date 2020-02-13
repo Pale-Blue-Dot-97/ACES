@@ -143,12 +143,14 @@ def main():
     print('***************************** CNN1 ********************************************')
     image_length = 1024
     n_channels = 4
+    in_filt = 32
+    filt_mult = 2
 
     print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
 
     print('\nLOAD IMAGES')
     # Load in images
-    images, names = load_images('Blocks/', 10000)
+    images, names = load_images('Blocks/', 40000)
 
     # Construct DataFrame matching images to their names
     data = pd.DataFrame()
@@ -164,7 +166,7 @@ def main():
 
     print('\nSPLIT DATA INTO TRAIN AND TEST')
     # Split images into test and train
-    train_images, test_images, train_labels, test_labels = split_data(data, labels, 3000, image_length, n_channels)
+    train_images, test_images, train_labels, test_labels = split_data(data, labels, 25000, image_length, n_channels)
 
     # Deletes variables no longer needed
     del data, labels
@@ -176,27 +178,29 @@ def main():
 
     # Build convolutional layers
     model = models.Sequential()
-    model.add(layers.Conv1D(filters=64, kernel_size=9, activation='relu', input_shape=(image_length, n_channels)))
-    model.add(layers.MaxPooling1D(2))
-    model.add(layers.Conv1D(64, 9, activation='relu'))
-    model.add(layers.MaxPooling1D(2))
-    model.add(layers.Conv1D(128, 9, activation='relu'))
-    model.add(layers.MaxPooling1D(2))
+    model.add(layers.Conv1D(filters=in_filt, kernel_size=9, activation='relu', batch_size=256,
+                            input_shape=(image_length, n_channels)))
+    model.add(layers.MaxPooling1D(2, strides=filt_mult))
+    model.add(layers.Conv1D(in_filt*pow(filt_mult, 1), 9, activation='relu'))
+    model.add(layers.MaxPooling1D(2, strides=filt_mult))
+    model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
+    model.add(layers.MaxPooling1D(2, strides=filt_mult))
+    model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
+    model.add(layers.MaxPooling1D(2, strides=filt_mult))
 
     # Build detection layers
-    model.summary()
     model.add(layers.Flatten())
-    model.add(layers.Dense(128, activation='relu'))
     model.add(layers.Dense(64, activation='relu'))
     model.add(layers.Dense(32, activation='relu'))
     model.add(layers.Dense(2, activation='sigmoid'))
     model.summary()
 
     # Define algorithms
-    model.compile(optimizer='sgd', loss='binary_crossentropy', metrics=['binary_accuracy'])
+    model.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=0.0001, momentum=0.0),
+                  loss='binary_crossentropy', metrics=['binary_accuracy'])
 
     # Train and test model
-    history = model.fit(train_images, train_labels, epochs=5, validation_data=(test_images, test_labels))
+    history = model.fit(train_images, train_labels, epochs=20, validation_data=(test_images, test_labels))
 
     # Plot history of model train and testing
     plt.plot(history.history['loss'], label='loss')
