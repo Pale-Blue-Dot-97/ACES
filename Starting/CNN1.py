@@ -69,12 +69,13 @@ def load_labels():
         if label == 'False':
             return [1, 0]
 
-    labels['LABEL'] = labels['LABEL'].apply(bool_to_binary)
+    labels['CLASS'] = labels['LABEL']
+    labels['LABEL'] = labels['CLASS'].apply(bool_to_binary)
 
     return labels
 
 
-def split_data(data, labels, n, image_length, n_channels):
+def split_data(data, labels, n, image_length, n_channels, stratify=True):
     """Splits data into training and testing data
 
     Args:
@@ -83,6 +84,7 @@ def split_data(data, labels, n, image_length, n_channels):
         n (int): Number of training images desired
         image_length (int): Length of each image
         n_channels (int): Number of channels of each image
+        stratify (bool): Whether to startify training data in equal True/ False cases. Default True
 
     Returns:
         train_images ([[[float]]]): All training images
@@ -96,6 +98,9 @@ def split_data(data, labels, n, image_length, n_channels):
 
     names = data['NAME'].tolist()
 
+    true_names = labels[labels['CLASS'] == 'True']['NAME'].tolist()
+    false_names = labels[labels['CLASS'] == 'False']['NAME'].tolist()
+
     print('Length of names: %s' % len(names))
 
     if len(names) != len(set(names)):
@@ -103,9 +108,29 @@ def split_data(data, labels, n, image_length, n_channels):
 
     train_names = []
 
-    # Randomly selects the desired number of training images
-    for i in random.sample(range(0, len(names)), n):
-        train_names.append(names[i])
+    true_train_names = []
+    false_train_names = []
+
+    if stratify is True:
+        print('STRATIFYING TRAINING DATA')
+
+        # Randomly selects the desired number of true case training images
+        for i in random.sample(range(0, len(true_names)), int(0.5 * n)):
+            true_train_names.append(true_names[i])
+
+        # Randomly selects the desired number of false case training images
+        for i in random.sample(range(0, len(false_names)), int(0.5 * n)):
+            false_train_names.append(false_names[i])
+
+        print('length of true train names: %s' % len(true_train_names))
+        print('length of false train names: %s' % len(false_train_names))
+
+        train_names = true_train_names + false_train_names
+
+    if stratify is False:
+        # Randomly selects the desired number of training images
+        for i in random.sample(range(0, len(names)), n):
+            train_names.append(names[i])
 
     print('length of train names: %s' % len(train_names))
 
@@ -166,7 +191,7 @@ def main():
 
     print('\nSPLIT DATA INTO TRAIN AND TEST')
     # Split images into test and train
-    train_images, test_images, train_labels, test_labels = split_data(data, labels, 25000, image_length, n_channels)
+    train_images, test_images, train_labels, test_labels = split_data(data, labels, 10000, image_length, n_channels)
 
     # Deletes variables no longer needed
     del data, labels
