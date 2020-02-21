@@ -47,7 +47,12 @@ def load_data():
 #                                                       MAIN
 # =====================================================================================================================
 def main():
-    return
+    # Load all data and normalised data from file in Pandas.DataFrame form
+    data, norm_data = load_data()
+
+    # Plot B_r against index
+    plt.plot(norm_data['BR_norm'])
+    plt.show()
 
 
 if __name__ == '__main__':
