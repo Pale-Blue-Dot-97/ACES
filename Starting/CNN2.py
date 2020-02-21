@@ -238,7 +238,7 @@ if __name__ == '__main__':
 
     bad_image_names = []
     for i in pp:
-        bad_image_names.append(test_names[i-1])
+        bad_image_names.append(test_names[i])
 
     print(bad_image_names[0:9])
 

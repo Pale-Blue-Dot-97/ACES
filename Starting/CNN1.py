@@ -168,7 +168,7 @@ def main():
     print('***************************** CNN1 ********************************************')
     image_length = 1024
     n_channels = 4
-    in_filt = 32
+    in_filt = 8
     filt_mult = 2
 
     print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
@@ -203,15 +203,15 @@ def main():
 
     # Build convolutional layers
     model = models.Sequential()
-    model.add(layers.Conv1D(filters=in_filt, kernel_size=9, activation='relu', batch_size=256,
+    model.add(layers.Conv1D(filters=in_filt, kernel_size=9, activation='relu', #batch_size=100,
                             input_shape=(image_length, n_channels)))
     model.add(layers.MaxPooling1D(2, strides=filt_mult))
     model.add(layers.Conv1D(in_filt*pow(filt_mult, 1), 9, activation='relu'))
     model.add(layers.MaxPooling1D(2, strides=filt_mult))
     model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
     model.add(layers.MaxPooling1D(2, strides=filt_mult))
-    model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
-    model.add(layers.MaxPooling1D(2, strides=filt_mult))
+    #model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
+    #model.add(layers.MaxPooling1D(2, strides=filt_mult))
 
     # Build detection layers
     model.add(layers.Flatten())
@@ -221,7 +221,7 @@ def main():
     model.summary()
 
     # Define algorithms
-    model.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=0.0001, momentum=0.0),
+    model.compile(optimizer=tf.keras.optimizers.SGD(),#learning_rate=0.001, momentum=0.0),
                   loss='binary_crossentropy', metrics=['binary_accuracy'])
 
     # Train and test model
