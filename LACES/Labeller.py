@@ -35,14 +35,11 @@ def load_data():
 
     data_names = ['BR', 'BTH', 'BPH', 'BMAG', 'UNIX TIME', 'BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm']
 
-    data = pd.read_csv('VOY2_JE_PROC.csv', names=data_names, dtype=float, header=0)
+    data = pd.read_csv('VOY2_JE_PROC.csv', names=data_names, dtype=float, header=0).drop(columns=['BR', 'BTH', 'BPH', 'BMAG'])
 
-    norm_data = data.drop(columns=['BR', 'BTH', 'BPH', 'BMAG'])
-
-    norm_data.reset_index(drop=True)
     data.reset_index(drop=True)
 
-    return data, norm_data
+    return data
 
 
 def unix_to_datetime(times):
@@ -66,27 +63,16 @@ def unix_to_datetime(times):
 # =====================================================================================================================
 def main():
     # Load all data and normalised data from file in Pandas.DataFrame form
-    data, norm_data = load_data()
+    data = load_data()
 
-    norm_data['DATETIME'] = unix_to_datetime(norm_data['UNIX TIME'])
+    data['DATETIME'] = pd.to_datetime(unix_to_datetime(data['UNIX TIME']))
 
-    p = int(len(norm_data['BR_norm'])/10)
+    data.index = data['DATETIME']
+    del data['DATETIME']
 
-    fig = plt.figure()
-    ax1 = fig.add_subplot(111)
-    ax2 = ax1.twiny()
-
-    # Plot B_r against date-time
-    ax1.plot_date(norm_data['DATETIME'], norm_data['BR_norm'], fmt='-')
-    ax1.set_xticks(np.arange(0, len(norm_data['BR_norm']), p))
-    ax1.set_xlabel('Date-time (UTC)')
-    ax1.set_ylabel('B_r')
-
-    # Add second x-axis for index
-    ax2.set_xlim(ax1.get_xlim())
-    ax2.set_xticks(range(0, len(norm_data['BR_norm']), p))
-    ax2.set_xticklabels(range(0, len(norm_data['BR_norm']), p))
-    ax2.set_xlabel('Index Location')
+    ax = data.plot(y='BR_norm', kind='line')
+    ax2 = ax.twiny()
+    ax2.set_xticks(range(0, len(data['BR_norm']), 100000))
 
     plt.show()
 
