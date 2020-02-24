@@ -11,9 +11,11 @@ TODO:
 #                                                     IMPORTS
 # =====================================================================================================================
 import time
+from datetime import datetime
 import sys
 import pandas as pd
 import numpy as np
+import matplotlib.dates as dates
 import matplotlib.pyplot as plt
 import scipy.signal as sg
 import random
@@ -43,6 +45,22 @@ def load_data():
     return data, norm_data
 
 
+def unix_to_datetime(times):
+    times.to_list()
+
+    datetimes = []
+
+    for i in times:
+        datetimes.append(datetime.utcfromtimestamp(i).strftime('%Y-%m-%d %H:%M:%S'))
+
+    print(datetimes[0])
+
+    #plotable = dates.date2num(datetimes[0])
+    #print(plotable)
+
+    return datetimes
+
+
 # =====================================================================================================================
 #                                                       MAIN
 # =====================================================================================================================
@@ -50,10 +68,29 @@ def main():
     # Load all data and normalised data from file in Pandas.DataFrame form
     data, norm_data = load_data()
 
-    # Plot B_r against index
-    plt.plot(norm_data['BR_norm'])
+    norm_data['DATETIME'] = unix_to_datetime(norm_data['UNIX TIME'])
+
+    p = int(len(norm_data['BR_norm'])/10)
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    ax2 = ax1.twiny()
+
+    # Plot B_r against date-time
+    ax1.plot_date(norm_data['DATETIME'], norm_data['BR_norm'], fmt='-')
+    ax1.set_xticks(np.arange(0, len(norm_data['BR_norm']), p))
+    ax1.set_xlabel('Date-time (UTC)')
+    ax1.set_ylabel('B_r')
+
+    # Add second x-axis for index
+    ax2.set_xlim(ax1.get_xlim())
+    ax2.set_xticks(range(0, len(norm_data['BR_norm']), p))
+    ax2.set_xticklabels(range(0, len(norm_data['BR_norm']), p))
+    ax2.set_xlabel('Index Location')
+
     plt.show()
 
 
 if __name__ == '__main__':
+    pd.plotting.register_matplotlib_converters()
     main()
