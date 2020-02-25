@@ -1,7 +1,6 @@
 """Script to manually label Voyager 1 Jupiter flyby magnetometer data for neural network training
 
 TODO:
-    * Import Voyager 1 data and plot against data index and datetime
     * Manually define CSCs and output to file for data labelling
     * Add further science classifications
 
@@ -40,7 +39,8 @@ def load_data():
 
     data_names = ['BR', 'BTH', 'BPH', 'BMAG', 'UNIX TIME', 'BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm']
 
-    data = pd.read_csv('VOY2_JE_PROC.csv', names=data_names, dtype=float, header=0).drop(columns=['BR', 'BTH', 'BPH', 'BMAG'])
+    data = pd.read_csv('VOY2_JE_PROC.csv', names=data_names, dtype=float, header=0)\
+        .drop(columns=['BR', 'BTH', 'BPH', 'BMAG'])
 
     # Create Matplotlib datetime64 type date-time column from UNIX time
     data['DATETIME'] = pd.to_datetime(data['UNIX TIME'], unit='s')
