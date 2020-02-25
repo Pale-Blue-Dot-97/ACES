@@ -13,7 +13,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 # =====================================================================================================================
 #                                                     GLOBAL
 # =====================================================================================================================
@@ -56,10 +55,6 @@ def main():
 
     # Plot using inbuilt Pandas function
     ax = data.plot(y='BR_norm', kind='line')
-
-    # Create secondary x-axis for index location ticks
-    ax2 = ax.twiny()
-    ax2.set_xticks(range(0, len(data['BR_norm']), 100000))
 
     plt.show()
 
