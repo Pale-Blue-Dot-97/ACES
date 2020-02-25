@@ -20,6 +20,11 @@ import matplotlib.pyplot as plt
 import scipy.signal as sg
 import random
 
+# =====================================================================================================================
+#                                                     GLOBAL
+# =====================================================================================================================
+pd.plotting.register_matplotlib_converters()
+
 
 # =====================================================================================================================
 #                                                     METHODS
@@ -37,25 +42,14 @@ def load_data():
 
     data = pd.read_csv('VOY2_JE_PROC.csv', names=data_names, dtype=float, header=0).drop(columns=['BR', 'BTH', 'BPH', 'BMAG'])
 
-    data.reset_index(drop=True)
+    # Create Matplotlib datetime64 type date-time column from UNIX time
+    data['DATETIME'] = pd.to_datetime(data['UNIX TIME'], unit='s')
+
+    # Re-index data to date-time
+    data.index = data['DATETIME']
+    del data['DATETIME']
 
     return data
-
-
-def unix_to_datetime(times):
-    times.to_list()
-
-    datetimes = []
-
-    for i in times:
-        datetimes.append(datetime.utcfromtimestamp(i).strftime('%Y-%m-%d %H:%M:%S'))
-
-    print(datetimes[0])
-
-    #plotable = dates.date2num(datetimes[0])
-    #print(plotable)
-
-    return datetimes
 
 
 # =====================================================================================================================
@@ -65,12 +59,10 @@ def main():
     # Load all data and normalised data from file in Pandas.DataFrame form
     data = load_data()
 
-    data['DATETIME'] = pd.to_datetime(unix_to_datetime(data['UNIX TIME']))
-
-    data.index = data['DATETIME']
-    del data['DATETIME']
-
+    # Plot using inbuilt Pandas function
     ax = data.plot(y='BR_norm', kind='line')
+
+    # Create secondary x-axis for index location ticks
     ax2 = ax.twiny()
     ax2.set_xticks(range(0, len(data['BR_norm']), 100000))
 
@@ -78,5 +70,4 @@ def main():
 
 
 if __name__ == '__main__':
-    pd.plotting.register_matplotlib_converters()
     main()
