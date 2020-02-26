@@ -45,12 +45,7 @@ def load_data():
     return data
 
 
-def load_labels(data):
-    # List of class names
-    classes = ['CSC', 'NSC', 'MP']
-
-    header = ['CLASS', 'START', 'STOP']
-
+def load_labels(data, classes, header):
     # Loads the start and endpoints of the labelled regions of the data
     labels = pd.read_csv('Labels.csv', names=header, dtype=str, header=0, sep=',', index_col='CLASS')
 
@@ -77,13 +72,18 @@ def load_labels(data):
         class_df = LABELS[classification]
 
         for i in range(len(class_df)):
+            # Start and endpoints for a label range
             start = class_df['START'][i]
             stop = class_df['STOP'][i]
 
-            label_slice = labelled_data[start:stop]
-            label_slice_index = label_slice.index.tolist()
+            # Finds all data points that lie in that datetime range and adds to list
+            label_match_list = label_match_list + labelled_data[start:stop].index.tolist()
 
-            label_match_list = label_match_list + label_slice_index
+        # Classifies all data points that lie in this classified event ranges
+        labelled_data['LABELS'][label_match_list] = classification
+
+    # Labels any remaining points as False
+    labelled_data['LABELS'].fillna(False, inplace=True)
 
     return labelled_data
 
@@ -92,14 +92,21 @@ def load_labels(data):
 #                                                       MAIN
 # =====================================================================================================================
 def main():
-    # Load all data and normalised data from file in Pandas.DataFrame form
-    data = load_data()
+    # List of class names
+    classes = ['CSC', 'NSC', 'MP']
 
-    load_labels(data)
+    header = ['CLASS', 'START', 'STOP']
+
+    data = load_labels(load_data(), classes, header)
 
     # Plot using inbuilt Pandas function
     data.plot(y=['BR_norm', 'BMAG_norm'], kind='line')
 
+    for classification in classes:
+        plt.plot(data.loc[data['LABELS'] == classification].index.to_list(),
+                 (data.loc[data['LABELS'] == classification]['BMAG_norm']), 'o', ms=0.5, alpha=0.8)
+
+    plt.legend(['BR', 'BMAG'] + classes)
     plt.show()
 
 
