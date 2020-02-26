@@ -48,6 +48,7 @@ def load_data():
 def load_labels(data):
     # List of class names
     classes = ['CSC', 'NSC', 'MP']
+
     header = ['CLASS', 'START', 'STOP']
 
     # Loads the start and endpoints of the labelled regions of the data
@@ -59,22 +60,30 @@ def load_labels(data):
     labels['START'] = pd.to_datetime(labels['START'])
     labels['STOP'] = pd.to_datetime(labels['STOP'])
 
+    # Creates new DataFrame with an additional column for the class labels
     labelled_data = data.copy()
+    labelled_data['LABELS'] = float('NaN')
 
+    # Dict to hold all the individual class DataFrame slices
     LABELS = {}
 
+    # Slices labels into separate DataFrames for each classification
     for classification in classes:
         LABELS[classification] = labels.loc[classification].reset_index(drop=True)
 
     for classification in classes:
+        label_match_list = []
+
         class_df = LABELS[classification]
-        print(classification)
+
         for i in range(len(class_df)):
             start = class_df['START'][i]
             stop = class_df['STOP'][i]
 
-            print('start: %s' % start)
-            print('stop: %s' % stop)
+            label_slice = labelled_data[start:stop]
+            label_slice_index = label_slice.index.tolist()
+
+            label_match_list = label_match_list + label_slice_index
 
     return labelled_data
 
