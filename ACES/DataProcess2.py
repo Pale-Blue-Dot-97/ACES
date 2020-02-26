@@ -12,11 +12,9 @@ TODO:
 # =====================================================================================================================
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import scipy.signal as sg
 from PIL import Image
 import random
-import Labeller.py as lb
+import Labeller as lb
 
 
 # =====================================================================================================================
@@ -218,13 +216,13 @@ def blocks_to_images(blocks, name):
 
 
 def block_to_image(block):
-    """Takes a 4096 long block of the data and converts to a greyscale image
+    """Takes a n_length long block of the data and converts to a greyscale image
 
     Args:
-        block ([[float]]): 2D numpy array of 4 rows of data 4096 points long
+        block ([[float]]): 2D numpy array of 4 rows of data n_length points long
 
     Returns:
-        image (Image): A 4096 x 4 greyscale Image
+        image (Image): A n_length x n_channel greyscale Image
 
     """
     image = Image.fromarray((block * 255).astype(np.uint8), mode='L')
@@ -236,7 +234,7 @@ def labels_to_file(all_blocks, all_names):
     names = []
     labels = []
 
-    for i in range(4):
+    for i in range(len(all_names)):
         for block in all_blocks[i]:
             names.append('%s_%s' % (block[0], all_names[i]))
             labels.append(block[1])
