@@ -46,12 +46,37 @@ def load_data():
 
 
 def load_labels(data):
+    # List of class names
     classes = ['CSC', 'NSC', 'MP']
+    header = ['CLASS', 'START', 'STOP']
 
-    labels = pd.read_csv('Labels.csv', names=classes, dtype=str, header=0, sep=',')
+    # Loads the start and endpoints of the labelled regions of the data
+    labels = pd.read_csv('Labels.csv', names=header, dtype=str, header=0, sep=',', index_col='CLASS')
 
+    print(labels)
 
-    return #labelled_data
+    # Converts strings to datetime64 dtype
+    labels['START'] = pd.to_datetime(labels['START'])
+    labels['STOP'] = pd.to_datetime(labels['STOP'])
+
+    labelled_data = data.copy()
+
+    LABELS = {}
+
+    for classification in classes:
+        LABELS[classification] = labels.loc[classification].reset_index(drop=True)
+
+    for classification in classes:
+        class_df = LABELS[classification]
+        print(classification)
+        for i in range(len(class_df)):
+            start = class_df['START'][i]
+            stop = class_df['STOP'][i]
+
+            print('start: %s' % start)
+            print('stop: %s' % stop)
+
+    return labelled_data
 
 
 # =====================================================================================================================
