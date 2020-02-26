@@ -54,7 +54,7 @@ def main():
     data = load_data()
 
     # Plot using inbuilt Pandas function
-    ax = data.plot(y='BR_norm', kind='line')
+    data.plot(y=['BR_norm', 'BMAG_norm'], kind='line')
 
     plt.show()
 
