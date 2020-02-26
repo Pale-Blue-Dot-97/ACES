@@ -14,31 +14,13 @@ import pandas as pd
 import numpy as np
 from PIL import Image
 import random
-import Labeller as lb
+from collections import Counter
+from Labeller import load_labels
 
 
 # =====================================================================================================================
 #                                                     METHODS
 # =====================================================================================================================
-
-
-def load_data():
-    """Load in cleaned and normalised data from file
-
-    Returns:
-        data (DataFrame): Table of all the cleaned and normalised data from file
-        norm_data (DataFrame): Table of just the normalised data
-
-    """
-
-    data_names = ['BR', 'BTH', 'BPH', 'BMAG', 'UNIX TIME', 'BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm']
-
-    data = pd.read_csv('VOY2_JE_PROC.csv', names=data_names, dtype=float, header=0)\
-        .drop(columns=['BR', 'BTH', 'BPH', 'BMAG']).reset_index(drop=True)
-
-    return data
-
-
 def renormalise(data):
     """Re-normalises data from -1<x<1 to 0<x<1
 
@@ -119,23 +101,26 @@ def create_random_blocks(data, data_columns, n, block_length, thres_frac=0.2):
         # Assume block label is False initially
         label = False
 
-        # Finds mode of the labels of the block
-        mode = block_slice['LABELS'].mode()
+        # Finds 2 most common labels of the block
+        mode = Counter(block_slice['LABELS']).most_common()
 
-        # If mode is not False, mode must be a classification
-        if mode[0] is not False:
-            # If more than the threshold value of the block is the mode, label block as that mode
-            if block_slice['LABELS'].tolist().count(mode[0]) > thres:
-                label = mode[0]
+        if len(mode) > 1:
+            # If mode is not False, mode must be a classification
+            if mode[0][0] is not False:
+                # If more than the threshold value of the block is the mode, label block as that mode
+                if mode[0][1] > thres:
+                    label = mode[0][0]
 
-        # If mode is False, the 2nd mode may be a classification that reaches threshold
-        if mode[0] is False:
-            # The 2nd mode must be a classification label. If it reaches threshold, label block as such
-            if block_slice['LABELS'].tolist().count(mode[1]) > thres:
-                label = mode[1]
-            # Else, label block as False
-            else:
-                label = False
+            # If mode is False, the 2nd mode may be a classification that reaches threshold
+            if mode[0][0] is False:
+                # The 2nd mode must be a classification label. If it reaches threshold, label block as such
+                if mode[1][1] > thres:
+                    label = mode[1][0]
+                # Else, label block as False
+                else:
+                    label = False
+        else:
+            label = mode[0][0]
 
         block = []
 
@@ -259,7 +244,7 @@ def main():
     print('*************************** WELCOME TO DATAPROCESS2 *************************************')
 
     print('\nLOADING DATA')
-    data = lb.label_data(load_data())
+    data = load_labels()
 
     print('\nRE-NORMALISING DATA')
     stan_data = renormalise(data)

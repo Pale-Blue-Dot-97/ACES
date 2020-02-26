@@ -49,11 +49,12 @@ def load_data():
     return data
 
 
-def load_labels(data):
+def load_labels():
+    # Loads in data
+    data = load_data()
+
     # Loads the start and endpoints of the labelled regions of the data
     labels = pd.read_csv('Labels.csv', names=header, dtype=str, header=0, sep=',', index_col='CLASS')
-
-    print(labels)
 
     # Converts strings to datetime64 dtype
     labels['START'] = pd.to_datetime(labels['START'])
@@ -96,7 +97,7 @@ def load_labels(data):
 #                                                       MAIN
 # =====================================================================================================================
 def main():
-    data = load_labels(load_data(), classes, header)
+    data = load_labels()
 
     # Plot using inbuilt Pandas function
     data.plot(y=['BR_norm', 'BMAG_norm'], kind='line')
