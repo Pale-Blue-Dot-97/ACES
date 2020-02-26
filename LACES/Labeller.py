@@ -46,12 +46,28 @@ def load_data():
     return data
 
 
+def load_labels(data):
+    classes = ['CSC', 'NSC', 'MP']
+
+    labels = pd.read_csv('Labels.csv', names=classes, dtype=str, header=0, sep=',')
+
+    print(labels)
+
+    print(labels['CSC'])
+    print(labels['NSC'])
+    print(labels['MP'])
+
+    return #labelled_data
+
+
 # =====================================================================================================================
 #                                                       MAIN
 # =====================================================================================================================
 def main():
     # Load all data and normalised data from file in Pandas.DataFrame form
     data = load_data()
+
+    load_labels(data)
 
     # Plot using inbuilt Pandas function
     data.plot(y=['BR_norm', 'BMAG_norm'], kind='line')
