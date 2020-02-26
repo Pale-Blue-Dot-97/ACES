@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 import scipy.signal as sg
 from PIL import Image
 import random
+import Labeller.py as lb
+
 
 # =====================================================================================================================
 #                                                     METHODS
@@ -33,14 +35,10 @@ def load_data():
 
     data_names = ['BR', 'BTH', 'BPH', 'BMAG', 'UNIX TIME', 'BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm']
 
-    data = pd.read_csv('VOY2_JE_PROC.csv', names=data_names, dtype=float, header=0)
+    data = pd.read_csv('VOY2_JE_PROC.csv', names=data_names, dtype=float, header=0)\
+        .drop(columns=['BR', 'BTH', 'BPH', 'BMAG']).reset_index(drop=True)
 
-    norm_data = data.drop(columns=['BR', 'BTH', 'BPH', 'BMAG'])
-
-    norm_data.reset_index(drop=True)
-    data.reset_index(drop=True)
-
-    return data, norm_data
+    return data
 
 
 def renormalise(data):
@@ -190,56 +188,6 @@ def data_perturb(data, mode):
     return
 
 
-def label_data(data, data_columns, kernel_size=255, pad=50):
-    """
-
-    Args:
-        data (DataFrame): Table of data to be labelled
-        data_columns ([str]): List of the names of columns containing data
-        kernel_size (int): Size of the kernel for scipy.signal.find_peaks() to use
-        pad (int): Number of points either side of a detection to include as `interesting'
-
-    Returns:
-        labelled_data (DataFrame): data with the addition of column `LABELS' with labels of True/ False for each point
-
-    """
-
-    labelled_data = data.copy()
-
-    interesting = []
-
-    # Creates a rolling window along each column
-    roll = data.rolling(window=kernel_size, win_type=None, min_periods=1)
-
-    for i in data_columns:
-        # Finds the peaks in the rolling mean to identify interesting spots
-        #peaks = sg.find_peaks(x=np.abs(roll[i].mean().tolist()), width=200)[0]
-        peaks = sg.find_peaks(x=np.abs(roll[i].std().tolist()), width=251)[0]
-
-        # Adds the padding about each peak in mean found
-        for j in peaks:
-            interesting += range(j - pad, j + pad)
-
-    # Eliminate duplicates in interesting
-    interesting = np.array(list(dict.fromkeys(interesting)))
-
-    # Removes out-of-bound indexes from interesting
-    interesting = interesting[0 <= interesting]
-    interesting = interesting[interesting < len(data[data_columns[0]])]
-
-    #plt.plot(labelled_data['BR_norm'])
-    #plt.plot(interesting, [0]*len(interesting), '|')
-    #plt.plot(roll['BR_norm'].std().tolist())
-    #plt.show()
-
-    # Creates new column in DataFrame to hold True for interesting points and False if not
-    labelled_data['LABELS'] = float('NaN')
-    labelled_data['LABELS'][interesting] = True
-    labelled_data['LABELS'].fillna(False, inplace=True)
-
-    return labelled_data.reset_index(drop=True)
-
-
 def blocks_to_images(blocks, name):
     """Converts each block in a series to 8-bit greyscale png images and saves to file
 
@@ -298,38 +246,24 @@ def main():
 
     data_columns = ['BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm']
 
-    print('*************************** WELCOME TO DATAPROCESS *************************************')
+    print('*************************** WELCOME TO DATAPROCESS2 *************************************')
 
     print('\nLOADING DATA')
-    data, norm_data = load_data()
+    data = lb.label_data(load_data())
 
     print('\nRE-NORMALISING DATA')
-    re_norm_data = renormalise(norm_data)
+    stan_data = renormalise(data)
 
     print('\nPERTURBING DATA:')
 
     print('\t-MIRRORING DATA')
-    mir_dat = data_perturb(re_norm_data, 'mirror')
+    mir_dat = data_perturb(stan_data, 'mirror')
 
     print('\t-REVERSING DATA')
-    rev_dat = data_perturb(re_norm_data, 'reverse')
+    rev_dat = data_perturb(stan_data, 'reverse')
 
     print('\t-MIRRORING AND REVERSING DATA')
     mir_rev_dat = data_perturb(mir_dat, 'reverse')
-
-    print('\nLABELLING DATA:')
-
-    print('\t-STANDARD DATA')
-    stan_data = label_data(norm_data, data_columns)
-
-    print('\t-MIRRORED DATA')
-    mir_dat = label_data(mir_dat, data_columns)
-
-    print('\t-REVERSED DATA')
-    rev_dat = label_data(rev_dat, data_columns)
-
-    print('\t-MIRRORED AND REVERSED DATA')
-    mir_rev_dat = label_data(mir_rev_dat, data_columns)
 
     print('\nCREATING RANDOMISED BLOCKS:')
 

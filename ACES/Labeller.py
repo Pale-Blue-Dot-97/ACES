@@ -17,6 +17,10 @@ import matplotlib.pyplot as plt
 # =====================================================================================================================
 pd.plotting.register_matplotlib_converters()
 
+# List of class names
+classes = ['CSC', 'NSC', 'MP']
+header = ['CLASS', 'START', 'STOP']
+
 
 # =====================================================================================================================
 #                                                     METHODS
@@ -45,7 +49,7 @@ def load_data():
     return data
 
 
-def load_labels(data, classes, header):
+def load_labels(data):
     # Loads the start and endpoints of the labelled regions of the data
     labels = pd.read_csv('Labels.csv', names=header, dtype=str, header=0, sep=',', index_col='CLASS')
 
@@ -92,11 +96,6 @@ def load_labels(data, classes, header):
 #                                                       MAIN
 # =====================================================================================================================
 def main():
-    # List of class names
-    classes = ['CSC', 'NSC', 'MP']
-
-    header = ['CLASS', 'START', 'STOP']
-
     data = load_labels(load_data(), classes, header)
 
     # Plot using inbuilt Pandas function

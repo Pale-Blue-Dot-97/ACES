@@ -13,11 +13,9 @@ import time
 import sys
 import pandas as pd
 import numpy as np
-import Plot2D as laplt
-import matplotlib.pyplot as plt
 import scipy.signal as sg
 from PIL import Image
-#import pyttsx3 as speech
+import pyttsx3 as speech
 import webbrowser
 import random
 
@@ -37,14 +35,10 @@ def load_data():
 
     data_names = ['BR', 'BTH', 'BPH', 'BMAG', 'UNIX TIME', 'BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm']
 
-    data = pd.read_csv('VOY2_JE_PROC.csv', names=data_names, dtype=float, header=0)
+    data = pd.read_csv('VOY2_JE_PROC.csv', names=data_names, dtype=float, header=0)\
+        .drop(columns=['BR', 'BTH', 'BPH', 'BMAG']).reset_index(drop=True)
 
-    norm_data = data.drop(columns=['BR', 'BTH', 'BPH', 'BMAG'])
-
-    norm_data.reset_index(drop=True)
-    data.reset_index(drop=True)
-
-    return data, norm_data
+    return data
 
 
 def renormalise(data):
@@ -313,8 +307,7 @@ def labels_to_file(all_blocks, all_names):
 #                                                       MAIN
 # =====================================================================================================================
 def main():
-    engine = 1
-    #engine = speech.init()
+    engine = speech.init()
     speech_on = False
     memes_on = False
 
@@ -329,13 +322,13 @@ def main():
     if speech_on:
         engine.say("Loading data")
         engine.runAndWait()
-    data, norm_data = load_data()
+    data = load_data()
 
     print('\nRE-NORMALISING DATA')
     if speech_on:
         engine.say("Re-normalising data")
         engine.runAndWait()
-    re_norm_data = renormalise(norm_data)
+    stan_data = renormalise(data)
 
     print('\nPERTURBING DATA:')
     if speech_on:
@@ -346,13 +339,13 @@ def main():
     if speech_on:
         engine.say("Mirroring data")
         engine.runAndWait()
-    mir_dat = data_perturb(re_norm_data, 'mirror')
+    mir_dat = data_perturb(stan_data, 'mirror')
 
     print('\t-REVERSING DATA')
     if speech_on:
         engine.say("Reversing data")
         engine.runAndWait()
-    rev_dat = data_perturb(re_norm_data, 'reverse')
+    rev_dat = data_perturb(stan_data, 'reverse')
 
     print('\t-MIRRORING AND REVERSING DATA')
     if speech_on:
@@ -369,7 +362,7 @@ def main():
     if speech_on:
         engine.say("Standard data")
         engine.runAndWait()
-    stan_data = label_data(norm_data, data_columns)
+    stan_data = label_data(stan_data, data_columns)
 
     print('\t-MIRRORED DATA')
     if speech_on:
