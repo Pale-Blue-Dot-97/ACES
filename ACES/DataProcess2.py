@@ -118,14 +118,26 @@ def create_random_blocks(data, data_columns, n, block_length, thres_frac=0.2):
     for i in ran_indices:
         block_slice = data[i: (i + block_length)]
 
-        # Labels block based on mode of point labels in block slice
-        label = block_slice['LABELS'].mode()[0]
-
+        # Assume block label is False initially
         label = False
 
-        # Labels blocks which have more interesting points than threshold as True
-        if block_slice['LABELS'].tolist().count(True) > thres:
-            label = True
+        # Finds mode of the labels of the block
+        mode = block_slice['LABELS'].mode()
+
+        # If mode is not False, mode must be a classification
+        if mode[0] is not False:
+            # If more than the threshold value of the block is the mode, label block as that mode
+            if block_slice['LABELS'].tolist().count(mode[0]) > thres:
+                label = mode[0]
+
+        # If mode is False, the 2nd mode may be a classification that reaches threshold
+        if mode[0] is False:
+            # The 2nd mode must be a classification label. If it reaches threshold, label block as such
+            if block_slice['LABELS'].tolist().count(mode[1]) > thres:
+                label = mode[1]
+            # Else, label block as False
+            else:
+                label = False
 
         block = []
 
