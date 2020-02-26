@@ -1,8 +1,7 @@
 """Script to manually label Voyager 1 Jupiter flyby magnetometer data for neural network training
 
 TODO:
-    * Manually define CSCs and output to file for data labelling
-    * Add further science classifications
+    * Label all of data using class start/stop points
 
 """
 
@@ -51,11 +50,6 @@ def load_labels(data):
 
     labels = pd.read_csv('Labels.csv', names=classes, dtype=str, header=0, sep=',')
 
-    print(labels)
-
-    print(labels['CSC'])
-    print(labels['NSC'])
-    print(labels['MP'])
 
     return #labelled_data
 
