@@ -19,6 +19,21 @@ from Labeller import load_labels
 
 
 # =====================================================================================================================
+#                                                     GLOBAL
+# =====================================================================================================================
+# Fraction of a block to be threshold to reach for block to labelled as such
+threshold_fraction = 0.5
+
+# Number of blocks to create for each data perturbation
+n = 10000
+
+# Length of each block
+block_length = 4096
+
+data_columns = ['BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm']
+
+
+# =====================================================================================================================
 #                                                     METHODS
 # =====================================================================================================================
 def renormalise(data):
@@ -67,15 +82,11 @@ def create_blocks(data):
     return blocks
 
 
-def create_random_blocks(data, data_columns, n, block_length, thres_frac=0.2):
+def create_random_blocks(data):
     """Selects n number of random 4096 long blocks from the data as numpy arrays
 
         Args:
             data (DataFrame): Table containing data to split into blocks
-            data_columns (list): List of column names containing the data
-            n (int): Number of blocks to randomly select
-            block_length (int): Length of each block
-            thres_frac (float): Fraction of block_length above which it can be considered interesting
 
         Returns:
             blocks ([[[float]]]): 3D array containing blocks of 4096 * 4 values
@@ -85,7 +96,7 @@ def create_random_blocks(data, data_columns, n, block_length, thres_frac=0.2):
     data.reset_index(drop=True)
 
     # Threshold number of interesting points in block to be considered interesting
-    thres = int(thres_frac * block_length)
+    thres = int(threshold_fraction * block_length)
 
     # Sets seed number at 42 to produce same selection of indices every run
     random.seed(42)
@@ -236,11 +247,6 @@ def labels_to_file(all_blocks, all_names):
 #                                                       MAIN
 # =====================================================================================================================
 def main():
-    n = 10000  # Number of blocks to create for each data perturbation
-    block_length = 1024
-
-    data_columns = ['BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm']
-
     print('*************************** WELCOME TO DATAPROCESS2 *************************************')
 
     print('\nLOADING DATA')
@@ -263,16 +269,16 @@ def main():
     print('\nCREATING RANDOMISED BLOCKS:')
 
     print('\t-STANDARD DATA')
-    blocks = create_random_blocks(stan_data, data_columns, n, block_length)
+    blocks = create_random_blocks(stan_data)
 
     print('\t-MIRRORED DATA')
-    mir_blocks = create_random_blocks(mir_dat, data_columns, n, block_length)
+    mir_blocks = create_random_blocks(mir_dat)
 
     print('\t-REVERSED DATA')
-    rev_blocks = create_random_blocks(rev_dat, data_columns, n, block_length)
+    rev_blocks = create_random_blocks(rev_dat)
 
     print('\t-MIRRORED AND REVERSED DATA')
-    mir_rev_blocks = create_random_blocks(mir_rev_dat, data_columns, n, block_length)
+    mir_rev_blocks = create_random_blocks(mir_rev_dat)
 
     print('\nCONVERTING BLOCKS TO IMAGES:')
 
