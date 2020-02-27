@@ -21,6 +21,13 @@ from collections import Counter
 
 
 # =====================================================================================================================
+#                                                     GLOBALS
+# =====================================================================================================================
+image_length = 4096
+n_channels = 4
+
+
+# =====================================================================================================================
 #                                                     METHODS
 # =====================================================================================================================
 def load_images(path, n_images):
@@ -200,13 +207,42 @@ def evaluate_model(train_images, train_labels, test_images, test_labels):
     return accuracy
 
 
+def sequential_CNN(train_images, train_labels, test_images, test_labels, in_filt=8, filt_mult=2):
+
+    # Build convolutional layers
+    model = models.Sequential()
+    model.add(layers.Conv1D(filters=in_filt, kernel_size=9, activation='relu', batch_size=1000,
+                            input_shape=(image_length, n_channels)))
+    model.add(layers.MaxPooling1D(2, strides=filt_mult))
+    model.add(layers.Conv1D(in_filt * pow(filt_mult, 1), 9, activation='relu'))
+    # model.add(layers.MaxPooling1D(2, strides=filt_mult))
+    # model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
+    # model.add(layers.MaxPooling1D(2, strides=filt_mult))
+    # model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
+    # model.add(layers.MaxPooling1D(2, strides=filt_mult))
+
+    # Build detection layers
+    model.add(layers.Flatten())
+    # model.add(layers.Dense(64, activation='relu'))
+    model.add(layers.Dense(32, activation='relu'))
+    model.add(layers.Dense(4, activation='sigmoid'))
+    model.summary()
+
+    # Define algorithms
+    model.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=1E-9, momentum=0.0),
+                  loss='categorical_crossentropy', metrics=['accuracy'])
+
+    # Train and test model
+    history = model.fit(train_images, train_labels, epochs=20, validation_data=(test_images, test_labels))
+
+    return history
+
+
 # =====================================================================================================================
 #                                                       MAIN
 # =====================================================================================================================
 def main():
     print('***************************** ACES ********************************************')
-    image_length = 4096
-    n_channels = 4
     in_filt = 8
     filt_mult = 2
 
@@ -242,32 +278,7 @@ def main():
     print('\nBEGIN MODEL CONSTRUCTION')
 
     """
-    # Build convolutional layers
-    model = models.Sequential()
-    model.add(layers.Conv1D(filters=in_filt, kernel_size=9, activation='relu', batch_size=1000,
-                            input_shape=(image_length, n_channels)))
-    model.add(layers.MaxPooling1D(2, strides=filt_mult))
-    model.add(layers.Conv1D(in_filt * pow(filt_mult, 1), 9, activation='relu'))
-    # model.add(layers.MaxPooling1D(2, strides=filt_mult))
-    # model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
-    # model.add(layers.MaxPooling1D(2, strides=filt_mult))
-    # model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
-    # model.add(layers.MaxPooling1D(2, strides=filt_mult))
-
-    # Build detection layers
-    model.add(layers.Flatten())
-    # model.add(layers.Dense(64, activation='relu'))
-    model.add(layers.Dense(32, activation='relu'))
-    model.add(layers.Dense(4, activation='sigmoid'))
-    model.summary()
-
-    # Define algorithms
-    model.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=1E-9, momentum=0.0),
-                  loss='categorical_crossentropy', metrics=['accuracy'])
-
-    # Train and test model
-    history = model.fit(train_images, train_labels, epochs=20, validation_data=(test_images, test_labels))
-
+    history = sequential_CNN(train_images, train_labels, test_images, test_labels)
     # Plot history of model train and testing
     plt.plot(history.history['loss'], label='loss')
     plt.plot(history.history['accuracy'], label='accuracy')
