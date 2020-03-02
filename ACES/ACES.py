@@ -158,7 +158,7 @@ def plot_subpopulations(class_labels):
 
     plt.pie(counts, labels=classes)
 
-    plt.show(block=False)
+    plt.show()
 
 
 def evaluate_model(train_images, train_labels, test_images, test_labels):
