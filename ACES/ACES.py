@@ -211,31 +211,35 @@ def sequential_CNN(train_images, train_labels, test_images, test_labels, in_filt
 
     # Build convolutional layers
     model = models.Sequential()
-    model.add(layers.Conv1D(filters=in_filt, kernel_size=9, activation='relu', batch_size=1000,
+    model.add(layers.Conv1D(filters=in_filt, kernel_size=9, activation='relu', batch_size=128,
                             input_shape=(image_length, n_channels)))
     model.add(layers.MaxPooling1D(2, strides=filt_mult))
     model.add(layers.Conv1D(in_filt * pow(filt_mult, 1), 9, activation='relu'))
-    # model.add(layers.MaxPooling1D(2, strides=filt_mult))
-    # model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
-    # model.add(layers.MaxPooling1D(2, strides=filt_mult))
-    # model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
-    # model.add(layers.MaxPooling1D(2, strides=filt_mult))
+    model.add(layers.MaxPooling1D(2, strides=filt_mult))
+    model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
+    model.add(layers.MaxPooling1D(2, strides=filt_mult))
+    model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
+    model.add(layers.MaxPooling1D(2, strides=filt_mult))
 
     # Build detection layers
     model.add(layers.Flatten())
-    # model.add(layers.Dense(64, activation='relu'))
+    model.add(layers.Dense(64, activation='relu'))
     model.add(layers.Dense(32, activation='relu'))
     model.add(layers.Dense(4, activation='sigmoid'))
     model.summary()
 
     # Define algorithms
-    model.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=1E-9, momentum=0.0),
+    model.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=1e-6, momentum=0.0),
                   loss='categorical_crossentropy', metrics=['accuracy'])
 
     # Train and test model
-    history = model.fit(train_images, train_labels, epochs=20, validation_data=(test_images, test_labels))
+    history = model.fit(train_images, train_labels, epochs=5, validation_data=(test_images, test_labels))
 
-    return history
+    test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
+
+    print('Test accuracy: %s' % test_acc)
+
+    return history, model
 
 
 # =====================================================================================================================
@@ -248,7 +252,7 @@ def main():
 
     print('\nLOAD IMAGES')
     # Load in images
-    images, names = load_images('Blocks/', 10000)
+    images, names = load_images('Blocks/', 40000)
 
     # Construct DataFrame matching images to their names
     data = pd.DataFrame()
@@ -267,7 +271,7 @@ def main():
 
     print('\nSPLIT DATA INTO TRAIN AND TEST')
     # Split images into test and train
-    train_images, test_images, train_labels, test_labels = split_data(data, labels, 8000, image_length, n_channels)
+    train_images, test_images, train_labels, test_labels = split_data(data, labels, 30000, image_length, n_channels)
 
     # Deletes variables no longer needed
     del data, labels
@@ -277,8 +281,8 @@ def main():
 
     print('\nBEGIN MODEL CONSTRUCTION')
 
-    """
-    history = sequential_CNN(train_images, train_labels, test_images, test_labels)
+    history, model = sequential_CNN(train_images, train_labels, test_images, test_labels)
+
     # Plot history of model train and testing
     plt.plot(history.history['loss'], label='loss')
     plt.plot(history.history['accuracy'], label='accuracy')
@@ -289,10 +293,23 @@ def main():
     plt.legend(loc='lower right')
     plt.show()
 
-    test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
-    
-    """
-    print('Test accuracy: %s' % evaluate_model(train_images, train_labels, test_images, test_labels))
+    pred_labels = model.predict_classes(test_images, batch_size=128)
+
+    #pred_labels = [str(i) for i in pred_labels]
+
+    classes = ['False', 'CSC', 'NSC', 'MP']
+    number = [0, 1, 2, 3]
+
+    class_labels = []
+
+    for i in range(len(pred_labels)):
+        for j in range(len(classes)):
+            if pred_labels[i] == number[j]:
+                class_labels.append(classes[j])
+
+    plot_subpopulations(class_labels)
+
+    #print('Test accuracy: %s' % evaluate_model(train_images, train_labels, test_images, test_labels))
 
 
 if __name__ == '__main__':
