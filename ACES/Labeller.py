@@ -11,6 +11,7 @@ TODO:
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from collections import Counter
 
 # =====================================================================================================================
 #                                                     GLOBAL
@@ -18,7 +19,7 @@ import matplotlib.pyplot as plt
 pd.plotting.register_matplotlib_converters()
 
 # List of class names
-classes = ['CSC', 'NSC', 'MP']
+#classes = ['CSC', 'NSC', 'MP']
 header = ['CLASS', 'START', 'STOP']
 
 
@@ -67,6 +68,9 @@ def load_labels():
     # Dict to hold all the individual class DataFrame slices
     LABELS = {}
 
+    # Finds class names from Labels
+    classes = [item[0] for item in Counter(labels.index).most_common()]
+
     # Slices labels into separate DataFrames for each classification
     for classification in classes:
         LABELS[classification] = labels.loc[classification].reset_index(drop=True)
@@ -90,14 +94,14 @@ def load_labels():
     # Labels any remaining points as False
     labelled_data['LABELS'].fillna(False, inplace=True)
 
-    return labelled_data
+    return labelled_data, classes
 
 
 # =====================================================================================================================
 #                                                       MAIN
 # =====================================================================================================================
 def main():
-    data = load_labels()
+    data, classes = load_labels()
 
     # Plot using inbuilt Pandas function
     data.plot(y=['BR_norm', 'BMAG_norm'], kind='line')
