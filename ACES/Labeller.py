@@ -19,7 +19,6 @@ from collections import Counter
 pd.plotting.register_matplotlib_converters()
 
 # List of class names
-#classes = ['CSC', 'NSC', 'MP']
 header = ['CLASS', 'START', 'STOP']
 
 
