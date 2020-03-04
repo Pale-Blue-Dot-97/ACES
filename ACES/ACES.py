@@ -59,7 +59,12 @@ def load_images(path, n_images):
         images.append([image.imread(fname=(path + name), format='PNG') / 255.0])
         names.append(name.replace('Blocks\\', '').replace('.png', ''))
 
-    return images, names
+    # Construct DataFrame matching images to their names
+    data = pd.DataFrame()
+    data['NAME'] = names
+    data['IMAGE'] = images
+
+    return data
 
 
 def load_labels():
@@ -93,15 +98,37 @@ def load_labels():
     return labels, n_classes, classes, identity
 
 
-def split_data(data, labels, n, image_length, n_channels):
+def balance_data(data, classes):
+
+    plot_subpopulations(data['CLASS'])
+
+    modes = Counter(data['CLASS']).most_common()
+
+    min_size = modes[len(modes) - 1][1]
+
+    dataframes = {}
+
+    for classification in classes:
+        class_df = data[data['CLASS'] == classification].reset_index(drop=True)
+
+        class_size = len(class_df)
+        names = [class_df['NAME'][i] for i in random.sample(range(class_size), class_size - min_size)]
+
+        dataframes[classification] = class_df[~class_df['NAME'].isin(names)]
+
+    new_data = pd.concat(dataframes)
+
+    plot_subpopulations(new_data['CLASS'])
+
+    return new_data
+
+
+def split_data(data, train_frac):
     """Splits data into training and testing data
 
     Args:
-        data (DataFrame): Table of images with filenames
-        labels (DataFrame): Table of labels for images with filenames
-        n (int): Number of training images desired
-        image_length (int): Length of each image
-        n_channels (int): Number of channels of each image
+        data (DataFrame): Table of images with filenames and labels
+        train_frac (float): Fraction of images desired for training
 
     Returns:
         train_images ([[[float]]]): All training images
@@ -110,6 +137,10 @@ def split_data(data, labels, n, image_length, n_channels):
         test_labels ([[int]]): All accompanying testing labels
 
     """
+
+    # Finds number of images to select for training
+    n = int(len(data.index) * train_frac)
+
     # Fixes seed number so results are replicable
     random.seed(42)
 
@@ -139,8 +170,8 @@ def split_data(data, labels, n, image_length, n_channels):
     train_images = np.array(data.loc[data['NAME'].isin(train_names)]['IMAGE'].tolist())
     test_images = np.array(data.loc[data['NAME'].isin(test_names)]['IMAGE'].tolist())
 
-    train_labels = np.array(labels.loc[labels['NAME'].isin(train_names)]['LABEL'].tolist())
-    test_labels = np.array(labels.loc[labels['NAME'].isin(test_names)]['LABEL'].tolist())
+    train_labels = np.array(data.loc[data['NAME'].isin(train_names)]['LABEL'].tolist())
+    test_labels = np.array(data.loc[data['NAME'].isin(test_names)]['LABEL'].tolist())
 
     print('Length of train images: %s' % len(train_images))
     print('Length of train labels: %s' % len(train_labels))
@@ -148,7 +179,8 @@ def split_data(data, labels, n, image_length, n_channels):
     print('Length of test labels: %s' % len(test_labels))
 
     return train_images.reshape((len(train_images), n_channels, image_length)), \
-           test_images.reshape((len(test_images), n_channels, image_length)), train_labels, test_labels
+           test_images.reshape((len(test_images), n_channels, image_length)), \
+           train_labels, test_labels
 
 
 def plot_subpopulations(class_labels):
@@ -222,10 +254,10 @@ def sequential_CNN(train_images, train_labels, test_images, test_labels, n_class
     model.add(layers.MaxPooling1D(2, strides=filt_mult))
     model.add(layers.Conv1D(in_filt * pow(filt_mult, 1), 9, activation='relu'))
     model.add(layers.MaxPooling1D(2, strides=filt_mult))
-    #model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
-    #model.add(layers.MaxPooling1D(2, strides=filt_mult))
-    #model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
-    #model.add(layers.MaxPooling1D(2, strides=filt_mult))
+    model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
+    model.add(layers.MaxPooling1D(2, strides=filt_mult))
+    model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
+    model.add(layers.MaxPooling1D(2, strides=filt_mult))
 
     # Build detection layers
     model.add(layers.Flatten())
@@ -258,42 +290,43 @@ def main():
     print('***************************** ACES ********************************************')
     in_filt = 8
     filt_mult = 2
+    batch_size = 32
 
     print('\nLOAD IMAGES')
     # Load in images
-    images, names = load_images('Blocks/', 40000)
-
-    # Construct DataFrame matching images to their names
-    data = pd.DataFrame()
-    data['NAME'] = names
-    data['IMAGE'] = images
-
-    # Deletes variables no longer needed from memory
-    del names, images
+    data = load_images('Blocks/', 40000)
 
     print('\nLOAD LABELS')
     # Load in accompanying labels into separate randomly ordered DataFrame
     labels, n_classes, classes, identity = load_labels()
 
-    print('\nDISPLAYING CLASS DISTRIBUTION')
-    plot_subpopulations(labels['CLASS'])
-
-    print('\nSPLIT DATA INTO TRAIN AND TEST')
-    # Split images into test and train
-    train_images, test_images, train_labels, test_labels = split_data(data, labels, 30000, image_length, n_channels)
-
-    # Compute class weights to account for dataset imbalance
-    #class_weights = class_weight.compute_class_weight('balanced', np.unique(identity), identity)
+    dataset = pd.merge(data, labels, on='NAME')
 
     # Deletes variables no longer needed
     del data, labels
+
+    #print('\nDISPLAYING CLASS DISTRIBUTION')
+    #plot_subpopulations(dataset['CLASS'])
+
+    print('\nBALANCING DATA')
+    data = balance_data(dataset, classes)
+
+    del dataset
+
+    print('\nSPLIT DATA INTO TRAIN AND TEST')
+    # Split images into test and train
+    train_images, test_images, train_labels, test_labels = split_data(data, 0.8)
+
+    # Compute class weights to account for dataset imbalance
+    #class_weights = class_weight.compute_class_weight('balanced', np.unique(identity), identity)
 
     train_images = np.swapaxes(train_images, 1, 2)
     test_images = np.swapaxes(test_images, 1, 2)
 
     print('\nBEGIN MODEL CONSTRUCTION')
 
-    history, model = sequential_CNN(train_images, train_labels, test_images, test_labels, n_classes, class_weights)
+    history, model = sequential_CNN(train_images, train_labels, test_images, test_labels, n_classes,
+                                    epochs=40, batch_size=batch_size, in_filt=in_filt, filt_mult=filt_mult)
 
     # Plot history of model train and testing
     plt.plot(history.history['loss'], label='loss')
@@ -305,12 +338,7 @@ def main():
     plt.legend(loc='lower right')
     plt.show()
 
-    pred_labels = model.predict_classes(test_images, batch_size=128)
-
-    #pred_labels = [str(i) for i in pred_labels]
-
-    #classes = ['False', 'CSC', 'NSC', 'MP']
-    #number = [0, 1, 2, 3]
+    pred_labels = model.predict_classes(test_images, batch_size=batch_size)
 
     class_labels = []
 
