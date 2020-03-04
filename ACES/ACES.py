@@ -247,7 +247,7 @@ def multi_head_CNN(train_images, train_labels, test_images, test_labels, verbose
 
 
 def sequential_CNN(train_images, train_labels, test_images, test_labels, n_classes,
-                   epochs=5, batch_size=32, class_weights=None, in_filt=8, filt_mult=2):
+                   epochs=5, batch_size=32, class_weights=None, in_filt=8, filt_mult=2, verbose=0):
 
     # Build convolutional layers
     model = models.Sequential()
@@ -258,11 +258,12 @@ def sequential_CNN(train_images, train_labels, test_images, test_labels, n_class
     model.add(layers.MaxPooling1D(2, strides=filt_mult))
     model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
     model.add(layers.MaxPooling1D(2, strides=filt_mult))
-    model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
+    model.add(layers.Conv1D(in_filt*pow(filt_mult, 3), 9, activation='relu'))
     model.add(layers.MaxPooling1D(2, strides=filt_mult))
 
     # Build detection layers
     model.add(layers.Flatten())
+    model.add(layers.Dense(128, activation='relu'))
     model.add(layers.Dense(64, activation='relu'))
     model.add(layers.Dense(32, activation='relu'))
     model.add(layers.Dense(n_classes, activation='softmax'))
@@ -278,7 +279,8 @@ def sequential_CNN(train_images, train_labels, test_images, test_labels, n_class
                         epochs=epochs,
                         validation_data=(test_images, test_labels))
 
-    plot_history(history)
+    if verbose is 1 or 2:
+        plot_history(history)
 
     test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
 
@@ -318,15 +320,15 @@ def plot_predictions(model, test_images, batch_size, n_classes, classes):
 # =====================================================================================================================
 def main():
     print('***************************** ACES ********************************************')
-    in_filt = 8
+    in_filt = 32
     filt_mult = 2
     batch_size = 32
-    model_type = 'multi-head'
+    model_type = 'sequential'
     verbose = 0
 
     print('\nLOAD IMAGES')
     # Load in images
-    data = load_images('Blocks/', 40000)
+    data = load_images('Blocks/', 80000)
 
     print('\nLOAD LABELS')
     # Load in accompanying labels into separate randomly ordered DataFrame
@@ -351,9 +353,10 @@ def main():
     print('\nBEGIN MODEL CONSTRUCTION')
     if model_type is 'sequential':
         history, model = sequential_CNN(train_images, train_labels, test_images, test_labels, n_classes,
-                                        epochs=40, batch_size=batch_size, in_filt=in_filt, filt_mult=filt_mult)
+                                        epochs=50, batch_size=batch_size, in_filt=in_filt, filt_mult=filt_mult,
+                                        verbose=verbose)
 
-        if verbose == 1:
+        if verbose == 2:
             plot_predictions(model, test_images, batch_size, n_classes, classes)
 
     if model_type is 'multi-head':

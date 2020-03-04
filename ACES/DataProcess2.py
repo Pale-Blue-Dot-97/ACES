@@ -25,7 +25,7 @@ from Labeller import load_labels
 threshold_fraction = 0.5
 
 # Number of blocks to create for each data perturbation
-n = 10000
+n = 20000
 
 # Length of each block
 block_length = 4096
