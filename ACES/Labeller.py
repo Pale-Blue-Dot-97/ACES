@@ -1,7 +1,6 @@
 """Script to manually label Voyager 1 Jupiter flyby magnetometer data for neural network training
 
 TODO:
-    * Label all of data using class start/stop points
 
 """
 
@@ -18,7 +17,7 @@ from collections import Counter
 # =====================================================================================================================
 pd.plotting.register_matplotlib_converters()
 
-# List of class names
+# Header names in Labels.csv
 header = ['CLASS', 'START', 'STOP']
 
 
