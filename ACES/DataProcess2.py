@@ -55,33 +55,6 @@ def renormalise(data):
     return new_data.reset_index(drop=True)
 
 
-def create_blocks(data):
-    """Splits the data into 4096 long blocks as numpy arrays
-
-    Args:
-        data (DataFrame): Table containing data to split into blocks
-
-    Returns:
-        blocks ([[[float]]]): 3D array containing blocks of 4096 * 4 values
-
-    """
-
-    blocks = []
-
-    # Slices DataFrame into 4096 long blocks
-    for i in range(int(len(data['BR_norm']) / 4096.0)):
-        block_slice = data[(i-1) * 4096: (i * 4096) - 1]
-
-        block = []
-
-        for j in ['BR_norm', 'BPH_norm', 'BTH_norm', 'BMAG_norm']:
-            block.append(np.array(block_slice[j]))
-
-        blocks.append(np.array(block))
-
-    return blocks
-
-
 def create_random_blocks(data):
     """Selects n number of random 4096 long blocks from the data as numpy arrays
 
@@ -250,7 +223,7 @@ def main():
     print('*************************** WELCOME TO DATAPROCESS2 *************************************')
 
     print('\nLOADING DATA')
-    data = load_labels()
+    data, classes = load_labels()
 
     print('\nRE-NORMALISING DATA')
     stan_data = renormalise(data)

@@ -18,6 +18,7 @@ import numpy as np
 import random
 import os
 from collections import Counter
+from sklearn.utils import class_weight
 
 
 # =====================================================================================================================
@@ -71,20 +72,25 @@ def load_labels():
 
     labels = pd.read_csv('Block_Labels.csv', names=('NAME', 'LABEL'), dtype=str, header=0)
 
+    # Finds class names from labels
+    classes = [item[0] for item in Counter(labels['LABEL']).most_common()]
+
+    n_classes = len(classes)
+
+    identity = np.identity(n_classes, dtype=int)
+
+    for i in range(n_classes):
+        print(classes[i], identity[i])
+
     def bool_to_binary(label):
-        if label == 'False':
-            return [1, 0, 0, 0]
-        elif label == 'CSC':
-            return [0, 1, 0, 0]
-        elif label == 'NSC':
-            return [0, 0, 1, 0]
-        elif label == 'MP':
-            return [0, 0, 0, 1]
+        for j in range(n_classes):
+            if label == classes[j]:
+                return identity[j]
 
     labels['CLASS'] = labels['LABEL']
     labels['LABEL'] = labels['CLASS'].apply(bool_to_binary)
 
-    return labels
+    return labels, n_classes, classes, identity
 
 
 def split_data(data, labels, n, image_length, n_channels):
@@ -96,7 +102,6 @@ def split_data(data, labels, n, image_length, n_channels):
         n (int): Number of training images desired
         image_length (int): Length of each image
         n_channels (int): Number of channels of each image
-        stratify (bool): Whether to startify training data in equal True/ False cases. Default True
 
     Returns:
         train_images ([[[float]]]): All training images
@@ -121,7 +126,7 @@ def split_data(data, labels, n, image_length, n_channels):
     for i in random.sample(range(0, len(names)), n):
         train_names.append(names[i])
 
-    print('length of train names: %s' % len(train_names))
+    print('Length of train names: %s' % len(train_names))
 
     if len(train_names) != len(set(train_names)):
         print(len(set(train_names)))
@@ -207,33 +212,37 @@ def evaluate_model(train_images, train_labels, test_images, test_labels):
     return accuracy
 
 
-def sequential_CNN(train_images, train_labels, test_images, test_labels, in_filt=8, filt_mult=2):
+def sequential_CNN(train_images, train_labels, test_images, test_labels, n_classes,
+                   epochs=5, batch_size=32, class_weights=None, in_filt=8, filt_mult=2):
 
     # Build convolutional layers
     model = models.Sequential()
-    model.add(layers.Conv1D(filters=in_filt, kernel_size=9, activation='relu', batch_size=128,
+    model.add(layers.Conv1D(filters=in_filt, kernel_size=9, activation='relu', batch_size=batch_size,
                             input_shape=(image_length, n_channels)))
     model.add(layers.MaxPooling1D(2, strides=filt_mult))
     model.add(layers.Conv1D(in_filt * pow(filt_mult, 1), 9, activation='relu'))
     model.add(layers.MaxPooling1D(2, strides=filt_mult))
-    model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
-    model.add(layers.MaxPooling1D(2, strides=filt_mult))
-    model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
-    model.add(layers.MaxPooling1D(2, strides=filt_mult))
+    #model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
+    #model.add(layers.MaxPooling1D(2, strides=filt_mult))
+    #model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
+    #model.add(layers.MaxPooling1D(2, strides=filt_mult))
 
     # Build detection layers
     model.add(layers.Flatten())
     model.add(layers.Dense(64, activation='relu'))
     model.add(layers.Dense(32, activation='relu'))
-    model.add(layers.Dense(4, activation='sigmoid'))
+    model.add(layers.Dense(n_classes, activation='softmax'))
     model.summary()
 
     # Define algorithms
-    model.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=1e-6, momentum=0.0),
+    model.compile(optimizer=tf.keras.optimizers.RMSprop(learning_rate=1e-4, momentum=0.0, clipvalue=0.5),
                   loss='categorical_crossentropy', metrics=['accuracy'])
 
     # Train and test model
-    history = model.fit(train_images, train_labels, epochs=5, validation_data=(test_images, test_labels))
+    history = model.fit(train_images, train_labels,
+                        class_weight=class_weights,
+                        epochs=epochs,
+                        validation_data=(test_images, test_labels))
 
     test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
 
@@ -264,7 +273,7 @@ def main():
 
     print('\nLOAD LABELS')
     # Load in accompanying labels into separate randomly ordered DataFrame
-    labels = load_labels()
+    labels, n_classes, classes, identity = load_labels()
 
     print('\nDISPLAYING CLASS DISTRIBUTION')
     plot_subpopulations(labels['CLASS'])
@@ -272,6 +281,9 @@ def main():
     print('\nSPLIT DATA INTO TRAIN AND TEST')
     # Split images into test and train
     train_images, test_images, train_labels, test_labels = split_data(data, labels, 30000, image_length, n_channels)
+
+    # Compute class weights to account for dataset imbalance
+    #class_weights = class_weight.compute_class_weight('balanced', np.unique(identity), identity)
 
     # Deletes variables no longer needed
     del data, labels
@@ -281,7 +293,7 @@ def main():
 
     print('\nBEGIN MODEL CONSTRUCTION')
 
-    history, model = sequential_CNN(train_images, train_labels, test_images, test_labels)
+    history, model = sequential_CNN(train_images, train_labels, test_images, test_labels, n_classes, class_weights)
 
     # Plot history of model train and testing
     plt.plot(history.history['loss'], label='loss')
@@ -297,14 +309,14 @@ def main():
 
     #pred_labels = [str(i) for i in pred_labels]
 
-    classes = ['False', 'CSC', 'NSC', 'MP']
-    number = [0, 1, 2, 3]
+    #classes = ['False', 'CSC', 'NSC', 'MP']
+    #number = [0, 1, 2, 3]
 
     class_labels = []
 
     for i in range(len(pred_labels)):
-        for j in range(len(classes)):
-            if pred_labels[i] == number[j]:
+        for j in range(n_classes):
+            if pred_labels[i] == j:
                 class_labels.append(classes[j])
 
     plot_subpopulations(class_labels)
