@@ -98,9 +98,10 @@ def load_labels():
     return labels, n_classes, classes, identity
 
 
-def balance_data(data, classes):
+def balance_data(data, classes, verbose=0):
 
-    plot_subpopulations(data['CLASS'])
+    if verbose == 1:
+        plot_subpopulations(data['CLASS'])
 
     modes = Counter(data['CLASS']).most_common()
 
@@ -118,7 +119,8 @@ def balance_data(data, classes):
 
     new_data = pd.concat(dataframes)
 
-    plot_subpopulations(new_data['CLASS'])
+    if verbose == 1:
+        plot_subpopulations(new_data['CLASS'])
 
     return new_data
 
@@ -198,8 +200,8 @@ def plot_subpopulations(class_labels):
     plt.show()
 
 
-def evaluate_model(train_images, train_labels, test_images, test_labels):
-    verbose, epochs, batch_size = 1, 10, 128
+def multi_head_CNN(train_images, train_labels, test_images, test_labels, verbose=1, epochs=50, batch_size=32):
+
     n_timesteps, n_features, n_outputs = train_images.shape[1], train_images.shape[2], train_labels.shape[1]
 
     # head 1
@@ -276,6 +278,8 @@ def sequential_CNN(train_images, train_labels, test_images, test_labels, n_class
                         epochs=epochs,
                         validation_data=(test_images, test_labels))
 
+    plot_history(history)
+
     test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
 
     print('Test accuracy: %s' % test_acc)
@@ -283,51 +287,7 @@ def sequential_CNN(train_images, train_labels, test_images, test_labels, n_class
     return history, model
 
 
-# =====================================================================================================================
-#                                                       MAIN
-# =====================================================================================================================
-def main():
-    print('***************************** ACES ********************************************')
-    in_filt = 8
-    filt_mult = 2
-    batch_size = 32
-
-    print('\nLOAD IMAGES')
-    # Load in images
-    data = load_images('Blocks/', 40000)
-
-    print('\nLOAD LABELS')
-    # Load in accompanying labels into separate randomly ordered DataFrame
-    labels, n_classes, classes, identity = load_labels()
-
-    dataset = pd.merge(data, labels, on='NAME')
-
-    # Deletes variables no longer needed
-    del data, labels
-
-    #print('\nDISPLAYING CLASS DISTRIBUTION')
-    #plot_subpopulations(dataset['CLASS'])
-
-    print('\nBALANCING DATA')
-    data = balance_data(dataset, classes)
-
-    del dataset
-
-    print('\nSPLIT DATA INTO TRAIN AND TEST')
-    # Split images into test and train
-    train_images, test_images, train_labels, test_labels = split_data(data, 0.8)
-
-    # Compute class weights to account for dataset imbalance
-    #class_weights = class_weight.compute_class_weight('balanced', np.unique(identity), identity)
-
-    train_images = np.swapaxes(train_images, 1, 2)
-    test_images = np.swapaxes(test_images, 1, 2)
-
-    print('\nBEGIN MODEL CONSTRUCTION')
-
-    history, model = sequential_CNN(train_images, train_labels, test_images, test_labels, n_classes,
-                                    epochs=40, batch_size=batch_size, in_filt=in_filt, filt_mult=filt_mult)
-
+def plot_history(history):
     # Plot history of model train and testing
     plt.plot(history.history['loss'], label='loss')
     plt.plot(history.history['accuracy'], label='accuracy')
@@ -336,8 +296,11 @@ def main():
     plt.ylabel('Accuracy')
     plt.ylim([0, 1])
     plt.legend(loc='lower right')
+
     plt.show()
 
+
+def plot_predictions(model, test_images, batch_size, n_classes, classes):
     pred_labels = model.predict_classes(test_images, batch_size=batch_size)
 
     class_labels = []
@@ -349,7 +312,52 @@ def main():
 
     plot_subpopulations(class_labels)
 
-    #print('Test accuracy: %s' % evaluate_model(train_images, train_labels, test_images, test_labels))
+
+# =====================================================================================================================
+#                                                       MAIN
+# =====================================================================================================================
+def main():
+    print('***************************** ACES ********************************************')
+    in_filt = 8
+    filt_mult = 2
+    batch_size = 32
+    model_type = 'multi-head'
+    verbose = 0
+
+    print('\nLOAD IMAGES')
+    # Load in images
+    data = load_images('Blocks/', 40000)
+
+    print('\nLOAD LABELS')
+    # Load in accompanying labels into separate randomly ordered DataFrame
+    labels, n_classes, classes, identity = load_labels()
+
+    # Merges data and labels together
+    data = pd.merge(data, labels, on='NAME')
+
+    # Deletes un-needed variable
+    del labels
+
+    print('\nBALANCING DATA')
+    data = balance_data(data, classes, verbose=0)
+
+    print('\nSPLIT DATA INTO TRAIN AND TEST')
+    # Split images into test and train
+    train_images, test_images, train_labels, test_labels = split_data(data, 0.8)
+
+    train_images = np.swapaxes(train_images, 1, 2)
+    test_images = np.swapaxes(test_images, 1, 2)
+
+    print('\nBEGIN MODEL CONSTRUCTION')
+    if model_type is 'sequential':
+        history, model = sequential_CNN(train_images, train_labels, test_images, test_labels, n_classes,
+                                        epochs=40, batch_size=batch_size, in_filt=in_filt, filt_mult=filt_mult)
+
+        if verbose == 1:
+            plot_predictions(model, test_images, batch_size, n_classes, classes)
+
+    if model_type is 'multi-head':
+        print('Test accuracy: %s' % multi_head_CNN(train_images, train_labels, test_images, test_labels))
 
 
 if __name__ == '__main__':
