@@ -200,7 +200,8 @@ def plot_subpopulations(class_labels):
     plt.show()
 
 
-def multi_head_CNN(train_images, train_labels, test_images, test_labels, verbose=1, epochs=50, batch_size=32):
+def multi_head_CNN(train_images, train_labels, val_images, val_labels, test_images, test_labels,
+                   verbose=1, epochs=50, batch_size=32, in_filt=8):
 
     n_timesteps, n_features, n_outputs = train_images.shape[1], train_images.shape[2], train_labels.shape[1]
 
@@ -238,7 +239,11 @@ def multi_head_CNN(train_images, train_labels, test_images, test_labels, verbose
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
     # fit network
-    model.fit([train_images, train_images, train_images], train_labels, epochs=epochs, batch_size=batch_size, verbose=verbose)
+    model.fit([train_images, train_images, train_images], train_labels,
+              validation_data=([val_images, val_images, val_images], val_labels),
+              epochs=epochs,
+              batch_size=batch_size,
+              verbose=verbose)
 
     # evaluate model
     _, accuracy = model.evaluate([test_images, test_images, test_images], test_labels, batch_size=batch_size, verbose=0)
@@ -246,7 +251,7 @@ def multi_head_CNN(train_images, train_labels, test_images, test_labels, verbose
     return accuracy
 
 
-def sequential_CNN(train_images, train_labels, test_images, test_labels, n_classes,
+def sequential_CNN(train_images, train_labels, val_images, val_labels, test_images, test_labels, n_classes,
                    epochs=5, batch_size=32, class_weights=None, in_filt=8, filt_mult=2, verbose=0):
 
     # Build convolutional layers
@@ -277,7 +282,7 @@ def sequential_CNN(train_images, train_labels, test_images, test_labels, n_class
     history = model.fit(train_images, train_labels,
                         class_weight=class_weights,
                         epochs=epochs,
-                        validation_data=(test_images, test_labels))
+                        validation_data=(val_images, val_labels))
 
     if verbose is 1 or 2:
         plot_history(history)
@@ -320,6 +325,7 @@ def plot_predictions(model, test_images, batch_size, n_classes, classes):
 # =====================================================================================================================
 def main():
     print('***************************** ACES ********************************************')
+    epochs = 100
     in_filt = 32
     filt_mult = 2
     batch_size = 32
@@ -345,22 +351,27 @@ def main():
 
     print('\nSPLIT DATA INTO TRAIN AND TEST')
     # Split images into test and train
-    train_images, test_images, train_labels, test_labels = split_data(data, 0.8)
+    train_images, val_images, train_labels, val_labels = split_data(data, 0.8)
 
     train_images = np.swapaxes(train_images, 1, 2)
-    test_images = np.swapaxes(test_images, 1, 2)
+    val_images = np.swapaxes(val_images, 1, 2)
+
+    test_images = val_images
+    test_labels = val_labels
 
     print('\nBEGIN MODEL CONSTRUCTION')
     if model_type is 'sequential':
-        history, model = sequential_CNN(train_images, train_labels, test_images, test_labels, n_classes,
-                                        epochs=50, batch_size=batch_size, in_filt=in_filt, filt_mult=filt_mult,
-                                        verbose=verbose)
+        history, model = sequential_CNN(train_images, train_labels, val_images, val_labels, test_images, test_labels,
+                                        n_classes, epochs=epochs, batch_size=batch_size, in_filt=in_filt,
+                                        filt_mult=filt_mult, verbose=verbose)
 
         if verbose == 2:
             plot_predictions(model, test_images, batch_size, n_classes, classes)
 
     if model_type is 'multi-head':
-        print('Test accuracy: %s' % multi_head_CNN(train_images, train_labels, test_images, test_labels))
+        print('Test accuracy: %s' % multi_head_CNN(train_images, train_labels, val_images, val_labels,
+                                                   test_images, test_labels, epochs=epochs, batch_size=batch_size,
+                                                   in_filt=in_filt, verbose=0))
 
 
 if __name__ == '__main__':
