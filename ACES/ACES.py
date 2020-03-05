@@ -239,11 +239,13 @@ def multi_head_CNN(train_images, train_labels, val_images, val_labels, test_imag
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
     # fit network
-    model.fit([train_images, train_images, train_images], train_labels,
-              validation_data=([val_images, val_images, val_images], val_labels),
-              epochs=epochs,
-              batch_size=batch_size,
-              verbose=verbose)
+    history = model.fit([train_images, train_images, train_images], train_labels,
+                        validation_data=([val_images, val_images, val_images], val_labels),
+                        epochs=epochs,
+                        batch_size=batch_size,
+                        verbose=verbose)
+
+    plot_history(history)
 
     # evaluate model
     _, accuracy = model.evaluate([test_images, test_images, test_images], test_labels, batch_size=batch_size, verbose=0)
@@ -325,12 +327,12 @@ def plot_predictions(model, test_images, batch_size, n_classes, classes):
 # =====================================================================================================================
 def main():
     print('***************************** ACES ********************************************')
-    epochs = 100
+    epochs = 10
     in_filt = 32
     filt_mult = 2
     batch_size = 32
     model_type = 'sequential'
-    verbose = 0
+    verbose = 1
 
     print('\nLOAD IMAGES')
     # Load in images
@@ -371,7 +373,7 @@ def main():
     if model_type is 'multi-head':
         print('Test accuracy: %s' % multi_head_CNN(train_images, train_labels, val_images, val_labels,
                                                    test_images, test_labels, epochs=epochs, batch_size=batch_size,
-                                                   in_filt=in_filt, verbose=0))
+                                                   in_filt=in_filt, verbose=verbose))
 
 
 if __name__ == '__main__':
