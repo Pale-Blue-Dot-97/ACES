@@ -18,7 +18,7 @@ import numpy as np
 import random
 import os
 from collections import Counter
-from sklearn.utils import class_weight
+from sklearn import metrics
 
 
 # =====================================================================================================================
@@ -100,6 +100,7 @@ def load_labels():
 
 def balance_data(data, classes, verbose=0):
 
+    # Plot distribution of class sub-populations before balancing
     if verbose == 1:
         plot_subpopulations(data['CLASS'])
 
@@ -110,15 +111,21 @@ def balance_data(data, classes, verbose=0):
     dataframes = {}
 
     for classification in classes:
+        # Creates a DataFrame of just 1 class
         class_df = data[data['CLASS'] == classification].reset_index(drop=True)
 
         class_size = len(class_df)
+
+        # Randomly selects the names of images to remove from class_df of number of difference in sizes
         names = [class_df['NAME'][i] for i in random.sample(range(class_size), class_size - min_size)]
 
+        # Adds down-sampled DataFrame of class to dict of all class_df
         dataframes[classification] = class_df[~class_df['NAME'].isin(names)]
 
+    # Plot distribution of class sub-populations after balancing
     new_data = pd.concat(dataframes)
 
+    # Plot distribution of class sub-populations after balancing
     if verbose == 1:
         plot_subpopulations(new_data['CLASS'])
 
@@ -309,26 +316,51 @@ def plot_history(history):
     plt.show()
 
 
+def OHE_to_class(ohe_labels, n_classes, classes):
+    class_labels = []
+
+    for i in range(len(ohe_labels)):
+        for j in range(n_classes):
+            if ohe_labels[i] == j:
+                class_labels.append(classes[j])
+
+    return class_labels
+
+
 def plot_predictions(model, test_images, batch_size, n_classes, classes):
     pred_labels = model.predict_classes(test_images, batch_size=batch_size)
 
-    class_labels = []
-
-    for i in range(len(pred_labels)):
-        for j in range(n_classes):
-            if pred_labels[i] == j:
-                class_labels.append(classes[j])
+    class_labels = OHE_to_class(pred_labels, n_classes, classes)
 
     plot_subpopulations(class_labels)
 
+
+def make_confusion_matrix(model, test_images, test_labels, batch_size, n_classes, classes, folder):
+    pred_labels = model.predict_classes(test_images, batch_size=batch_size)
+
+    pred_classes = OHE_to_class(pred_labels, n_classes, classes)
+    test_classes = OHE_to_class(np.argmax(test_labels, axis=1), n_classes, classes)
+
+    conf_matrix = metrics.multilabel_confusion_matrix(y_true=test_classes, y_pred=pred_classes, labels=classes)
+
+    for i in range(len(classes)):
+        plt.imshow(conf_matrix[i], cmap=plt.cm.get_cmap('Blues'))
+        plt.xlabel("Predicted labels")
+        plt.ylabel("True labels")
+        plt.xticks([], [])
+        plt.yticks([], [])
+        plt.title('%s - Confusion Matrix' % classes[i])
+        plt.colorbar()
+        plt.show()
+        plt.savefig('%s/%s-confusion_matrix.png' % (folder, classes[i]))
 
 # =====================================================================================================================
 #                                                       MAIN
 # =====================================================================================================================
 def main():
     print('***************************** ACES ********************************************')
-    epochs = 10
-    in_filt = 32
+    epochs = 20
+    in_filt = 64
     filt_mult = 2
     batch_size = 32
     model_type = 'sequential'
@@ -336,7 +368,7 @@ def main():
 
     print('\nLOAD IMAGES')
     # Load in images
-    data = load_images('Blocks/', 80000)
+    data = load_images('Blocks/', 40000)
 
     print('\nLOAD LABELS')
     # Load in accompanying labels into separate randomly ordered DataFrame
@@ -369,6 +401,8 @@ def main():
 
         if verbose == 2:
             plot_predictions(model, test_images, batch_size, n_classes, classes)
+
+        make_confusion_matrix(model, test_images, test_labels, batch_size, n_classes, classes, 'Confusion_Matrices')
 
     if model_type is 'multi-head':
         print('Test accuracy: %s' % multi_head_CNN(train_images, train_labels, val_images, val_labels,
