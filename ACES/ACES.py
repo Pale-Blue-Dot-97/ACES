@@ -19,6 +19,7 @@ import random
 import os
 from collections import Counter
 from sklearn import metrics
+import seaborn as sns
 
 
 # =====================================================================================================================
@@ -335,32 +336,32 @@ def plot_predictions(model, test_images, batch_size, n_classes, classes):
     plot_subpopulations(class_labels)
 
 
-def make_confusion_matrix(model, test_images, test_labels, batch_size, n_classes, classes, folder):
+def make_confusion_matrix(model, test_images, test_labels, batch_size, classes):
     pred_labels = model.predict_classes(test_images, batch_size=batch_size)
 
-    pred_classes = OHE_to_class(pred_labels, n_classes, classes)
-    test_classes = OHE_to_class(np.argmax(test_labels, axis=1), n_classes, classes)
+    conf_matrix = tf.math.confusion_matrix(labels=np.argmax(test_labels, axis=1), predictions=pred_labels).numpy()
 
-    conf_matrix = metrics.multilabel_confusion_matrix(y_true=test_classes, y_pred=pred_classes, labels=classes)
+    conf_matrix_norm = np.around(conf_matrix.astype('float') / conf_matrix.sum(axis=1)[:, np.newaxis], decimals=2)
 
-    for i in range(len(classes)):
-        plt.imshow(conf_matrix[i], cmap=plt.cm.get_cmap('Blues'))
-        plt.xlabel("Predicted labels")
-        plt.ylabel("True labels")
-        plt.xticks([], [])
-        plt.yticks([], [])
-        plt.title('%s - Confusion Matrix' % classes[i])
-        plt.colorbar()
-        plt.show()
-        plt.savefig('%s/%s-confusion_matrix.png' % (folder, classes[i]))
+    con_mat_df = pd.DataFrame(conf_matrix_norm,
+                              index=classes,
+                              columns=classes)
+
+    #plt.figure(figsize=(8, 8))
+    sns.heatmap(con_mat_df, annot=True, square=True, cmap=plt.cm.get_cmap('Blues'))
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    plt.show()
+
 
 # =====================================================================================================================
 #                                                       MAIN
 # =====================================================================================================================
 def main():
     print('***************************** ACES ********************************************')
-    epochs = 20
-    in_filt = 64
+    epochs = 5
+    in_filt = 32
     filt_mult = 2
     batch_size = 32
     model_type = 'sequential'
@@ -368,7 +369,7 @@ def main():
 
     print('\nLOAD IMAGES')
     # Load in images
-    data = load_images('Blocks/', 40000)
+    data = load_images('Blocks/', 20000)
 
     print('\nLOAD LABELS')
     # Load in accompanying labels into separate randomly ordered DataFrame
@@ -402,7 +403,7 @@ def main():
         if verbose == 2:
             plot_predictions(model, test_images, batch_size, n_classes, classes)
 
-        make_confusion_matrix(model, test_images, test_labels, batch_size, n_classes, classes, 'Confusion_Matrices')
+        make_confusion_matrix(model, test_images, test_labels, batch_size, classes)
 
     if model_type is 'multi-head':
         print('Test accuracy: %s' % multi_head_CNN(train_images, train_labels, val_images, val_labels,
