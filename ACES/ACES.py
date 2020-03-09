@@ -1,8 +1,9 @@
-"""ACES
+"""ACES - Autonomous Communications Enhancement System
 
 TODO:
-    * Construct model
-
+    * Implement model hyper-parameter varying tester code
+    * Split data into train, validate and test
+    * Implement Cassini data as test
 """
 
 # =====================================================================================================================
@@ -421,6 +422,7 @@ def main():
 
     test_images = val_images
     test_labels = val_labels
+
 
     print('\nBEGIN MODEL CONSTRUCTION')
     if model_type is 'sequential':
