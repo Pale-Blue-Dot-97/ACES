@@ -1,6 +1,7 @@
 """ACES - Autonomous Communications Enhancement System
 
 TODO:
+    * Fix json outputting of testing
     * Split data into train, validate and test
     * Implement Cassini data as test
 """
@@ -215,7 +216,7 @@ def split_data(data, train_frac):
 
 
 def plot_subpopulations(class_labels):
-    """
+    """Creates a pie chart of the distribution of the classes within the data
 
     Args:
         class_labels ([int]): List of predicted classifications from model, in form of class numbers
@@ -446,6 +447,22 @@ def plot_predictions(model, test_images, batch_size, n_classes, classes):
 
 
 def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, filename, show=True, save=False):
+    """Creates a heat-map of the confusion matrix of the given model
+
+    Args:
+        model (keras.Model):
+        test_images ([[[float]]]): Images for testing model post-fitting
+        test_labels ([[int]]): Accompanying labels for testing images
+        batch_size (int): Number of images in each batch for network input
+        classes ([str]): List of all class names
+        filename (str): Name of file to save plot to
+        show (bool): Whether to show plot
+        save (bool): Whether to save plot to file
+
+    Returns:
+        None
+    """
+
     pred_labels = model.predict_classes(test_images, batch_size=batch_size)
 
     conf_matrix = tf.math.confusion_matrix(labels=np.argmax(test_labels, axis=1), predictions=pred_labels).numpy()
