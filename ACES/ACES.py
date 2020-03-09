@@ -21,7 +21,7 @@ import os
 from collections import Counter
 from sklearn import metrics
 import seaborn as sns
-
+import json
 
 # =====================================================================================================================
 #                                                     GLOBALS
@@ -364,6 +364,7 @@ def plot_history(history, filename, show=True, save=False):
         plt.show()
     if save:
         plt.savefig(filename)
+        plt.close()
 
 
 def OHE_to_class(ohe_labels, n_classes, classes):
@@ -396,7 +397,7 @@ def plot_predictions(model, test_images, batch_size, n_classes, classes):
     plot_subpopulations(class_labels)
 
 
-def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, filename):
+def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, filename, show=True, save=False):
     pred_labels = model.predict_classes(test_images, batch_size=batch_size)
 
     conf_matrix = tf.math.confusion_matrix(labels=np.argmax(test_labels, axis=1), predictions=pred_labels).numpy()
@@ -412,8 +413,11 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, 
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    plt.show()
-    plt.savefig(filename)
+    if show:
+        plt.show()
+    if save:
+        plt.savefig(filename)
+        plt.close()
 
 
 # =====================================================================================================================
@@ -426,13 +430,13 @@ def main():
     verbose = 1
     batch_size = 32
 
-    in_filters = (8, 32)
+    in_filters = (8, 32, 64)
     filt_mult = 2
 
-    kernels = (9, 11)
+    kernels = (5, 9, 11)
 
-    n_conv = 2
-    n_dense = 2
+    n_conv = [2]
+    n_dense = [2]
 
     optimisers = (tf.keras.optimizers.RMSprop(learning_rate=1e-4),
                   tf.keras.optimizers.RMSprop(learning_rate=1e-6))
@@ -474,12 +478,16 @@ def main():
         i = 0  # Logs model number
         for a in kernels:
             for b in in_filters:
-                for c in range(n_conv):
-                    for d in range(n_dense):
+                for c in n_conv:
+                    for d in n_dense:
                         for e in optimisers:
                             i = i + 1
 
                             print('\nMODEL NUMBER: %s' % i)
+                            print('kernel: %s' % a)
+                            print('initial filters: %s' % b)
+                            print('number of convolutional layers: %s' % c)
+                            print('number of dense layers: %s' % d)
 
                             log['%s' % i], model = sequential_CNN(train_images, train_labels, val_images, val_labels,
                                                                   test_images, test_labels, n_classes, epochs=epochs,
@@ -490,7 +498,11 @@ def main():
                             plot_history(log['%s' % i], 'ROCs/%s.png' % i, show=False, save=True)
 
                             make_confusion_matrix(model, test_images, test_labels, batch_size, classes,
-                                                  'Confusion_Matrices/%s.png' % i)
+                                                  'Confusion_Matrices/%s.png' % i, show=False, save=True)
+
+    # Writes output to JSON file
+    with open('test.json', 'w') as fp:
+        json.dump(log, fp)
 
 
 if __name__ == '__main__':
