@@ -335,10 +335,6 @@ def sequential_CNN(train_images, train_labels, val_images, val_labels, test_imag
                         epochs=epochs,
                         validation_data=(val_images, val_labels))
 
-    # Plot the history of model fitting
-    if verbose is 1 or 2:
-        plot_history(history)
-
     # Test model using test data
     test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
     print('Test accuracy: %s' % test_acc)
@@ -346,7 +342,7 @@ def sequential_CNN(train_images, train_labels, val_images, val_labels, test_imag
     return history, model
 
 
-def plot_history(history):
+def plot_history(history, filename, show=True, save=False):
     """Plot history of model train and testing
 
     Args:
@@ -364,10 +360,24 @@ def plot_history(history):
     plt.ylim([0, 1])
     plt.legend(loc='lower right')
 
-    plt.show()
+    if show:
+        plt.show()
+    if save:
+        plt.savefig(filename)
 
 
 def OHE_to_class(ohe_labels, n_classes, classes):
+    """Converts OHE labels to string class names
+
+    Args:
+        ohe_labels ([[int]]):
+        n_classes (int):
+        classes ([str]):
+
+    Returns:
+        class_labels ():
+    """
+
     class_labels = []
 
     for i in range(len(ohe_labels)):
@@ -386,7 +396,7 @@ def plot_predictions(model, test_images, batch_size, n_classes, classes):
     plot_subpopulations(class_labels)
 
 
-def make_confusion_matrix(model, test_images, test_labels, batch_size, classes):
+def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, filename):
     pred_labels = model.predict_classes(test_images, batch_size=batch_size)
 
     conf_matrix = tf.math.confusion_matrix(labels=np.argmax(test_labels, axis=1), predictions=pred_labels).numpy()
@@ -403,6 +413,7 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes):
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
     plt.show()
+    plt.savefig(filename)
 
 
 # =====================================================================================================================
@@ -410,16 +421,21 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes):
 # =====================================================================================================================
 def main():
     print('***************************** ACES ********************************************')
-    epochs = 50
-    in_filt = 32
-    filt_mult = 2
-    batch_size = 32
     model_type = 'sequential'
-    n_conv = 2
-    n_dense = 3
+    epochs = 50
     verbose = 1
+    batch_size = 32
 
-    optimiser = tf.keras.optimizers.RMSprop(learning_rate=1e-4)
+    in_filters = (8, 32)
+    filt_mult = 2
+
+    kernels = (9, 11)
+
+    n_conv = 2
+    n_dense = 2
+
+    optimisers = (tf.keras.optimizers.RMSprop(learning_rate=1e-4),
+                  tf.keras.optimizers.RMSprop(learning_rate=1e-6))
 
     print('\nLOAD IMAGES')
     # Load in images
@@ -448,23 +464,33 @@ def main():
     test_images = val_images
     test_labels = val_labels
 
-
-    print('\nBEGIN MODEL CONSTRUCTION')
-    if model_type is 'sequential':
-        history, model = sequential_CNN(train_images, train_labels, val_images, val_labels, test_images, test_labels,
-                                        n_classes, epochs=epochs, batch_size=batch_size, in_filt=in_filt,
-                                        filt_mult=filt_mult, n_conv=n_conv, n_dense=n_dense,
-                                        optimiser=optimiser, verbose=verbose)
-
-        if verbose == 2:
-            plot_predictions(model, test_images, batch_size, n_classes, classes)
-
-        make_confusion_matrix(model, test_images, test_labels, batch_size, classes)
-
     if model_type is 'multi-head':
         print('Test accuracy: %s' % multi_head_CNN(train_images, train_labels, val_images, val_labels,
                                                    test_images, test_labels, epochs=epochs, batch_size=batch_size,
-                                                   in_filt=in_filt, verbose=verbose))
+                                                   in_filt=32, verbose=verbose))
+    log = {}
+
+    if model_type is 'sequential':
+        i = 0  # Logs model number
+        for a in kernels:
+            for b in in_filters:
+                for c in range(n_conv):
+                    for d in range(n_dense):
+                        for e in optimisers:
+                            i = i + 1
+
+                            print('\nMODEL NUMBER: %s' % i)
+
+                            log['%s' % i], model = sequential_CNN(train_images, train_labels, val_images, val_labels,
+                                                                  test_images, test_labels, n_classes, epochs=epochs,
+                                                                  batch_size=batch_size, in_filt=b, filt_mult=filt_mult,
+                                                                  kernel=a, n_conv=c, n_dense=d, optimiser=e,
+                                                                  verbose=verbose)
+
+                            plot_history(log['%s' % i], 'ROCs/%s.png' % i, show=False, save=True)
+
+                            make_confusion_matrix(model, test_images, test_labels, batch_size, classes,
+                                                  'Confusion_Matrices/%s.png' % i)
 
 
 if __name__ == '__main__':
