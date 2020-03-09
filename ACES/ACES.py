@@ -215,6 +215,15 @@ def split_data(data, train_frac):
 
 
 def plot_subpopulations(class_labels):
+    """
+
+    Args:
+        class_labels ([int]): List of predicted classifications from model, in form of class numbers
+
+    Returns:
+        None
+    """
+
     modes = Counter(class_labels).most_common()
     classes = []
     counts = []
@@ -231,6 +240,23 @@ def plot_subpopulations(class_labels):
 
 def multi_head_CNN(train_images, train_labels, val_images, val_labels, test_images, test_labels,
                    verbose=1, epochs=50, batch_size=32, in_filt=8):
+    """Fits a multi-head CNN using provided hyper-parameters and data
+
+    Args:
+        train_images ([[[float]]]): Images for training
+        train_labels ([[[int]]]): Accompanying labels for training images
+        val_images ([[[float]]]): Images for validation
+        val_labels ([[[int]]]): Accompanying labels for validation images
+        test_images ([[[float]]]): Images for testing model post-fitting
+        test_labels ([[[int]]]): Accompanying labels for testing images
+        verbose (int): Setting for level of output and analysis
+        epochs (int): Number of epochs of training
+        batch_size (int): Number of images in each batch for network input
+        in_filt (int): Number of filters in the initial CNN layer. Used as baseline number for subsequent layers
+
+    Returns:
+        accuracy (float): Test accuracy of model
+    """
 
     n_timesteps, n_features, n_outputs = train_images.shape[1], train_images.shape[2], train_labels.shape[1]
 
@@ -286,12 +312,12 @@ def sequential_CNN(train_images, train_labels, val_images, val_labels, test_imag
     """Creates a sequential CNN using Keras based on hyper-parameters and data supplied
 
     Args:
-        train_images: Images for training
-        train_labels: Accompanying labels for training images
-        val_images: Images for validation
-        val_labels: Accompanying labels for validation images
-        test_images: Images for testing model post-fitting
-        test_labels: Accompanying labels for testing images
+        train_images ([[[float]]]): Images for training
+        train_labels ([[[int]]]): Accompanying labels for training images
+        val_images ([[[float]]]): Images for validation
+        val_labels ([[[int]]]): Accompanying labels for validation images
+        test_images ([[[float]]]): Images for testing model post-fitting
+        test_labels ([[[int]]]): Accompanying labels for testing images
         n_classes (int): Number of classes in data
         epochs (int): Number of epochs of training
         batch_size (int): Number of images in each batch for network input
