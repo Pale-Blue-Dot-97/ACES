@@ -262,31 +262,55 @@ def multi_head_CNN(train_images, train_labels, val_images, val_labels, test_imag
 
 
 def sequential_CNN(train_images, train_labels, val_images, val_labels, test_images, test_labels, n_classes,
-                   epochs=5, batch_size=32, class_weights=None, in_filt=8, filt_mult=2, verbose=0):
+                   epochs=5, batch_size=32, class_weights=None, in_filt=8, filt_mult=2, kernel=9, n_conv=3,
+                   n_dense=3, fn_neurons=32, optimiser='SGD', verbose=0):
+    """
+
+    Args:
+        train_images: Images for training
+        train_labels: Accompanying labels for training images
+        val_images: Images for validation
+        val_labels: Accompanying labels for validation images
+        test_images: Images for testing model post-fitting
+        test_labels: Accompanying labels for testing images
+        n_classes (int): Number of classes in data
+        epochs (int): Number of epochs of training
+        batch_size (int):
+        class_weights:
+        in_filt (int):
+        filt_mult (int):
+        kernel (int):
+        n_conv (int):
+        n_dense (int):
+        optimiser (str, tf.keras.optimizer):
+        verbose (int):
+
+    Returns:
+
+    """
 
     # Build convolutional layers
     model = models.Sequential()
     model.add(layers.Conv1D(filters=in_filt, kernel_size=9, activation='relu', batch_size=batch_size,
                             input_shape=(image_length, n_channels)))
     model.add(layers.MaxPooling1D(2, strides=filt_mult))
-    model.add(layers.Conv1D(in_filt * pow(filt_mult, 1), 9, activation='relu'))
-    model.add(layers.MaxPooling1D(2, strides=filt_mult))
-    model.add(layers.Conv1D(in_filt*pow(filt_mult, 2), 9, activation='relu'))
-    model.add(layers.MaxPooling1D(2, strides=filt_mult))
-    model.add(layers.Conv1D(in_filt*pow(filt_mult, 3), 9, activation='relu'))
-    model.add(layers.MaxPooling1D(2, strides=filt_mult))
+
+    for i in range(n_conv):
+        model.add(layers.Conv1D(in_filt * pow(filt_mult, i + 1), kernel, activation='relu'))
+        model.add(layers.MaxPooling1D(2, strides=filt_mult))
 
     # Build detection layers
     model.add(layers.Flatten())
-    model.add(layers.Dense(128, activation='relu'))
-    model.add(layers.Dense(64, activation='relu'))
-    model.add(layers.Dense(32, activation='relu'))
+    for i in range(n_dense):
+        model.add(layers.Dense(fn_neurons * pow(filt_mult, n_dense - i), activation='relu'))
+
     model.add(layers.Dense(n_classes, activation='softmax'))
     model.summary()
 
     # Define algorithms
-    model.compile(optimizer=tf.keras.optimizers.RMSprop(learning_rate=1e-4, momentum=0.0, clipvalue=0.5),
-                  loss='categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer=optimiser,
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy'])
 
     # Train and test model
     history = model.fit(train_images, train_labels,
@@ -347,7 +371,7 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes):
                               index=classes,
                               columns=classes)
 
-    #plt.figure(figsize=(8, 8))
+    plt.figure(figsize=(9, 9))
     sns.heatmap(con_mat_df, annot=True, square=True, cmap=plt.cm.get_cmap('Blues'))
     plt.tight_layout()
     plt.ylabel('True label')
@@ -360,16 +384,20 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes):
 # =====================================================================================================================
 def main():
     print('***************************** ACES ********************************************')
-    epochs = 5
+    epochs = 50
     in_filt = 32
     filt_mult = 2
     batch_size = 32
     model_type = 'sequential'
+    n_conv = 2
+    n_dense = 3
     verbose = 1
+
+    optimiser = tf.keras.optimizers.RMSprop(learning_rate=1e-4)
 
     print('\nLOAD IMAGES')
     # Load in images
-    data = load_images('Blocks/', 20000)
+    data = load_images('Blocks/', 40000)
 
     print('\nLOAD LABELS')
     # Load in accompanying labels into separate randomly ordered DataFrame
@@ -398,7 +426,8 @@ def main():
     if model_type is 'sequential':
         history, model = sequential_CNN(train_images, train_labels, val_images, val_labels, test_images, test_labels,
                                         n_classes, epochs=epochs, batch_size=batch_size, in_filt=in_filt,
-                                        filt_mult=filt_mult, verbose=verbose)
+                                        filt_mult=filt_mult, n_conv=n_conv, n_dense=n_dense,
+                                        optimiser=optimiser, verbose=verbose)
 
         if verbose == 2:
             plot_predictions(model, test_images, batch_size, n_classes, classes)
