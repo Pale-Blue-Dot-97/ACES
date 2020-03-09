@@ -244,11 +244,11 @@ def multi_head_CNN(train_images, train_labels, val_images, val_labels, test_imag
 
     Args:
         train_images ([[[float]]]): Images for training
-        train_labels ([[[int]]]): Accompanying labels for training images
+        train_labels ([[int]]): Accompanying labels for training images
         val_images ([[[float]]]): Images for validation
-        val_labels ([[[int]]]): Accompanying labels for validation images
+        val_labels ([[int]]): Accompanying labels for validation images
         test_images ([[[float]]]): Images for testing model post-fitting
-        test_labels ([[[int]]]): Accompanying labels for testing images
+        test_labels ([[int]]): Accompanying labels for testing images
         verbose (int): Setting for level of output and analysis
         epochs (int): Number of epochs of training
         batch_size (int): Number of images in each batch for network input
@@ -313,11 +313,11 @@ def sequential_CNN(train_images, train_labels, val_images, val_labels, test_imag
 
     Args:
         train_images ([[[float]]]): Images for training
-        train_labels ([[[int]]]): Accompanying labels for training images
+        train_labels ([[int]]): Accompanying labels for training images
         val_images ([[[float]]]): Images for validation
-        val_labels ([[[int]]]): Accompanying labels for validation images
+        val_labels ([[int]]): Accompanying labels for validation images
         test_images ([[[float]]]): Images for testing model post-fitting
-        test_labels ([[[int]]]): Accompanying labels for testing images
+        test_labels ([[int]]): Accompanying labels for testing images
         n_classes (int): Number of classes in data
         epochs (int): Number of epochs of training
         batch_size (int): Number of images in each batch for network input
@@ -406,12 +406,12 @@ def OHE_to_class(ohe_labels, n_classes, classes):
     """Converts OHE labels to string class names
 
     Args:
-        ohe_labels ([[int]]):
-        n_classes (int):
-        classes ([str]):
+        ohe_labels ([[int]]): List of class labels in OHE format
+        n_classes (int): Number of classes in data
+        classes ([str]): List of all class names
 
     Returns:
-        class_labels ():
+        class_labels ([str]): List of class name labels
     """
 
     class_labels = []
@@ -425,6 +425,19 @@ def OHE_to_class(ohe_labels, n_classes, classes):
 
 
 def plot_predictions(model, test_images, batch_size, n_classes, classes):
+    """Produces a pie chart of the predictions made by a model
+
+    Args:
+        model (keras.Model):
+        test_images ([[[float]]]): Images for testing model post-fitting
+        batch_size (int): Number of images in each batch for network input
+        n_classes (int): Number of classes in data
+        classes ([str]): List of all class names
+
+    Returns:
+        None
+    """
+
     pred_labels = model.predict_classes(test_images, batch_size=batch_size)
 
     class_labels = OHE_to_class(pred_labels, n_classes, classes)
