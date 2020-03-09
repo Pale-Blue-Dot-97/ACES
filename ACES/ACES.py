@@ -1,7 +1,6 @@
 """ACES - Autonomous Communications Enhancement System
 
 TODO:
-    * Implement model hyper-parameter varying tester code
     * Split data into train, validate and test
     * Implement Cassini data as test
 """
@@ -266,8 +265,6 @@ def multi_head_CNN(train_images, train_labels, val_images, val_labels, test_imag
                         batch_size=batch_size,
                         verbose=verbose)
 
-    plot_history(history)
-
     # evaluate model
     _, accuracy = model.evaluate([test_images, test_images, test_images], test_labels, batch_size=batch_size, verbose=0)
 
@@ -347,6 +344,9 @@ def plot_history(history, filename, show=True, save=False):
 
     Args:
         history (keras.History): Object holding the history of the model fitting
+        filename (str): Name of file to save plot to
+        show (bool): Whether to show plot
+        save (bool): Whether to save plot to file
 
     Returns:
          None
