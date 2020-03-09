@@ -18,7 +18,6 @@ import numpy as np
 import random
 import os
 from collections import Counter
-from sklearn import metrics
 import seaborn as sns
 import json
 
@@ -112,6 +111,16 @@ def load_labels():
 
 
 def balance_data(data, classes, verbose=0):
+    """Balances data into equally sized class sub-populations
+
+    Args:
+        data (DataFrame): DataFrame containing all the data with labels
+        classes ([str]): List of all class names
+        verbose (int): Setting for level of output and analysis
+
+    Returns:
+        new_data (DataFrame): DataFrame with balanced sized class sub-populations
+    """
 
     # Plot distribution of class sub-populations before balancing
     if verbose == 1:
