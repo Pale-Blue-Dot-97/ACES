@@ -70,10 +70,13 @@ def load_images(path, n_images):
 
 
 def load_labels():
-    """
+    """Loads in the file containing the labels for each block, and converts these to OHE
 
     Returns:
-        labels (DataFrame):
+        labels (DataFrame): Dataframe containing names of blocks with their labels as OHE and class name
+        n_classes (int): The number of classes detected in labels file
+        classes ([str]): List of class names
+        identity ([[int]]): The identity matrix of order n_classes
 
     """
 
@@ -89,13 +92,22 @@ def load_labels():
     for i in range(n_classes):
         print(classes[i], identity[i])
 
-    def bool_to_binary(label):
+    def name_to_OHE(label):
+        """Converts class name as a string to the correct OHE format
+
+        Args:
+            label (str): Name of the class this block has been labelled as
+
+        Returns:
+            Block label in OHE format
+
+        """
         for j in range(n_classes):
             if label == classes[j]:
                 return identity[j]
 
     labels['CLASS'] = labels['LABEL']
-    labels['LABEL'] = labels['CLASS'].apply(bool_to_binary)
+    labels['LABEL'] = labels['CLASS'].apply(name_to_OHE)
 
     return labels, n_classes, classes, identity
 
