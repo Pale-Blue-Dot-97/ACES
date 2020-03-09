@@ -342,12 +342,20 @@ def sequential_CNN(train_images, train_labels, val_images, val_labels, test_imag
     # Test model using test data
     test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
     print('Test accuracy: %s' % test_acc)
-    
+
     return history, model
 
 
 def plot_history(history):
-    # Plot history of model train and testing
+    """Plot history of model train and testing
+
+    Args:
+        history (keras.History): Object holding the history of the model fitting
+
+    Returns:
+         None
+    """
+
     plt.plot(history.history['loss'], label='loss')
     plt.plot(history.history['accuracy'], label='accuracy')
     plt.plot(history.history['val_accuracy'], label='val_accuracy')
