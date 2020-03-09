@@ -277,7 +277,7 @@ def multi_head_CNN(train_images, train_labels, val_images, val_labels, test_imag
 def sequential_CNN(train_images, train_labels, val_images, val_labels, test_images, test_labels, n_classes,
                    epochs=5, batch_size=32, class_weights=None, in_filt=8, filt_mult=2, kernel=9, n_conv=3,
                    n_dense=3, fn_neurons=32, optimiser='SGD', verbose=0):
-    """
+    """Creates a sequential CNN using Keras based on hyper-parameters and data supplied
 
     Args:
         train_images: Images for training
@@ -288,17 +288,19 @@ def sequential_CNN(train_images, train_labels, val_images, val_labels, test_imag
         test_labels: Accompanying labels for testing images
         n_classes (int): Number of classes in data
         epochs (int): Number of epochs of training
-        batch_size (int):
+        batch_size (int): Number of images in each batch for network input
         class_weights:
-        in_filt (int):
-        filt_mult (int):
-        kernel (int):
-        n_conv (int):
-        n_dense (int):
-        optimiser (str, tf.keras.optimizer):
-        verbose (int):
+        in_filt (int): Number of filters in the initial CNN layer. Used as baseline number for subsequent layers
+        filt_mult (int): Factor by which to increase the number of filters in each sucessive layer
+        kernel (int): Size of kernel in CNN layers
+        n_conv (int): Number of CNN layers (except initial layer)
+        n_dense (int): Number of dense layers (except classification layer)
+        optimiser (str, tensorflow.keras.optimizer): Optimiser to use
+        verbose (int): Setting for level of output and analysis
 
     Returns:
+        history (keras.History): Object holding the history of the model fitting
+        model (keras.Model): The produced Keras model
 
     """
 
@@ -308,6 +310,7 @@ def sequential_CNN(train_images, train_labels, val_images, val_labels, test_imag
                             input_shape=(image_length, n_channels)))
     model.add(layers.MaxPooling1D(2, strides=filt_mult))
 
+    # Add convolutional layers
     for i in range(n_conv):
         model.add(layers.Conv1D(in_filt * pow(filt_mult, i + 1), kernel, activation='relu'))
         model.add(layers.MaxPooling1D(2, strides=filt_mult))
@@ -317,6 +320,7 @@ def sequential_CNN(train_images, train_labels, val_images, val_labels, test_imag
     for i in range(n_dense):
         model.add(layers.Dense(fn_neurons * pow(filt_mult, n_dense - i), activation='relu'))
 
+    # Add classification layer
     model.add(layers.Dense(n_classes, activation='softmax'))
     model.summary()
 
@@ -331,13 +335,14 @@ def sequential_CNN(train_images, train_labels, val_images, val_labels, test_imag
                         epochs=epochs,
                         validation_data=(val_images, val_labels))
 
+    # Plot the history of model fitting
     if verbose is 1 or 2:
         plot_history(history)
 
+    # Test model using test data
     test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
-
     print('Test accuracy: %s' % test_acc)
-
+    
     return history, model
 
 
