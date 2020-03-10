@@ -599,10 +599,10 @@ def main():
                                                                 verbose=verbose, filename='Logs/%s.csv' % model_name,
                                                                 log=True)
 
-                                plot_history(history, 'ROCs/%s.png' % model_name, show=False, save=True)
+                                plot_history(history, 'ROCs/%s-ROC.png' % model_name, show=False, save=True)
 
                                 make_confusion_matrix(model, test_images, test_labels, batch_size, classes,
-                                                      'Confusion_Matrices/%s.png' % model_name, show=False, save=True)
+                                                      'Confusion_Matrices/%s-CM.png' % model_name, show=False, save=True)
 
 
 if __name__ == '__main__':
