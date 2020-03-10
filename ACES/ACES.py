@@ -158,7 +158,7 @@ def split_data(data, split_fracs):
 
     Args:
         data (DataFrame): Table of images with filenames and labels
-        split_fracs ([float]): Fraction of images desired for training, validation and testing
+        split_fracs ([float]): Fraction of images desired for training and validation. Remainder for testing
 
     Returns:
         train_images ([[[float]]]): All training images
@@ -228,6 +228,19 @@ def split_data(data, split_fracs):
         return images.reshape((len(images), n_channels, image_length))
 
     return reorder(train_images), reorder(val_images), reorder(test_images), train_labels, val_labels, test_labels
+
+
+def set_optimiser(name, lr):
+    if name is 'RMSprop':
+        return tf.keras.optimizers.RMSprop(learning_rate=lr)
+    if name is 'Adadelta':
+        return tf.keras.optimizers.Adadelta()
+    if name is 'Adagrad':
+        return tf.keras.optimizers.Adagrad()
+    if name is 'Nadam':
+        return tf.keras.optimizers.Nadam()
+    else:
+        return
 
 
 def plot_subpopulations(class_labels):
@@ -513,11 +526,11 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, 
 def main():
     print('***************************** ACES ********************************************')
     model_type = 'sequential'
-    epochs = 50
+    epochs = 100
     verbose = 1
     batch_size = 32
 
-    in_filters = [16, 32]
+    in_filters = [16]
     filt_mult = 2
 
     kernels = (5, 9, 11)
@@ -525,8 +538,7 @@ def main():
     n_conv = [2]
     n_dense = [2]
 
-    optimisers = (tf.keras.optimizers.RMSprop(learning_rate=1e-4),
-                  tf.keras.optimizers.RMSprop(learning_rate=1e-6))
+    optimisers = [('RMSprop', 1e-5), ('RMSprop', 1e-6), ('Adadelta', 1), ('Adagrad', 1), ('Nadam', 1)]
 
     print('\nLOAD IMAGES')
     # Load in images
@@ -568,19 +580,24 @@ def main():
                             i = i + 1
 
                             # Unique model ID to use for logging and output
-                            model_name = '%sM_%sK_%sF_%sC_%sD' % (i, a, b, c, d)
+                            model_name = '%sM_%sK_%sF_%sC_%sD_%sO_%sL' % (i, a, b, c, d, e[0], e[1])
 
                             print('\nMODEL NUMBER: %s' % i)
-                            print('kernel: %s' % a)
-                            print('initial filters: %s' % b)
-                            print('number of convolutional layers: %s' % c)
-                            print('number of dense layers: %s' % d)
+                            print('Kernel: %s' % a)
+                            print('Initial filters: %s' % b)
+                            print('Number of convolutional layers: %s' % c)
+                            print('Number of dense layers: %s' % d)
+                            print('Optimiser: %s' % e[0])
+                            print('Learning rate: %s' % e[1])
+
+                            optimiser = set_optimiser(e[0], e[1])
 
                             history, model = sequential_CNN(train_images, train_labels, val_images, val_labels,
                                                             test_images, test_labels, n_classes, epochs=epochs,
                                                             batch_size=batch_size, in_filt=b, filt_mult=filt_mult,
-                                                            kernel=a, n_conv=c, n_dense=d, optimiser=e, verbose=verbose,
-                                                            filename='Logs/%s.csv' % model_name, log=True)
+                                                            kernel=a, n_conv=c, n_dense=d, optimiser=optimiser,
+                                                            verbose=verbose, filename='Logs/%s.csv' % model_name,
+                                                            log=True)
 
                             plot_history(history, 'ROCs/%s.png' % model_name, show=False, save=True)
 
