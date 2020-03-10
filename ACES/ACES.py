@@ -11,7 +11,7 @@ TODO:
 # =====================================================================================================================
 from __future__ import absolute_import, division, print_function, unicode_literals
 import tensorflow as tf
-from tensorflow.keras import layers, models, backend, utils
+from tensorflow.keras import layers, models, backend, utils, callbacks
 import matplotlib.pyplot as plt
 from matplotlib import image
 import pandas as pd
@@ -309,7 +309,7 @@ def multi_head_CNN(train_images, train_labels, val_images, val_labels, test_imag
 
 def sequential_CNN(train_images, train_labels, val_images, val_labels, test_images, test_labels, n_classes,
                    epochs=5, batch_size=32, class_weights=None, in_filt=8, filt_mult=2, kernel=9, n_conv=3,
-                   n_dense=3, fn_neurons=32, optimiser='SGD', verbose=0):
+                   n_dense=3, fn_neurons=32, optimiser='SGD', filename='test.csv', log=False, verbose=0,):
     """Creates a sequential CNN using Keras based on hyper-parameters and data supplied
 
     Args:
@@ -328,7 +328,10 @@ def sequential_CNN(train_images, train_labels, val_images, val_labels, test_imag
         kernel (int): Size of kernel in CNN layers
         n_conv (int): Number of CNN layers (except initial layer)
         n_dense (int): Number of dense layers (except classification layer)
+        fn_neurons (): Number of neurons in the final dense layer. Used as baseline number for preceding layers
         optimiser (str, tensorflow.keras.optimizer): Optimiser to use
+        filename (str): Name of log file to output History of model to
+        log (bool): Whether to output history to file
         verbose (int): Setting for level of output and analysis
 
     Returns:
@@ -362,11 +365,15 @@ def sequential_CNN(train_images, train_labels, val_images, val_labels, test_imag
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
 
+    # Creates CSVLogger to output history of model fitting to
+    log = callbacks.CSVLogger(filename=filename, append=True, separator=',')
+
     # Train and test model
     history = model.fit(train_images, train_labels,
                         class_weight=class_weights,
                         epochs=epochs,
-                        validation_data=(val_images, val_labels))
+                        validation_data=(val_images, val_labels),
+                        callbacks=[log])
 
     # Test model using test data
     test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
@@ -495,7 +502,7 @@ def main():
     verbose = 1
     batch_size = 32
 
-    in_filters = (8, 32, 64)
+    in_filters = [16, 32]
     filt_mult = 2
 
     kernels = (5, 9, 11)
@@ -537,7 +544,6 @@ def main():
         print('Test accuracy: %s' % multi_head_CNN(train_images, train_labels, val_images, val_labels,
                                                    test_images, test_labels, epochs=epochs, batch_size=batch_size,
                                                    in_filt=32, verbose=verbose))
-    log = {}
 
     if model_type is 'sequential':
         i = 0  # Logs model number
@@ -548,26 +554,29 @@ def main():
                         for e in optimisers:
                             i = i + 1
 
+                            # Unique model ID to use for logging and output
+                            model_name = '%sM_%sK_%sF_%sC_%sD' % (i, a, b, c, d)
+
                             print('\nMODEL NUMBER: %s' % i)
                             print('kernel: %s' % a)
                             print('initial filters: %s' % b)
                             print('number of convolutional layers: %s' % c)
                             print('number of dense layers: %s' % d)
 
-                            log['%s' % i], model = sequential_CNN(train_images, train_labels, val_images, val_labels,
-                                                                  test_images, test_labels, n_classes, epochs=epochs,
-                                                                  batch_size=batch_size, in_filt=b, filt_mult=filt_mult,
-                                                                  kernel=a, n_conv=c, n_dense=d, optimiser=e,
-                                                                  verbose=verbose)
+                            history, model = sequential_CNN(train_images, train_labels, val_images, val_labels,
+                                                            test_images, test_labels, n_classes, epochs=epochs,
+                                                            batch_size=batch_size, in_filt=b, filt_mult=filt_mult,
+                                                            kernel=a, n_conv=c, n_dense=d, optimiser=e, verbose=verbose,
+                                                            filename='Logs/%s.csv' % model_name, log=True)
 
-                            plot_history(log['%s' % i], 'ROCs/%s.png' % i, show=False, save=True)
+                            plot_history(history, 'ROCs/%s.png' % model_name, show=False, save=True)
 
                             make_confusion_matrix(model, test_images, test_labels, batch_size, classes,
-                                                  'Confusion_Matrices/%s.png' % i, show=False, save=True)
+                                                  'Confusion_Matrices/%s.png' % model_name, show=False, save=True)
 
     # Writes output to JSON file
-    with open('test.json', 'w') as fp:
-        json.dump(log, fp)
+    #with open('test.json', 'w') as fp:
+        #json.dump(log, fp)
 
 
 if __name__ == '__main__':
