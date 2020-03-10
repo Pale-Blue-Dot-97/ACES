@@ -530,18 +530,18 @@ def main():
     batch_size = 32
 
     in_filters = [16]
-    filt_mult = 2
+    filt_mult = [1, 2]
 
-    kernels = (5, 9, 11)
+    kernels = [9]
 
     n_conv = [2]
-    n_dense = [2]
+    n_dense = [2, 3]
 
-    optimisers = [('RMSprop', 1e-5), ('RMSprop', 1e-6), ('Adadelta', 1), ('Adagrad', 1), ('Nadam', 1)]
+    optimisers = [('Adagrad', 0.1), ('Nadam', 1e-2)]
 
     print('\nLOAD IMAGES')
     # Load in images
-    data = load_images('Blocks/', 40000)
+    data = load_images('Blocks/', 60000)
 
     print('\nLOAD LABELS')
     # Load in accompanying labels into separate randomly ordered DataFrame
@@ -558,7 +558,7 @@ def main():
 
     print('\nSPLIT DATA INTO TRAIN AND TEST')
     # Split images into test and train
-    train_images, val_images, test_images, train_labels, val_labels, test_labels = split_data(data, (0.8, 0.1))
+    train_images, val_images, test_images, train_labels, val_labels, test_labels = split_data(data, (0.7, 0.2))
 
     train_images = np.swapaxes(train_images, 1, 2)
     val_images = np.swapaxes(val_images, 1, 2)
@@ -576,36 +576,33 @@ def main():
                 for c in n_conv:
                     for d in n_dense:
                         for e in optimisers:
-                            i = i + 1
+                            for f in filt_mult:
+                                i = i + 1
 
-                            # Unique model ID to use for logging and output
-                            model_name = '%sM_%sK_%sF_%sC_%sD_%sO_%sL' % (i, a, b, c, d, e[0], e[1])
+                                # Unique model ID to use for logging and output
+                                model_name = '%sM_%sK_%sF_%sC_%sD_%sO_%sL_%sfm' % (i, a, b, c, d, e[0], e[1], f)
 
-                            print('\nMODEL NUMBER: %s' % i)
-                            print('Kernel: %s' % a)
-                            print('Initial filters: %s' % b)
-                            print('Number of convolutional layers: %s' % c)
-                            print('Number of dense layers: %s' % d)
-                            print('Optimiser: %s' % e[0])
-                            print('Learning rate: %s' % e[1])
+                                print('\nMODEL NUMBER: %s' % i)
+                                print('Kernel: %s' % a)
+                                print('Initial filters: %s' % b)
+                                print('Number of convolutional layers: %s' % c)
+                                print('Number of dense layers: %s' % d)
+                                print('Optimiser: %s' % e[0])
+                                print('Learning rate: %s' % e[1])
 
-                            optimiser = set_optimiser(e[0], e[1])
+                                optimiser = set_optimiser(e[0], e[1])
 
-                            history, model = sequential_CNN(train_images, train_labels, val_images, val_labels,
-                                                            test_images, test_labels, n_classes, epochs=epochs,
-                                                            batch_size=batch_size, in_filt=b, filt_mult=filt_mult,
-                                                            kernel=a, n_conv=c, n_dense=d, optimiser=optimiser,
-                                                            verbose=verbose, filename='Logs/%s.csv' % model_name,
-                                                            log=True)
+                                history, model = sequential_CNN(train_images, train_labels, val_images, val_labels,
+                                                                test_images, test_labels, n_classes, epochs=epochs,
+                                                                batch_size=batch_size, in_filt=b, filt_mult=f,
+                                                                kernel=a, n_conv=c, n_dense=d, optimiser=optimiser,
+                                                                verbose=verbose, filename='Logs/%s.csv' % model_name,
+                                                                log=True)
 
-                            plot_history(history, 'ROCs/%s.png' % model_name, show=False, save=True)
+                                plot_history(history, 'ROCs/%s.png' % model_name, show=False, save=True)
 
-                            make_confusion_matrix(model, test_images, test_labels, batch_size, classes,
-                                                  'Confusion_Matrices/%s.png' % model_name, show=False, save=True)
-
-    # Writes output to JSON file
-    #with open('test.json', 'w') as fp:
-        #json.dump(log, fp)
+                                make_confusion_matrix(model, test_images, test_labels, batch_size, classes,
+                                                      'Confusion_Matrices/%s.png' % model_name, show=False, save=True)
 
 
 if __name__ == '__main__':
