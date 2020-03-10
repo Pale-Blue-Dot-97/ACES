@@ -153,12 +153,12 @@ def balance_data(data, classes, verbose=0):
     return new_data
 
 
-def split_data(data, train_frac):
+def split_data(data, split_fracs):
     """Splits data into training and testing data
 
     Args:
         data (DataFrame): Table of images with filenames and labels
-        train_frac (float): Fraction of images desired for training
+        split_fracs ([float]): Fraction of images desired for training, validation and testing
 
     Returns:
         train_images ([[[float]]]): All training images
@@ -170,8 +170,9 @@ def split_data(data, train_frac):
 
     """
 
-    # Finds number of images to select for training
-    n = int(len(data.index) * train_frac)
+    # Finds number of images to select for training, validation and testing
+    train_n = int(len(data.index) * split_fracs[0])
+    val_n = int(len(data.index) * split_fracs[1])
 
     # Fixes seed number so results are replicable
     random.seed(42)
@@ -186,7 +187,7 @@ def split_data(data, train_frac):
     train_names = []
 
     # Randomly selects the desired number of training images
-    for i in random.sample(range(0, len(names)), n):
+    for i in random.sample(range(0, len(names)), train_n):
         train_names.append(names[i])
 
     print('Length of train names: %s' % len(train_names))
@@ -194,25 +195,39 @@ def split_data(data, train_frac):
     if len(train_names) != len(set(train_names)):
         print(len(set(train_names)))
 
-    # Takes the difference of lists to find remaining names must be for testing
-    test_names = list(set(names).difference(set(train_names)))
+    # Takes the difference of lists to find remaining names must be for validation and testing
+    val_n_test_names = list(set(names).difference(set(train_names)))
+    print('Length of validation and test names: %s' % len(val_n_test_names))
+
+    val_names = []
+
+    # Randomly selects the desired number of validation images from the remaining names
+    for i in random.sample(range(0, len(val_n_test_names)), val_n):
+        val_names.append(val_n_test_names[i])
+
+    test_names = list(set(val_n_test_names).difference(set(val_names)))
     print('Length of test names: %s' % len(test_names))
 
     # Uses these to find those names in data to make cut
     train_images = np.array(data.loc[data['NAME'].isin(train_names)]['IMAGE'].tolist())
+    val_images = np.array(data.loc[data['NAME'].isin(val_names)]['IMAGE'].tolist())
     test_images = np.array(data.loc[data['NAME'].isin(test_names)]['IMAGE'].tolist())
 
     train_labels = np.array(data.loc[data['NAME'].isin(train_names)]['LABEL'].tolist())
+    val_labels = np.array(data.loc[data['NAME'].isin(val_names)]['LABEL'].tolist())
     test_labels = np.array(data.loc[data['NAME'].isin(test_names)]['LABEL'].tolist())
 
     print('Length of train images: %s' % len(train_images))
     print('Length of train labels: %s' % len(train_labels))
+    print('Length of validation images: %s' % len(val_images))
+    print('Length of validation labels: %s' % len(val_labels))
     print('Length of test images: %s' % len(test_images))
     print('Length of test labels: %s' % len(test_labels))
 
-    return train_images.reshape((len(train_images), n_channels, image_length)), \
-           test_images.reshape((len(test_images), n_channels, image_length)), \
-           train_labels, test_labels
+    def reorder(images):
+        return images.reshape((len(images), n_channels, image_length))
+
+    return reorder(train_images), reorder(val_images), reorder(test_images), train_labels, val_labels, test_labels
 
 
 def plot_subpopulations(class_labels):
@@ -532,13 +547,11 @@ def main():
 
     print('\nSPLIT DATA INTO TRAIN AND TEST')
     # Split images into test and train
-    train_images, val_images, train_labels, val_labels = split_data(data, 0.8)
+    train_images, val_images, test_images, train_labels, val_labels, test_labels = split_data(data, (0.8, 0.1))
 
     train_images = np.swapaxes(train_images, 1, 2)
     val_images = np.swapaxes(val_images, 1, 2)
-
-    test_images = val_images
-    test_labels = val_labels
+    test_images = np.swapaxes(test_images, 1, 2)
 
     if model_type is 'multi-head':
         print('Test accuracy: %s' % multi_head_CNN(train_images, train_labels, val_images, val_labels,
