@@ -132,3 +132,9 @@ Starting/raw_vs_filtered.png
 cnntest/cnn_test.png
 
 *.png
+
+Logs/*.csv
+ACES/Logs/2M_5K_16F_2C_2D.csv
+ACES/Logs/3M_5K_32F_2C_2D.csv
+ACES/Logs/1M_5K_16F_2C_2D.csv
+ACES/Logs/1M_5K_16F_2C_2D.csv

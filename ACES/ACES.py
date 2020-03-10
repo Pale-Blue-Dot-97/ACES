@@ -1,7 +1,6 @@
 """ACES - Autonomous Communications Enhancement System
 
 TODO:
-    * Fix json outputting of testing
     * Split data into train, validate and test
     * Implement Cassini data as test
 """
@@ -164,8 +163,10 @@ def split_data(data, train_frac):
 
     Returns:
         train_images ([[[float]]]): All training images
+        val_images ([[[float]]]): All validation images
         test_images ([[[float]]]): All testing images
         train_labels ([[int]]): All accompanying training labels
+        val_labels ([[int]]): All accompanying testing labels
         test_labels ([[int]]): All accompanying testing labels
 
     """
