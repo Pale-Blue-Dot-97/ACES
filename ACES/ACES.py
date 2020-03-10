@@ -1,7 +1,6 @@
 """ACES - Autonomous Communications Enhancement System
 
 TODO:
-    * Split data into train, validate and test
     * Implement Cassini data as test
 """
 
