@@ -10,7 +10,7 @@ TODO:
 # =====================================================================================================================
 from __future__ import absolute_import, division, print_function, unicode_literals
 import tensorflow as tf
-from tensorflow.keras import layers, models, backend, utils, callbacks
+from tensorflow.keras import layers, models, callbacks, backend, utils
 import matplotlib.pyplot as plt
 from matplotlib import image
 import pandas as pd
@@ -19,7 +19,6 @@ import random
 import os
 from collections import Counter
 import seaborn as sns
-import json
 
 # =====================================================================================================================
 #                                                     GLOBALS
