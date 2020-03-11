@@ -152,12 +152,13 @@ def balance_data(data, classes, verbose=0):
     return new_data
 
 
-def split_data(data, split_fracs):
-    """Splits data into training and testing data
+def split_data(data, split_fracs, verbose=0):
+    """Splits data into training, validation and testing data
 
     Args:
         data (DataFrame): Table of images with filenames and labels
         split_fracs ([float]): Fraction of images desired for training and validation. Remainder for testing
+        verbose (int): Setting for level of output and analysis
 
     Returns:
         train_images ([[[float]]]): All training images
@@ -178,10 +179,11 @@ def split_data(data, split_fracs):
 
     names = data['NAME'].tolist()
 
-    print('Length of names: %s' % len(names))
+    if verbose is 1:
+        print('Length of names: %s' % len(names))
 
     if len(names) != len(set(names)):
-        print(len(set(names)))
+        print('ERROR: Duplicate names detected in data!')
 
     train_names = []
 
@@ -189,14 +191,14 @@ def split_data(data, split_fracs):
     for i in random.sample(range(0, len(names)), train_n):
         train_names.append(names[i])
 
-    print('Length of train names: %s' % len(train_names))
-
-    if len(train_names) != len(set(train_names)):
-        print(len(set(train_names)))
+    if verbose is 1:
+        print('Length of train names: %s' % len(train_names))
 
     # Takes the difference of lists to find remaining names must be for validation and testing
     val_n_test_names = list(set(names).difference(set(train_names)))
-    print('Length of validation and test names: %s' % len(val_n_test_names))
+
+    if verbose is 1:
+        print('Length of validation and test names: %s' % len(val_n_test_names))
 
     val_names = []
 
@@ -205,7 +207,9 @@ def split_data(data, split_fracs):
         val_names.append(val_n_test_names[i])
 
     test_names = list(set(val_n_test_names).difference(set(val_names)))
-    print('Length of test names: %s' % len(test_names))
+
+    if verbose is 1:
+        print('Length of test names: %s' % len(test_names))
 
     # Uses these to find those names in data to make cut
     train_images = np.array(data.loc[data['NAME'].isin(train_names)]['IMAGE'].tolist())
@@ -216,12 +220,13 @@ def split_data(data, split_fracs):
     val_labels = np.array(data.loc[data['NAME'].isin(val_names)]['LABEL'].tolist())
     test_labels = np.array(data.loc[data['NAME'].isin(test_names)]['LABEL'].tolist())
 
-    print('Length of train images: %s' % len(train_images))
-    print('Length of train labels: %s' % len(train_labels))
-    print('Length of validation images: %s' % len(val_images))
-    print('Length of validation labels: %s' % len(val_labels))
-    print('Length of test images: %s' % len(test_images))
-    print('Length of test labels: %s' % len(test_labels))
+    if verbose is 1:
+        print('Length of train images: %s' % len(train_images))
+        print('Length of train labels: %s' % len(train_labels))
+        print('Length of validation images: %s' % len(val_images))
+        print('Length of validation labels: %s' % len(val_labels))
+        print('Length of test images: %s' % len(test_images))
+        print('Length of test labels: %s' % len(test_labels))
 
     def reorder(images):
         return images.reshape((len(images), n_channels, image_length))
