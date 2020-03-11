@@ -76,6 +76,7 @@ def load_labels():
 
     """
 
+    # Loads in the labels from file as a Pandas.DataFrame
     labels = pd.read_csv('Block_Labels.csv', names=('NAME', 'LABEL'), dtype=str, header=0)
 
     # Finds class names from labels
@@ -83,8 +84,10 @@ def load_labels():
 
     n_classes = len(classes)
 
+    # Creates the identity matrix of order n_classes
     identity = np.identity(n_classes, dtype=int)
 
+    # Prints out the classes and their corresponding OHE label in the data to screen for reference
     for i in range(n_classes):
         print(classes[i], identity[i])
 
@@ -102,7 +105,10 @@ def load_labels():
             if label == classes[j]:
                 return identity[j]
 
+    # Creates CLASS column as a duplicate of LABEL column to hold class names
     labels['CLASS'] = labels['LABEL']
+
+    # Converts the labels in LABEL to OHE
     labels['LABEL'] = labels['CLASS'].apply(name_to_OHE)
 
     return labels, n_classes, classes, identity
@@ -124,12 +130,16 @@ def balance_data(data, classes, verbose=0):
     if verbose == 1:
         plot_subpopulations(data['CLASS'])
 
+    # Find distribution of class sub-populations within data
     modes = Counter(data['CLASS']).most_common()
 
+    # Find the smallest class
     min_size = modes[len(modes) - 1][1]
 
+    # Create a dict to hold all the DataFrames of each class
     dataframes = {}
 
+    # Splits data apart into different DataFrames for each class
     for classification in classes:
         # Creates a DataFrame of just 1 class
         class_df = data[data['CLASS'] == classification].reset_index(drop=True)
