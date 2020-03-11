@@ -229,15 +229,20 @@ def split_data(data, split_fracs):
     return reorder(train_images), reorder(val_images), reorder(test_images), train_labels, val_labels, test_labels
 
 
-def set_optimiser(name, lr):
-    if name is 'RMSprop':
-        return tf.keras.optimizers.RMSprop(learning_rate=lr)
-    if name is 'Adadelta':
-        return tf.keras.optimizers.Adadelta()
-    if name is 'Adagrad':
-        return tf.keras.optimizers.Adagrad()
-    if name is 'Nadam':
-        return tf.keras.optimizers.Nadam()
+def set_optimiser(optimiser):
+    if optimiser[0] is 'RMSprop':
+        return tf.keras.optimizers.RMSprop(learning_rate=optimiser[1]), '%s_%sL' % (optimiser[0], optimiser[1])
+    if optimiser[0] is 'Adadelta':
+        return tf.keras.optimizers.Adadelta(learning_rate=optimiser[1]), '%s_%sL' % (optimiser[0], optimiser[1])
+    if optimiser[0] is 'Adagrad':
+        return tf.keras.optimizers.Adagrad(learning_rate=optimiser[1]), '%s_%sL' % (optimiser[0], optimiser[1])
+    if optimiser[0] is 'Nadam':
+        return tf.keras.optimizers.Nadam(learning_rate=optimiser[1]), '%s_%sL' % (optimiser[0], optimiser[1])
+    if optimiser[0] is 'Adam':
+        return tf.keras.optimizers.Adam(learning_rate=optimiser[1]), '%s_%sL' % (optimiser[0], optimiser[1])
+    if optimiser[0] is 'SGD':
+        return tf.keras.optimizers.SGD(learning_rate=optimiser[1], momentum=optimiser[2]), \
+               '%s_%sL_%sm' % (optimiser[0], optimiser[1], optimiser[2])
     else:
         return
 
@@ -525,19 +530,20 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, 
 def main():
     print('***************************** ACES ********************************************')
     model_type = 'sequential'
-    epochs = 100
+    epochs = 200
     verbose = 1
     batch_size = 32
 
     in_filters = [16]
-    filt_mult = [1, 2]
+    filt_mult = [2]
 
     kernels = [9]
 
-    n_conv = [2]
-    n_dense = [2, 3]
+    n_conv = [2, 3, 4]
+    n_dense = [2, 3, 4]
 
-    optimisers = [('Adagrad', 0.1), ('Nadam', 1e-2)]
+    optimisers = [('Adam', 0.1), ('Adagrad', 0.1), ('Nadam', 1e-3),
+                  ('SGD', 1, 1), ('SGD', 1, 0), ('SGD', 0.1, 1), ('SGD', 0.1, 0)]
 
     print('\nLOAD IMAGES')
     # Load in images
@@ -579,8 +585,11 @@ def main():
                             for f in filt_mult:
                                 i = i + 1
 
+                                # Determines optimiser
+                                optimiser, optimiser_name = set_optimiser(e)
+
                                 # Unique model ID to use for logging and output
-                                model_name = '%sM_%sK_%sF_%sC_%sD_%sO_%sL_%sfm' % (i, a, b, c, d, e[0], e[1], f)
+                                model_name = '%sM_%sK_%sF_%sC_%sD_%s_%sfm' % (i, a, b, c, d, optimiser_name, f)
 
                                 print('\nMODEL NUMBER: %s' % i)
                                 print('Kernel: %s' % a)
@@ -589,8 +598,6 @@ def main():
                                 print('Number of dense layers: %s' % d)
                                 print('Optimiser: %s' % e[0])
                                 print('Learning rate: %s' % e[1])
-
-                                optimiser = set_optimiser(e[0], e[1])
 
                                 history, model = sequential_CNN(train_images, train_labels, val_images, val_labels,
                                                                 test_images, test_labels, n_classes, epochs=epochs,
