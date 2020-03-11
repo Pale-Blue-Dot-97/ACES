@@ -230,6 +230,18 @@ def split_data(data, split_fracs):
 
 
 def set_optimiser(optimiser):
+    """Creates a tf.keras.optimizer based on parameters given
+
+    Args:
+        optimiser ((str, float) / (str, float, float)): Parameters of optimiser
+        (name, learning_rate, momentum (optional))
+
+    Returns:
+        optimiser (tf.keras.optimizer): The desired optimiser object
+        optimiser_name (str): ID code for optimiser for file naming
+
+    """
+
     if optimiser[0] is 'RMSprop':
         return tf.keras.optimizers.RMSprop(learning_rate=optimiser[1]), '%s_%sL' % (optimiser[0], optimiser[1])
     if optimiser[0] is 'Adadelta':
