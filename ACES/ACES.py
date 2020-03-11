@@ -502,21 +502,26 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, 
         None
     """
 
+    # Uses model to make predictions on the images supplied
     pred_labels = model.predict_classes(test_images, batch_size=batch_size)
 
+    # Creates the confusion matrix based on these predictions and the corresponding ground truth labels
     conf_matrix = tf.math.confusion_matrix(labels=np.argmax(test_labels, axis=1), predictions=pred_labels).numpy()
 
+    # Normalises confusion matrix
     conf_matrix_norm = np.around(conf_matrix.astype('float') / conf_matrix.sum(axis=1)[:, np.newaxis], decimals=2)
 
-    con_mat_df = pd.DataFrame(conf_matrix_norm,
-                              index=classes,
-                              columns=classes)
+    # Converts confusion matrix to Pandas.DataFrame
+    con_mat_df = pd.DataFrame(conf_matrix_norm, index=classes, columns=classes)
 
+    # Plots figure
     plt.figure(figsize=(9, 9))
     sns.heatmap(con_mat_df, annot=True, square=True, cmap=plt.cm.get_cmap('Blues'))
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
+
+    # Shows and/or saves plot
     if show:
         plt.show()
     if save:
@@ -568,6 +573,7 @@ def main():
     # Split images into test and train
     train_images, val_images, test_images, train_labels, val_labels, test_labels = split_data(data, (0.7, 0.2))
 
+    # Corrects shape of images
     train_images = np.swapaxes(train_images, 1, 2)
     val_images = np.swapaxes(val_images, 1, 2)
     test_images = np.swapaxes(test_images, 1, 2)
@@ -602,6 +608,7 @@ def main():
                                     print('Optimiser: %s' % e[0])
                                     print('Learning rate: %s' % e[1])
 
+                                    # Performs model fitting with given hyper-parameters
                                     history, model = sequential_CNN(train_images, train_labels, val_images, val_labels,
                                                                     test_images, test_labels, n_classes, epochs=epochs,
                                                                     batch_size=batch_size, in_filt=b, filt_mult=f,
@@ -609,8 +616,10 @@ def main():
                                                                     fn_neurons=g, verbose=verbose,
                                                                     filename='Logs/%s.csv' % model_name, log=True)
 
+                                    # Plots the history of the model fitting and saves to file
                                     plot_history(history, 'ROCs/%s-ROC.png' % model_name, show=False, save=True)
 
+                                    # Creates the confusion matrix of the model and saves to file
                                     make_confusion_matrix(model, test_images, test_labels, batch_size, classes,
                                                           'Confusion_Matrices/%s-CM.png' % model_name, show=False,
                                                           save=True)
