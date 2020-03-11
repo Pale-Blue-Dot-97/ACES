@@ -41,15 +41,18 @@ def load_images(path, n_images):
         names ([str]): List of names of each image without path and .png
 
     """
-
+    # Lists to hold the image data and their names
     images = []
     names = []
 
+    # All the filenames in the path given
     filenames = os.listdir(path)
 
+    # Sets the seed so results are replicable
     random.seed(42)
 
-    ran_indices = random.sample(range(0, len(filenames)), n_images)
+    # Randomly selects files to be added to the dataset
+    ran_indices = random.sample(range(len(filenames)), n_images)
     for i in ran_indices:
         name = filenames[i]
 
