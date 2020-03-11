@@ -257,17 +257,27 @@ def plot_subpopulations(class_labels):
         None
     """
 
+    # Finds the distribution of the classes within the data
     modes = Counter(class_labels).most_common()
+
+    # List to hold the name and percentage distribution of each class in the data as str
     classes = []
+
+    # List to hold the total counts of each class
     counts = []
+
+    # Finds total number of images to normalise data
     n_images = len(class_labels)
 
+    # For each class, find the percentage of data that is that class and the total counts for that class
     for label in modes:
         classes.append('%s (%s)' % (label[0], (label[1] / n_images)))
         counts.append(label[1])
 
+    # Plot a pie chart of the data distribution amongst the classes with labels of class name and percentage size
     plt.pie(counts, labels=classes)
 
+    # Show plot for review
     plt.show()
 
 
@@ -435,6 +445,7 @@ def plot_history(history, filename, show=True, save=False):
     plt.ylim([0, 1])
     plt.legend(loc='lower right')
 
+    # Shows and/or saves plot
     if show:
         plt.show()
     if save:
@@ -478,10 +489,13 @@ def plot_predictions(model, test_images, batch_size, n_classes, classes):
         None
     """
 
+    # Uses model to make predictions on the images supplied
     pred_labels = model.predict_classes(test_images, batch_size=batch_size)
 
+    # Converts these labels from OHE to class names
     class_labels = OHE_to_class(pred_labels, n_classes, classes)
 
+    # Plots distribution of these class names in the data as a pie chart
     plot_subpopulations(class_labels)
 
 
