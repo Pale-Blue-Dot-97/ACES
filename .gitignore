@@ -134,3 +134,4 @@ cnntest/cnn_test.png
 *.png
 
 ACES/Logs/*
+ACES/Cassini Data/*
