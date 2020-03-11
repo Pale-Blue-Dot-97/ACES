@@ -537,12 +537,14 @@ def main():
     in_filters = [16]
     filt_mult = [2]
 
+    fn_neurons = [16, 32, 64]
+
     kernels = [9]
 
-    n_conv = [2, 3, 4]
-    n_dense = [2, 3, 4]
+    n_conv = [2, 3, 4, 5]
+    n_dense = [2, 3, 4, 5]
 
-    optimisers = [('Adam', 0.1), ('Adagrad', 0.1), ('Nadam', 1e-3),
+    optimisers = [('Adam', 0.1), ('Adam', 1e-2), ('Adagrad', 0.1), ('Nadam', 1e-3),
                   ('SGD', 1, 1), ('SGD', 1, 0), ('SGD', 0.1, 1), ('SGD', 0.1, 0)]
 
     print('\nLOAD IMAGES')
@@ -583,33 +585,35 @@ def main():
                     for d in n_dense:
                         for e in optimisers:
                             for f in filt_mult:
-                                i = i + 1
+                                for g in fn_neurons:
+                                    i = i + 1
 
-                                # Determines optimiser
-                                optimiser, optimiser_name = set_optimiser(e)
+                                    # Determines optimiser
+                                    optimiser, optimiser_name = set_optimiser(e)
 
-                                # Unique model ID to use for logging and output
-                                model_name = '%sM_%sK_%sF_%sC_%sD_%s_%sfm' % (i, a, b, c, d, optimiser_name, f)
+                                    # Unique model ID to use for logging and output
+                                    model_name = '%sM_%sK_%sF_%sC_%sD_%s_%sfm_%sd' % (i, a, b, c, d, optimiser_name, f, g)
 
-                                print('\nMODEL NUMBER: %s' % i)
-                                print('Kernel: %s' % a)
-                                print('Initial filters: %s' % b)
-                                print('Number of convolutional layers: %s' % c)
-                                print('Number of dense layers: %s' % d)
-                                print('Optimiser: %s' % e[0])
-                                print('Learning rate: %s' % e[1])
+                                    print('\nMODEL NUMBER: %s' % i)
+                                    print('Kernel: %s' % a)
+                                    print('Initial filters: %s' % b)
+                                    print('Number of convolutional layers: %s' % c)
+                                    print('Number of dense layers: %s' % d)
+                                    print('Optimiser: %s' % e[0])
+                                    print('Learning rate: %s' % e[1])
 
-                                history, model = sequential_CNN(train_images, train_labels, val_images, val_labels,
-                                                                test_images, test_labels, n_classes, epochs=epochs,
-                                                                batch_size=batch_size, in_filt=b, filt_mult=f,
-                                                                kernel=a, n_conv=c, n_dense=d, optimiser=optimiser,
-                                                                verbose=verbose, filename='Logs/%s.csv' % model_name,
-                                                                log=True)
+                                    history, model = sequential_CNN(train_images, train_labels, val_images, val_labels,
+                                                                    test_images, test_labels, n_classes, epochs=epochs,
+                                                                    batch_size=batch_size, in_filt=b, filt_mult=f,
+                                                                    kernel=a, n_conv=c, n_dense=d, optimiser=optimiser,
+                                                                    fn_neurons=g, verbose=verbose,
+                                                                    filename='Logs/%s.csv' % model_name, log=True)
 
-                                plot_history(history, 'ROCs/%s-ROC.png' % model_name, show=False, save=True)
+                                    plot_history(history, 'ROCs/%s-ROC.png' % model_name, show=False, save=True)
 
-                                make_confusion_matrix(model, test_images, test_labels, batch_size, classes,
-                                                      'Confusion_Matrices/%s-CM.png' % model_name, show=False, save=True)
+                                    make_confusion_matrix(model, test_images, test_labels, batch_size, classes,
+                                                          'Confusion_Matrices/%s-CM.png' % model_name, show=False,
+                                                          save=True)
 
 
 if __name__ == '__main__':
