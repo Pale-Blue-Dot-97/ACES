@@ -2,7 +2,6 @@
 and process ready for use as test data for ACES.py
 
 TODO:
-    * Re-configure for Cassini data
 
 """
 
