@@ -16,7 +16,7 @@ from collections import Counter
 # =====================================================================================================================
 pd.plotting.register_matplotlib_converters()
 
-# Header names in Labels.csv
+# Header names in VOY1_Labels.csv
 header = ['CLASS', 'START', 'STOP']
 
 
@@ -52,7 +52,7 @@ def load_labels():
     data = load_data()
 
     # Loads the start and endpoints of the labelled regions of the data
-    labels = pd.read_csv('Labels.csv', names=header, dtype=str, header=0, sep=',', index_col='CLASS')
+    labels = pd.read_csv('VOY1_Labels.csv', names=header, dtype=str, header=0, sep=',', index_col='CLASS')
 
     # Converts strings to datetime64 dtype
     labels['START'] = pd.to_datetime(labels['START'])
