@@ -255,6 +255,18 @@ def main():
     norm_data.reset_index(drop=True)
     norm_data.to_csv('%s/CASSINI_2006_01_PROC.csv' % folder)
 
+    # Create Matplotlib datetime64 type date-time column from UNIX time
+    norm_data['DATETIME'] = pd.to_datetime(norm_data['UNIX TIME'], unit='s')
+
+    # Re-index data to date-time
+    norm_data.index = norm_data['DATETIME']
+    del norm_data['DATETIME']
+
+    norm_data.plot(y=['BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm'], kind='line')
+
+    plt.legend(['BR', 'BTH', 'BPH', 'BMAG'], loc='upper right')
+    plt.show()
+
 
 if __name__ == '__main__':
     main()
