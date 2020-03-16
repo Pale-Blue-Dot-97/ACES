@@ -14,12 +14,15 @@ import scipy.interpolate as ip
 import datetime
 import matplotlib.pyplot as plt
 
+# =====================================================================================================================
+#                                                     GLOBAL
+# =====================================================================================================================
 folder = 'Cassini Data'
+
+
 # =====================================================================================================================
 #                                                     METHODS
 # =====================================================================================================================
-
-
 def load_data():
     """Load in data from PDS archive. Column headers come from the LBL meta data
 
@@ -60,7 +63,30 @@ def load_data():
 
 
 def reformat_time(position):
+    """
+
+    Args:
+        position (DataFrame): DataFrame containing Cassini positions with datetime in separate columns
+
+    Returns:
+        df (DataFrame): positions with datetime columns merged into datetime in PDS format
+
+    """
     def time_together(yr, doy, hr, min, sec):
+        """Takes the separate year, day of year, hour, minute and seconds values and sticks them together
+        into a PDS format timestamp
+
+        Args:
+            yr (float):
+            doy (float):
+            hr (float):
+            min (float):
+            sec (float):
+
+        Returns:
+            datetime (str): PDS format timestamp
+        """
+
         date_time = datetime.datetime.strptime('%s %s %s %s %s' % (int(yr), int(doy), int(hr), int(min), int(sec)),
                                                '%Y %j %H %M %S')
 
