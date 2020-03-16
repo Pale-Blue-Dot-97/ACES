@@ -266,6 +266,8 @@ def set_optimiser(optimiser):
         return tf.keras.optimizers.Adadelta(learning_rate=optimiser[1]), '%s_%sL' % (optimiser[0], optimiser[1])
     if optimiser[0] is 'Adagrad':
         return tf.keras.optimizers.Adagrad(learning_rate=optimiser[1]), '%s_%sL' % (optimiser[0], optimiser[1])
+    if optimiser[0] is 'Adamax':
+        return tf.keras.optimizers.Adamax(learning_rate=optimiser[1]), '%s_%sL' % (optimiser[0], optimiser[1])
     if optimiser[0] is 'Nadam':
         return tf.keras.optimizers.Nadam(learning_rate=optimiser[1]), '%s_%sL' % (optimiser[0], optimiser[1])
     if optimiser[0] is 'Adam':
@@ -579,22 +581,21 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, 
 def main():
     print('***************************** ACES ********************************************')
     model_type = 'sequential'
-    epochs = 200
+    epochs = 20
     verbose = 1
     batch_size = 32
 
     in_filters = [16]
     filt_mult = [2]
 
-    fn_neurons = [16, 32, 64]
+    fn_neurons = [32]
 
     kernels = [9]
 
-    n_conv = [2, 3, 4, 5]
-    n_dense = [2, 3, 4, 5]
+    n_conv = [2]
+    n_dense = [2]
 
-    optimisers = [('Adam', 0.1), ('Adam', 1e-2), ('Adagrad', 0.1), ('Nadam', 1e-3),
-                  ('SGD', 1, 1), ('SGD', 1, 0), ('SGD', 0.1, 1), ('SGD', 0.1, 0)]
+    optimisers = [('Adagrad', 0.01), ('Adamax', 0.01), ('Nadam', 2e-5), ('SGD', 0.01, 0.5)]
 
     print('\nLOAD IMAGES')
     # Load in images
