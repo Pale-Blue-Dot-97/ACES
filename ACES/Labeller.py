@@ -34,7 +34,7 @@ def load_data():
 
     data_names = ['BR', 'BTH', 'BPH', 'BMAG', 'UNIX TIME', 'BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm']
 
-    data = pd.read_csv('Data.csv', names=data_names, dtype=float, header=0)\
+    data = pd.read_csv('VOY1_data.csv', names=data_names, dtype=float, header=0)\
         .drop(columns=['BR', 'BTH', 'BPH', 'BMAG'])
 
     # Create Matplotlib datetime64 type date-time column from UNIX time
