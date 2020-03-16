@@ -1,6 +1,7 @@
-"""Script to manually label Voyager 1 Jupiter flyby magnetometer data for neural network training
+"""Script to manually label data for neural network classification
 
 TODO:
+    * Generalise for all ACES magnetometer data
 
 """
 
@@ -10,21 +11,25 @@ TODO:
 import pandas as pd
 import matplotlib.pyplot as plt
 from collections import Counter
+import sys
 
 # =====================================================================================================================
 #                                                     GLOBAL
 # =====================================================================================================================
 pd.plotting.register_matplotlib_converters()
 
-# Header names in VOY1_Labels.csv
+# Header names in the labels file
 header = ['CLASS', 'START', 'STOP']
 
 
 # =====================================================================================================================
 #                                                     METHODS
 # =====================================================================================================================
-def load_data():
+def load_data(filename):
     """Load in cleaned and normalised data from file
+
+    Args:
+        filename (str): Name of file to be loaded
 
     Returns:
         data (DataFrame): Table of all the cleaned and normalised data from file
@@ -34,7 +39,7 @@ def load_data():
 
     data_names = ['BR', 'BTH', 'BPH', 'BMAG', 'UNIX TIME', 'BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm']
 
-    data = pd.read_csv('VOY1_data.csv', names=data_names, dtype=float, header=0)\
+    data = pd.read_csv(filename, names=data_names, dtype=float, header=0)\
         .drop(columns=['BR', 'BTH', 'BPH', 'BMAG'])
 
     # Create Matplotlib datetime64 type date-time column from UNIX time
@@ -47,12 +52,24 @@ def load_data():
     return data
 
 
-def load_labels():
+def load_labels(data_filename, labels_filename):
+    """
+
+    Args:
+        data_filename (str): Name of file containing data
+        labels_filename (str): Name of file containing labels
+
+    Returns:
+        labelled_data (DataFrame): Labelled data
+        classes ([str]): List of class names found in labels file
+
+    """
+
     # Loads in data
-    data = load_data()
+    data = load_data(data_filename)
 
     # Loads the start and endpoints of the labelled regions of the data
-    labels = pd.read_csv('VOY1_Labels.csv', names=header, dtype=str, header=0, sep=',', index_col='CLASS')
+    labels = pd.read_csv(labels_filename, names=header, dtype=str, header=0, sep=',', index_col='CLASS')
 
     # Converts strings to datetime64 dtype
     labels['START'] = pd.to_datetime(labels['START'])
@@ -98,7 +115,7 @@ def load_labels():
 #                                                       MAIN
 # =====================================================================================================================
 def main():
-    data, classes = load_labels()
+    data, classes = load_labels(sys.argv[1], sys.argv[2])
 
     # Plot using inbuilt Pandas function
     data.plot(y=['BR_norm', 'BMAG_norm'], kind='line')
