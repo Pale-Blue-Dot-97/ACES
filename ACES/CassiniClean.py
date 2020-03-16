@@ -35,7 +35,7 @@ def load_data():
 
     data_names = ['TIME', 'BR', 'BTH', 'BPH', 'BMAG', 'NUM_PTS']
 
-    data = pd.read_table('%s/06005_06036_20_FGM_KRTP_1S.TAB' % folder, delim_whitespace=True, names=data_names,
+    data = pd.read_table('%s/06005_06036_20_FGM_KRTP_1S.DAT' % folder, delim_whitespace=True, names=data_names,
                          na_values=99999.999)
 
     data.drop(columns=['NUM_PTS'], inplace=True)
@@ -52,7 +52,7 @@ def load_data():
     position_names = ['YEAR', 'DOY', 'HR', 'MIN', 'SEC', 'X (Rs)', 'Y (Rs)', 'Z (Rs)', 'R', 'X (km/s)', 'Y (km/s)',
                       'Z (km/s)', 'Vmag (km/s)']
 
-    position = pd.read_table('%s/Cassini_POS_2006-01-05-2006-02-05_300S.TAB' % folder, delim_whitespace=True,
+    position = pd.read_table('%s/Cassini_POS_2006-01-05-2006-02-05_300S.DAT' % folder, delim_whitespace=True,
                              names=position_names)
     position.drop(columns=['X (Rs)', 'Y (Rs)', 'Z (Rs)', 'X (km/s)', 'Y (km/s)', 'Z (km/s)', 'Vmag (km/s)'],
                   inplace=True)
