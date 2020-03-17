@@ -12,19 +12,25 @@ import pandas as pd
 import numpy as np
 import scipy.interpolate as ip
 import datetime
-import matplotlib.pyplot as plt
+import sys
 
 # =====================================================================================================================
 #                                                     GLOBAL
 # =====================================================================================================================
-folder = 'Cassini Data'
+raw_data_path = 'Raw_Cassini_Data'
+pos_path = 'Cassini_Telemetry'
+proc_data_path = 'Processed_Cassini_Data'
 
 
 # =====================================================================================================================
 #                                                     METHODS
 # =====================================================================================================================
-def load_data():
+def load_data(data_name, pos_name):
     """Load in data from PDS archive. Column headers come from the LBL meta data
+
+    Args:
+        data_name (str): Name of file containing data
+        pos_name (str): Name of file containing corresponding position data
 
     Returns:
         data (DataFrame): Table of the magnetometer data time-series
@@ -35,7 +41,7 @@ def load_data():
 
     data_names = ['TIME', 'BR', 'BTH', 'BPH', 'BMAG', 'NUM_PTS']
 
-    data = pd.read_table('%s/06005_06036_20_FGM_KRTP_1S.DAT' % folder, delim_whitespace=True, names=data_names,
+    data = pd.read_table('%s/%s' % (data_path, data_name), delim_whitespace=True, names=data_names,
                          na_values=99999.999)
 
     data.drop(columns=['NUM_PTS'], inplace=True)
@@ -52,7 +58,7 @@ def load_data():
     position_names = ['YEAR', 'DOY', 'HR', 'MIN', 'SEC', 'X (Rs)', 'Y (Rs)', 'Z (Rs)', 'R', 'X (km/s)', 'Y (km/s)',
                       'Z (km/s)', 'Vmag (km/s)']
 
-    position = pd.read_table('%s/Cassini_POS_2006-01-05-2006-02-05_300S.DAT' % folder, delim_whitespace=True,
+    position = pd.read_table('%s/%s' % (pos_path, pos_name), delim_whitespace=True,
                              names=position_names)
     position.drop(columns=['X (Rs)', 'Y (Rs)', 'Z (Rs)', 'X (km/s)', 'Y (km/s)', 'Z (km/s)', 'Vmag (km/s)'],
                   inplace=True)
@@ -239,7 +245,7 @@ def pow_normalise(data, a=4.0e5, b=200.0, c=35.0):
 def main():
 
     print("\nLoading data")
-    data, data_columns, position = load_data()
+    data, data_columns, position = load_data(sys.argv[1], sys.argv[2])
 
     print("\nExtracting time stamps")
     data, times = extract_time(data)
@@ -253,7 +259,7 @@ def main():
     print('\nWRITING DATA TO FILE')
     norm_data.drop(columns=['TIME', 'R'], inplace=True)
     norm_data.reset_index(drop=True)
-    norm_data.to_csv('%s/CASSINI_2006_01_PROC.csv' % folder)
+    norm_data.to_csv('%s/%s' % (proc_data_path, sys.argv[3]))
 
 
 if __name__ == '__main__':
