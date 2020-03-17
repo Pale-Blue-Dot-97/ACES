@@ -63,7 +63,7 @@ def load_data():
 
 
 def reformat_time(position):
-    """
+    """Re-formats the separate date and time columns in the telemetry file into PDS format timestamps
 
     Args:
         position (DataFrame): DataFrame containing Cassini positions with datetime in separate columns
@@ -72,22 +72,22 @@ def reformat_time(position):
         df (DataFrame): positions with datetime columns merged into datetime in PDS format
 
     """
-    def time_together(yr, doy, hr, min, sec):
-        """Takes the separate year, day of year, hour, minute and seconds values and sticks them together
+    def time_together(yr, doy, hr, minutes, sec):
+        """Takes the separate year, day of year, hour, minute and seconds values in a row and sticks them together
         into a PDS format timestamp
 
         Args:
             yr (float):
             doy (float):
             hr (float):
-            min (float):
+            minutes (float):
             sec (float):
 
         Returns:
             datetime (str): PDS format timestamp
         """
 
-        date_time = datetime.datetime.strptime('%s %s %s %s %s' % (int(yr), int(doy), int(hr), int(min), int(sec)),
+        date_time = datetime.datetime.strptime('%s %s %s %s %s' % (int(yr), int(doy), int(hr), int(minutes), int(sec)),
                                                '%Y %j %H %M %S')
 
         return date_time.strftime('%Y-%m-%dT%H:%M:%S.%f')
