@@ -13,6 +13,7 @@ import numpy as np
 import scipy.interpolate as ip
 import datetime
 import sys
+import matplotlib.pyplot as plt
 
 # =====================================================================================================================
 #                                                     GLOBAL
@@ -41,7 +42,7 @@ def load_data(data_name, pos_name):
 
     data_names = ['TIME', 'BR', 'BTH', 'BPH', 'BMAG', 'NUM_PTS']
 
-    data = pd.read_table('%s/%s' % (data_path, data_name), delim_whitespace=True, names=data_names,
+    data = pd.read_table('%s/%s' % (raw_data_path, data_name), delim_whitespace=True, names=data_names,
                          na_values=99999.999)
 
     data.drop(columns=['NUM_PTS'], inplace=True)
@@ -260,6 +261,18 @@ def main():
     norm_data.drop(columns=['TIME', 'R'], inplace=True)
     norm_data.reset_index(drop=True)
     norm_data.to_csv('%s/%s' % (proc_data_path, sys.argv[3]))
+
+    # Create Matplotlib datetime64 type date-time column from UNIX time
+    norm_data['DATETIME'] = pd.to_datetime(norm_data['UNIX TIME'], unit='s')
+
+    # Re-index data to date-time
+    norm_data.index = norm_data['DATETIME']
+    del norm_data['DATETIME']
+
+    norm_data.plot(y=['BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm'], kind='line')
+
+    plt.legend(['BR', 'BTH', 'BPH', 'BMAG'], loc='upper right')
+    plt.show()
 
 
 if __name__ == '__main__':
