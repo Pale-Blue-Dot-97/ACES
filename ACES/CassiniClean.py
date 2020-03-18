@@ -79,7 +79,7 @@ def reformat_time(position):
         df (DataFrame): positions with datetime columns merged into datetime in PDS format
 
     """
-    def time_together(yr, doy, hr, minutes, sec):
+    def time_together(row):
         """Takes the separate year, day of year, hour, minute and seconds values in a row and sticks them together
         into a PDS format timestamp
 
@@ -94,16 +94,14 @@ def reformat_time(position):
             datetime (str): PDS format timestamp
         """
 
-        date_time = datetime.datetime.strptime('%s %s %s %s %s' % (int(yr), int(doy), int(hr), int(minutes), int(sec)),
-                                               '%Y %j %H %M %S')
+        date_time = datetime.datetime.strptime('%s %s %s %s %s' % (int(row['YEAR']), int(row['DOY']), int(row['HR']),
+                                                                   int(row['MIN']), int(row['SEC'])),'%Y %j %H %M %S')
 
         return date_time.strftime('%Y-%m-%dT%H:%M:%S.%f')
 
     df = position.copy()
 
-    df['TIME'] = float('NaN')
-
-    df['TIME'] = df.apply(lambda row: time_together(row['YEAR'], row['DOY'], row['HR'], row['MIN'], row['SEC']), axis=1)
+    df['TIME'] = df.apply(time_together, axis=1)
 
     df.drop(columns=['YEAR', 'DOY', 'HR', 'MIN', 'SEC'], inplace=True)
 
@@ -118,62 +116,22 @@ def extract_time(data):
 
     Returns:
         new_data (DataFrame): Data with column containing times since UNIX Epoch
-        times ([float]): Array identical to new column added to data
     """
 
+    def get_UNIX_time(row):
+        dt = datetime.datetime.strptime(row['TIME'], '%Y-%m-%dT%H:%M:%S.%f')
+        return (dt - datetime.datetime(1970, 1, 1)).total_seconds()
+
     new_data = data.copy()
-    times = []
 
     print('\nExtracting UNIX time from time-stamps')
 
-    err = []
-
-    for i in range(len(new_data['TIME'])):
-        j = new_data['TIME'][i]
-
-        try:
-            dt = datetime.datetime.strptime(j, '%Y-%m-%dT%H:%M:%S.%f')
-            t = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
-            times.append(t)
-
-        except ValueError:
-            print('Exception in timestamp extraction in row %d' % i)
-            print('Handling exception')
-            err.append(i)
-
-            # Handling exception by splitting into date and time components
-            # then finding Unix time and adding back together
-            stamp = list(j)
-
-            date = ""
-            date = date.join(stamp[:10])
-
-            hr = ""
-            hr = hr.join(stamp[11:13])
-
-            mn = ""
-            mn = mn.join(stamp[14:16])
-
-            ss = ""
-            ss = ss.join(stamp[17:])
-
-            date_time = datetime.datetime.strptime(date, '%Y-%m-%d')
-
-            time_time = datetime.timedelta(hours=int(hr), minutes=int(mn), seconds=float(ss))
-
-            dt = date_time + time_time
-            t = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
-            times.append(t)
-
-    print('\nTotal number of exceptions: %s' % len(err))
-
-    # Adds UNIX time to DataFrame
-    new_data['UNIX TIME'] = times
+    new_data['UNIX TIME'] = new_data.apply(get_UNIX_time, axis=1)
 
     # Resets index after indices have been dropped to avoid key errors
     new_data.reset_index(drop=True)
 
-    return new_data, times
+    return new_data
 
 
 def interpolate_positions(positions, data):
@@ -190,11 +148,11 @@ def interpolate_positions(positions, data):
 
     new_data = data.copy()
 
-    positions, time = extract_time(positions)
+    positions = extract_time(positions)
 
     print('\nInterpolating positional data to match time intervals of meter data')
 
-    R = ip.interp1d(x=time, y=positions['R'], bounds_error=False, fill_value='extrapolate')
+    R = ip.interp1d(x=positions['UNIX TIME'], y=positions['R'], bounds_error=False, fill_value='extrapolate')
 
     new_data['R'] = R(data['UNIX TIME'])
 
@@ -249,13 +207,13 @@ def main():
     data, data_columns, position = load_data(sys.argv[1], sys.argv[2])
 
     print("\nExtracting time stamps")
-    data, times = extract_time(data)
+    data = extract_time(data)
 
     print("\nInterpolating data")
     data = interpolate_positions(position, data)
 
     print("\nNormalising data")
-    norm_data = pow_normalise(data, a=3.0e4, b=0.35e3, c=160.0)
+    norm_data = pow_normalise(data, a=5.0e4, b=0.7e3, c=380.0)
 
     print('\nWRITING DATA TO FILE')
     norm_data.drop(columns=['TIME', 'R'], inplace=True)
