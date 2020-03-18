@@ -37,10 +37,9 @@ def load_data(filename):
 
     """
 
-    data_names = ['BR', 'BTH', 'BPH', 'BMAG', 'UNIX TIME', 'BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm']
+    data_names = ['BR', 'BTH', 'BPH', 'BMAG', 'UNIX TIME']
 
-    data = pd.read_csv(filename, names=data_names, dtype=float, header=0)\
-        .drop(columns=['BR', 'BTH', 'BPH', 'BMAG'])
+    data = pd.read_csv(filename, names=data_names, dtype=float, header=0)
 
     # Create Matplotlib datetime64 type date-time column from UNIX time
     data['DATETIME'] = pd.to_datetime(data['UNIX TIME'], unit='s')
@@ -118,11 +117,11 @@ def main():
     data, classes = load_labels(sys.argv[1], sys.argv[2])
 
     # Plot using inbuilt Pandas function
-    data.plot(y=['BR_norm', 'BMAG_norm'], kind='line')
+    data.plot(y=['BR', 'BMAG'], kind='line')
 
     for classification in classes:
         plt.plot(data.loc[data['LABELS'] == classification].index.to_list(),
-                 (data.loc[data['LABELS'] == classification]['BMAG_norm']), 'o', ms=0.5, alpha=0.8)
+                 (data.loc[data['LABELS'] == classification]['BMAG']), 'o', ms=0.5, alpha=0.8)
 
     plt.legend(['BR', 'BMAG'] + classes)
     plt.show()

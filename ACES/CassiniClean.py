@@ -190,10 +190,10 @@ def pow_normalise(data, a=4.0e5, b=200.0, c=35.0):
 
     # More complex polynomial approach
     print('\nApplying power series normalisation to data')
-    norm_data['BR_norm'] = power_series_norm(data['BR'], data['R'])
-    norm_data['BTH_norm'] = power_series_norm(data['BTH'], data['R'])
-    norm_data['BPH_norm'] = power_series_norm(data['BPH'], data['R'])
-    norm_data['BMAG_norm'] = power_series_norm(data['BMAG'], data['R'])
+    norm_data['BR'] = power_series_norm(data['BR'], data['R'])
+    norm_data['BTH'] = power_series_norm(data['BTH'], data['R'])
+    norm_data['BPH'] = power_series_norm(data['BPH'], data['R'])
+    norm_data['BMAG'] = power_series_norm(data['BMAG'], data['R'])
 
     return norm_data
 
@@ -213,7 +213,7 @@ def main():
     data = interpolate_positions(position, data)
 
     print("\nNormalising data")
-    norm_data = pow_normalise(data, a=5.0e4, b=0.7e3, c=380.0)
+    norm_data = pow_normalise(data, a=4.5e4, b=0.6e3, c=400.0)
 
     print('\nWRITING DATA TO FILE')
     norm_data.drop(columns=['TIME', 'R'], inplace=True)
@@ -227,7 +227,7 @@ def main():
     norm_data.index = norm_data['DATETIME']
     del norm_data['DATETIME']
 
-    norm_data.plot(y=['BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm'], kind='line')
+    norm_data.plot(y=['BR', 'BTH', 'BPH', 'BMAG'], kind='line')
 
     plt.legend(['BR', 'BTH', 'BPH', 'BMAG'], loc='upper right')
     plt.show()
