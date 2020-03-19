@@ -213,7 +213,7 @@ def main():
     data = interpolate_positions(position, data)
 
     print("\nNormalising data")
-    norm_data = pow_normalise(data, a=4.5e4, b=0.6e3, c=400.0)
+    norm_data = pow_normalise(data, a=3.0e4, b=0.35e3, c=160.0)
 
     print('\nWRITING DATA TO FILE')
     norm_data.drop(columns=['TIME', 'R'], inplace=True)
