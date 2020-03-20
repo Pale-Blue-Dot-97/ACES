@@ -209,7 +209,7 @@ def labels_to_file(all_blocks, all_names):
     data = pd.DataFrame()
     data['NAME'] = names
     data['LABEL'] = labels
-    data.to_csv('Block_Labels.csv')
+    data.to_csv('VOY1_Block_Labels.csv')
 
     return
 

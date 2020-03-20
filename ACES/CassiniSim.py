@@ -75,11 +75,17 @@ def create_blocks(data, stride=2):
 
     blocks = []
 
-    indices = range(int(len(data) * stride / block_length))
+    # Starting index of every block which is set at stride apart
+    indices = np.arange(int(len(data) * stride / block_length)) * int(block_length/stride)
+
+    elements_delete = range(len(indices) - stride - 1, len(indices))
+
+    # Removes last few elements to prevent out-of-bounds errors
+    indices = np.delete(indices, elements_delete)
 
     # Slices DataFrame into blocks
     for i in indices:
-        block_slice = data[(i-1) * int(block_length/stride): (i * block_length) - 1]
+        block_slice = data[i: i + block_length]
 
         # Assume block label is False initially
         label = False
@@ -113,7 +119,7 @@ def create_blocks(data, stride=2):
             if len(channel) != block_length:
                 print('%s: %s' % (k, len(channel)))
 
-        # Adds tuple of the block number, label of the block, and the block itself
+        # Adds tuple of the starting index of the block, label of the block, and the block itself
         blocks.append((i, label, np.array(block)))
 
     return blocks
@@ -166,7 +172,7 @@ def main():
     data = renormalise(data)
 
     print('\nCREATING BLOCKS:')
-    blocks = create_blocks(data, stride=2)
+    blocks = create_blocks(data, stride=int(sys.argv[2]))
 
     print('\nCONVERTING BLOCKS TO IMAGES:')
     blocks_to_images(blocks, 'Cassini_Rev%s_Blocks' % rev_num)

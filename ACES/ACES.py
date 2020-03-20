@@ -58,7 +58,7 @@ def load_images(path, n_images):
 
         # Normalize pixel values to be between 0 and 1
         images.append([image.imread(fname=(path + name), format='PNG') / 255.0])
-        names.append(name.replace('Voyager1_Blocks\\', '').replace('.png', ''))
+        names.append(name.replace(path, '').replace('.png', ''))
 
     # Construct DataFrame matching images to their names
     data = pd.DataFrame()
@@ -68,7 +68,7 @@ def load_images(path, n_images):
     return data
 
 
-def load_labels():
+def load_labels(filename):
     """Loads in the file containing the labels for each block, and converts these to OHE
 
     Returns:
@@ -80,7 +80,7 @@ def load_labels():
     """
 
     # Loads in the labels from file as a Pandas.DataFrame
-    labels = pd.read_csv('Block_Labels.csv', names=('NAME', 'LABEL'), dtype=str, header=0)
+    labels = pd.read_csv(filename, names=('NAME', 'LABEL'), dtype=str, header=0)
 
     # Finds class names from labels
     classes = [item[0] for item in Counter(labels['LABEL']).most_common()]
@@ -603,7 +603,7 @@ def main():
 
     print('\nLOAD LABELS')
     # Load in accompanying labels into separate randomly ordered DataFrame
-    labels, n_classes, classes, identity = load_labels()
+    labels, n_classes, classes, identity = load_labels('VOY1_Block_Labels.csv')
 
     # Merges data and labels together
     data = pd.merge(data, labels, on='NAME')
