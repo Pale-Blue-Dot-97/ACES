@@ -177,7 +177,7 @@ def blocks_to_images(blocks, name):
     """
 
     for block in blocks:
-        Image.fromarray((block[2] * 255).astype(np.uint8), mode='L').save('Blocks/%s_%s.png' % (block[0], name))
+        Image.fromarray((block[2] * 255).astype(np.uint8), mode='L').save('Voyager1_Blocks/%s_%s.png' % (block[0], name))
 
     return
 

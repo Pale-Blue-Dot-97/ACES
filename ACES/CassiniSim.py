@@ -30,6 +30,10 @@ data_columns = ['BR', 'BTH', 'BPH', 'BMAG']
 
 block_labels_path = 'Cassini_Block_Labels'
 
+data_path = 'Processed_Cassini_Data'
+
+labels_path = 'Cassini_Labels'
+
 
 # =====================================================================================================================
 #                                                     METHODS
@@ -152,8 +156,11 @@ def labels_to_file(blocks, filename):
 def main():
     print('*************************** WELCOME TO CASSINISIM *************************************')
 
+    rev_num = sys.argv[1]
+
     print('\nLOADING DATA')
-    data, classes = load_labels()
+    data, classes = load_labels('%s/CASSINI_Rev%s_PROC.csv' % (data_path, rev_num),
+                                '%s/Cassini_Labels_Rev%s' % (labels_path, rev_num))
 
     print('\nRE-NORMALISING DATA')
     data = renormalise(data)
@@ -162,10 +169,10 @@ def main():
     blocks = create_blocks(data, stride=2)
 
     print('\nCONVERTING BLOCKS TO IMAGES:')
-    blocks_to_images(blocks, sys.argv[1])
+    blocks_to_images(blocks, 'Cassini_Rev%s_Blocks' % rev_num)
 
     print('\nEXPORTING LABELS TO FILE')
-    labels_to_file(blocks, sys.argv[2])
+    labels_to_file(blocks, 'Cassini_Rev%s_Block_Labels.csv' % rev_num)
     
     print('\nFINISHED')
 

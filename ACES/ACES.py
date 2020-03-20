@@ -58,7 +58,7 @@ def load_images(path, n_images):
 
         # Normalize pixel values to be between 0 and 1
         images.append([image.imread(fname=(path + name), format='PNG') / 255.0])
-        names.append(name.replace('Blocks\\', '').replace('.png', ''))
+        names.append(name.replace('Voyager1_Blocks\\', '').replace('.png', ''))
 
     # Construct DataFrame matching images to their names
     data = pd.DataFrame()
@@ -599,7 +599,7 @@ def main():
 
     print('\nLOAD IMAGES')
     # Load in images
-    data = load_images('Blocks/', 60000)
+    data = load_images('Voyager1_Blocks/', 60000)
 
     print('\nLOAD LABELS')
     # Load in accompanying labels into separate randomly ordered DataFrame
