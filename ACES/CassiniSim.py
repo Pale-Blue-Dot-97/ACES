@@ -1,7 +1,8 @@
-"""Script to process cleaned and normalised Voyager magnetometer data into 4-channel blocks for use as training and
-validation data for neural networks using manually constructed labels
+"""Script to simulate the recording of data by Cassini in near real-time as a test for neural networks
 
 TODO:
+    * Re-work for Cassini data in ordered blocks rather than randomised blocks
+    * Streamline code
 
 """
 
