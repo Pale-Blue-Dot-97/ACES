@@ -67,10 +67,6 @@ def load_labels(data_filename, labels_filename):
     # Loads in data
     data = load_data(data_filename)
 
-    # Plot using inbuilt Pandas function
-    data.plot(y=['BR', 'BMAG'], kind='line')
-    plt.show()
-
     # Loads the start and endpoints of the labelled regions of the data
     labels = pd.read_csv(labels_filename, names=header, dtype=str, header=0, sep=',', index_col='CLASS')
 

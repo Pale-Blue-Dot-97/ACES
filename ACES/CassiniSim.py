@@ -160,7 +160,7 @@ def main():
 
     print('\nLOADING DATA')
     data, classes = load_labels('%s/CASSINI_Rev%s_PROC.csv' % (data_path, rev_num),
-                                '%s/Cassini_Labels_Rev%s' % (labels_path, rev_num))
+                                '%s/Cassini_Labels_Rev%s.csv' % (labels_path, rev_num))
 
     print('\nRE-NORMALISING DATA')
     data = renormalise(data)

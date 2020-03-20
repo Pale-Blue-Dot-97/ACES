@@ -136,3 +136,4 @@ cnntest/cnn_test.png
 ACES/Logs/*
 ACES/Raw_Cassini_Data/*
 ACES/Processed_Cassini_Data/*
+ACES/Cassini_Rev20_Blocks/*
