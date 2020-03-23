@@ -14,7 +14,7 @@ import numpy as np
 from PIL import Image
 import sys
 from collections import Counter
-from Labeller import load_labels
+from Labeller import load_labels, plot_labelled_data
 
 
 # =====================================================================================================================
@@ -180,7 +180,10 @@ def main():
 
     print('\nEXPORTING LABELS TO FILE')
     labels_to_file(blocks, 'Cassini_Rev%s_Block_Labels.csv' % rev_num)
-    
+
+    print('\nPLOTTING DATA WITH LABELS')
+    plot_labelled_data(data, classes)
+
     print('\nFINISHED')
 
 

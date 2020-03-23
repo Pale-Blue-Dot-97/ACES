@@ -110,6 +110,19 @@ def load_labels(data_filename, labels_filename):
     return labelled_data, classes
 
 
+def plot_labelled_data(data, classes):
+
+    # Plot using inbuilt Pandas function
+    data.plot(y=['BR', 'BMAG'], kind='line')
+
+    for classification in classes:
+        plt.plot(data.loc[data['LABELS'] == classification].index.to_list(),
+                 (data.loc[data['LABELS'] == classification]['BMAG']), 'o', ms=0.5, alpha=0.8)
+
+    plt.legend(['BR', 'BMAG'] + classes, loc='upper right')
+    plt.show()
+
+
 # =====================================================================================================================
 #                                                       MAIN
 # =====================================================================================================================
@@ -118,15 +131,7 @@ def main():
     data, classes = load_labels(sys.argv[1], sys.argv[2])
 
     print('\nPLOTTING DATA WITH LABELS')
-    # Plot using inbuilt Pandas function
-    data.plot(y=['BR', 'BMAG'], kind='line')
-
-    for classification in classes:
-        plt.plot(data.loc[data['LABELS'] == classification].index.to_list(),
-                 (data.loc[data['LABELS'] == classification]['BMAG']), 'o', ms=0.5, alpha=0.8)
-
-    plt.legend(['BR', 'BMAG'] + classes)
-    plt.show()
+    plot_labelled_data(data, classes)
 
 
 if __name__ == '__main__':
