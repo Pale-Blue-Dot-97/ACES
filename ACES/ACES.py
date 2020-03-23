@@ -29,12 +29,13 @@ n_channels = 4
 # =====================================================================================================================
 #                                                     METHODS
 # =====================================================================================================================
-def load_images(path, n_images):
+def load_images(path, n_images=40000, load_all=True):
     """Loads in images and their names from file
 
     Args:
         path (str): Path to folder containing images
         n_images (int): Number of images to load
+        load_all (bool): If true, loads all images found in path
 
     Returns:
         images ([[float]]): 3D array of all the 2D images
@@ -48,17 +49,24 @@ def load_images(path, n_images):
     # All the filenames in the path given
     filenames = os.listdir(path)
 
-    # Sets the seed so results are replicable
-    random.seed(42)
+    if load_all:
+        for name in filenames:
+            # Normalize pixel values to be between 0 and 1
+            images.append([image.imread(fname=(path + name), format='PNG') / 255.0])
+            names.append(name.replace(path, '').replace('.png', ''))
 
-    # Randomly selects files to be added to the dataset
-    ran_indices = random.sample(range(len(filenames)), n_images)
-    for i in ran_indices:
-        name = filenames[i]
+    if not load_all:
+        # Sets the seed so results are replicable
+        random.seed(42)
 
-        # Normalize pixel values to be between 0 and 1
-        images.append([image.imread(fname=(path + name), format='PNG') / 255.0])
-        names.append(name.replace(path, '').replace('.png', ''))
+        # Randomly selects files to be added to the dataset
+        ran_indices = random.sample(range(len(filenames)), n_images)
+        for i in ran_indices:
+            name = filenames[i]
+
+            # Normalize pixel values to be between 0 and 1
+            images.append([image.imread(fname=(path + name), format='PNG') / 255.0])
+            names.append(name.replace(path, '').replace('.png', ''))
 
     # Construct DataFrame matching images to their names
     data = pd.DataFrame()

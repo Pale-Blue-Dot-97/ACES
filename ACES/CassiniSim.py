@@ -62,6 +62,7 @@ def create_blocks(data, stride=2):
 
         Args:
             data (DataFrame): Table containing data to split into blocks
+            stride (int): Number of blocks per block length to create
 
         Returns:
             blocks ([[[float]]]): 3D array containing blocks of image_length * n_channels values
