@@ -22,7 +22,7 @@ import seaborn as sns
 # =====================================================================================================================
 #                                                     GLOBALS
 # =====================================================================================================================
-image_length = 4096
+image_length = 2048
 n_channels = 4
 
 
@@ -468,7 +468,7 @@ def sequential_CNN(train_images, train_labels, val_images, val_labels, test_imag
     # Add classification layer
     model.add(layers.Dense(n_classes, activation='softmax'))
 
-    if verbose is 1:
+    if verbose is 2:
         model.summary()
 
     # Define algorithms

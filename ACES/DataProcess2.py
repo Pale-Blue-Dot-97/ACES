@@ -145,9 +145,9 @@ def mirror_data(data):
     """
     data = data.copy()
 
-    data['BR_norm'] = data['BR_norm'].multiply(-1)
-    data['BTH_norm'] = data['BTH_norm'].multiply(-1)
-    data['BPH_norm'] = data['BPH_norm'].multiply(-1)
+    data['BR'] = data['BR'].multiply(-1)
+    data['BTH'] = data['BTH'].multiply(-1)
+    data['BPH'] = data['BPH'].multiply(-1)
 
     return data.reset_index(drop=True)
 
@@ -221,7 +221,7 @@ def main():
     print('*************************** WELCOME TO DATAPROCESS2 *************************************')
 
     print('\nLOADING DATA')
-    data, classes = load_labels()
+    data, classes = load_labels('VOY1_data.csv', 'VOY1_Labels.csv')
 
     print('\nRE-NORMALISING DATA')
     stan_data = renormalise(data)

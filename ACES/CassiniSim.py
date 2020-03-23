@@ -24,7 +24,7 @@ from Labeller import load_labels, plot_labelled_data
 threshold_fraction = 0.5
 
 # Length of each block
-block_length = 4096
+block_length = 2048
 
 data_columns = ['BR', 'BTH', 'BPH', 'BMAG']
 
