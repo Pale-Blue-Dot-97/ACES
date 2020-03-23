@@ -26,9 +26,9 @@ threshold_fraction = 0.5
 n = 20000
 
 # Length of each block
-block_length = 4096
+block_length = 2048
 
-data_columns = ['BR_norm', 'BTH_norm', 'BPH_norm', 'BMAG_norm']
+data_columns = ['BR', 'BTH', 'BPH', 'BMAG']
 
 
 # =====================================================================================================================
@@ -47,7 +47,7 @@ def renormalise(data):
 
     new_data = data.copy()
 
-    for i in ['BR_norm', 'BPH_norm', 'BTH_norm', 'BMAG_norm']:
+    for i in data_columns:
         new_data[i] = (data[i] + 1.0).multiply(0.5)
 
     return new_data.reset_index(drop=True)

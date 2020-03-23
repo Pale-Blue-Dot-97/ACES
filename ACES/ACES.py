@@ -467,7 +467,9 @@ def sequential_CNN(train_images, train_labels, val_images, val_labels, test_imag
 
     # Add classification layer
     model.add(layers.Dense(n_classes, activation='softmax'))
-    model.summary()
+
+    if verbose is 1:
+        model.summary()
 
     # Define algorithms
     model.compile(optimizer=optimiser,
