@@ -29,7 +29,7 @@ n_channels = 4
 # =====================================================================================================================
 #                                                     METHODS
 # =====================================================================================================================
-def load_images(path, n_images=40000, load_all=True):
+def load_images(path, n_images=40000, load_all=False):
     """Loads in images and their names from file
 
     Args:
@@ -76,7 +76,7 @@ def load_images(path, n_images=40000, load_all=True):
     return data
 
 
-def load_labels(filename):
+def load_labels(filename, classes=None, n_classes=None, identity=None):
     """Loads in the file containing the labels for each block, and converts these to OHE
 
     Returns:
@@ -90,13 +90,15 @@ def load_labels(filename):
     # Loads in the labels from file as a Pandas.DataFrame
     labels = pd.read_csv(filename, names=('NAME', 'LABEL'), dtype=str, header=0)
 
-    # Finds class names from labels
-    classes = [item[0] for item in Counter(labels['LABEL']).most_common()]
+    # Finds the class names and creates the identity matrix if not provided
+    if classes is None or n_classes is None or identity is None:
+        # Finds class names from labels
+        classes = [item[0] for item in Counter(labels['LABEL']).most_common()]
 
-    n_classes = len(classes)
+        n_classes = len(classes)
 
-    # Creates the identity matrix of order n_classes
-    identity = np.identity(n_classes, dtype=int)
+        # Creates the identity matrix of order n_classes
+        identity = np.identity(n_classes, dtype=int)
 
     # Prints out the classes and their corresponding OHE label in the data to screen for reference
     for i in range(n_classes):
@@ -173,12 +175,18 @@ def balance_data(data, classes, verbose=0):
     return new_data
 
 
-def split_data(data, split_fracs, verbose=0):
+def reorder(images):
+    return images.reshape((len(images), n_channels, image_length))
+
+
+def split_data(data, train_frac, val_test_frac=None, verbose=0):
     """Splits data into training, validation and testing data
 
     Args:
         data (DataFrame): Table of images with filenames and labels
-        split_fracs ([float]): Fraction of images desired for training and validation. Remainder for testing
+        train_frac (float): Fraction of images desired for training. Remainder for validation and testing
+        val_test_frac (float): Fraction of remaining images for validation. Remainder for test.
+                               If None, remaining images from train split are assumed just for validation and no test.
         verbose (int): Setting for level of output and analysis
 
     Returns:
@@ -191,9 +199,8 @@ def split_data(data, split_fracs, verbose=0):
 
     """
 
-    # Finds number of images to select for training, validation and testing
-    train_n = int(len(data.index) * split_fracs[0])
-    val_n = int(len(data.index) * split_fracs[1])
+    # Finds number of images to select for training
+    train_n = int(len(data.index) * train_frac)
 
     # Fixes seed number so results are replicable
     random.seed(42)
@@ -223,36 +230,56 @@ def split_data(data, split_fracs, verbose=0):
 
     val_names = []
 
-    # Randomly selects the desired number of validation images from the remaining names
-    for i in random.sample(range(0, len(val_n_test_names)), val_n):
-        val_names.append(val_n_test_names[i])
+    if val_test_frac is None:
 
-    test_names = list(set(val_n_test_names).difference(set(val_names)))
+        val_names = val_n_test_names
 
-    if verbose is 1:
-        print('Length of test names: %s' % len(test_names))
+        # Uses these to find those names in data to make cut
+        train_images = np.array(data.loc[data['NAME'].isin(train_names)]['IMAGE'].tolist())
+        val_images = np.array(data.loc[data['NAME'].isin(val_names)]['IMAGE'].tolist())
 
-    # Uses these to find those names in data to make cut
-    train_images = np.array(data.loc[data['NAME'].isin(train_names)]['IMAGE'].tolist())
-    val_images = np.array(data.loc[data['NAME'].isin(val_names)]['IMAGE'].tolist())
-    test_images = np.array(data.loc[data['NAME'].isin(test_names)]['IMAGE'].tolist())
+        train_labels = np.array(data.loc[data['NAME'].isin(train_names)]['LABEL'].tolist())
+        val_labels = np.array(data.loc[data['NAME'].isin(val_names)]['LABEL'].tolist())
 
-    train_labels = np.array(data.loc[data['NAME'].isin(train_names)]['LABEL'].tolist())
-    val_labels = np.array(data.loc[data['NAME'].isin(val_names)]['LABEL'].tolist())
-    test_labels = np.array(data.loc[data['NAME'].isin(test_names)]['LABEL'].tolist())
+        if verbose is 1:
+            print('Length of train images: %s' % len(train_images))
+            print('Length of train labels: %s' % len(train_labels))
+            print('Length of validation images: %s' % len(val_images))
+            print('Length of validation labels: %s' % len(val_labels))
 
-    if verbose is 1:
-        print('Length of train images: %s' % len(train_images))
-        print('Length of train labels: %s' % len(train_labels))
-        print('Length of validation images: %s' % len(val_images))
-        print('Length of validation labels: %s' % len(val_labels))
-        print('Length of test images: %s' % len(test_images))
-        print('Length of test labels: %s' % len(test_labels))
+        return reorder(train_images), reorder(val_images), train_labels, val_labels
 
-    def reorder(images):
-        return images.reshape((len(images), n_channels, image_length))
+    else:
+        # Finds the number of images to randomly select as validation split from test
+        val_n = int(len(data.index) * val_test_frac)
 
-    return reorder(train_images), reorder(val_images), reorder(test_images), train_labels, val_labels, test_labels
+        # Randomly selects the desired number of validation images from the remaining names
+        for i in random.sample(range(0, len(val_n_test_names)), val_n):
+            val_names.append(val_n_test_names[i])
+
+        test_names = list(set(val_n_test_names).difference(set(val_names)))
+
+        if verbose is 1:
+            print('Length of test names: %s' % len(test_names))
+
+        # Uses these to find those names in data to make cut
+        train_images = np.array(data.loc[data['NAME'].isin(train_names)]['IMAGE'].tolist())
+        val_images = np.array(data.loc[data['NAME'].isin(val_names)]['IMAGE'].tolist())
+        test_images = np.array(data.loc[data['NAME'].isin(test_names)]['IMAGE'].tolist())
+
+        train_labels = np.array(data.loc[data['NAME'].isin(train_names)]['LABEL'].tolist())
+        val_labels = np.array(data.loc[data['NAME'].isin(val_names)]['LABEL'].tolist())
+        test_labels = np.array(data.loc[data['NAME'].isin(test_names)]['LABEL'].tolist())
+
+        if verbose is 1:
+            print('Length of train images: %s' % len(train_images))
+            print('Length of train labels: %s' % len(train_labels))
+            print('Length of validation images: %s' % len(val_images))
+            print('Length of validation labels: %s' % len(val_labels))
+            print('Length of test images: %s' % len(test_images))
+            print('Length of test labels: %s' % len(test_labels))
+
+        return reorder(train_images), reorder(val_images), reorder(test_images), train_labels, val_labels, test_labels
 
 
 def set_optimiser(optimiser):
@@ -622,9 +649,22 @@ def main():
     print('\nBALANCING DATA')
     data = balance_data(data, classes, verbose=0)
 
-    print('\nSPLIT DATA INTO TRAIN AND TEST')
+    print('\nSPLIT DATA INTO TRAIN AND VALIDATION')
     # Split images into test and train
-    train_images, val_images, test_images, train_labels, val_labels, test_labels = split_data(data, (0.7, 0.2))
+    train_images, val_images, train_labels, val_labels = split_data(data, 0.7)
+
+    print('\nLOAD IN TEST DATA')
+    test_data_df = load_images('Cassini_Rev20_Blocks/', load_all=True)
+    test_labels_df, x, y, z = load_labels('Cassini_Block_Labels/Cassini_Rev20_Block_Labels.csv',
+                                          classes=classes, n_classes=n_classes, identity=identity)
+
+    test_data = pd.merge(test_data_df, test_labels_df, on='NAME')
+
+    # Deletes un-needed variables
+    del test_data_df, test_labels_df, x, y, z
+
+    test_images = reorder(np.array(test_data['IMAGE'].tolist()))
+    test_labels = np.array(test_data['LABEL'].tolist())
 
     # Corrects shape of images
     train_images = np.swapaxes(train_images, 1, 2)
