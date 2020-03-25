@@ -618,7 +618,7 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, 
 def main():
     print('***************************** ACES ********************************************')
     model_type = 'sequential'
-    epochs = 20
+    epochs = 40
     verbose = 1
     batch_size = 32
 
@@ -629,14 +629,14 @@ def main():
 
     kernels = [9]
 
-    n_conv = [2]
-    n_dense = [2]
+    n_conv = [3]
+    n_dense = [3]
 
     optimisers = [('Adagrad', 0.01), ('Adamax', 0.01), ('Nadam', 2e-5), ('SGD', 0.01, 0.5)]
 
     print('\nLOAD IMAGES')
     # Load in images
-    data = load_images('Voyager1_Blocks/', 60000)
+    data = load_images('Voyager1_Blocks/', 20000)
 
     print('\nLOAD LABELS')
     # Load in accompanying labels into separate randomly ordered DataFrame
