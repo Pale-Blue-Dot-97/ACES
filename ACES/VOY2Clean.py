@@ -13,6 +13,7 @@ import numpy as np
 import scipy.interpolate as ip
 import scipy.signal as sg
 import datetime
+import matplotlib.pyplot as plt
 
 
 # =====================================================================================================================
@@ -38,7 +39,7 @@ def load_data():
                   'RMS_BTH', 'RMS_BPH', 'NUM_PTS']
 
     data = pd.read_table('%s/RAW_Voyager2_JE.TAB' % data_path, names=data_names, delim_whitespace=True,
-                         na_values=-9999.999)
+                         na_values=9999.999)
 
     data.drop(columns=['SCLK', 'MAG_ID', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH', 'NUM_PTS'],
               inplace=True)
@@ -59,7 +60,21 @@ def load_data():
 
     position.drop(columns=['LAT', 'LON', 'LOCTIME'], inplace=True)
 
+    data['TIME'] = data['TIME'].apply(fix_timestamps)
+    position['TIME'] = position['TIME'].apply(fix_timestamps)
+
     return data, data_columns, position
+
+
+def fix_timestamps(timestamp):
+
+    stamp_list = list(timestamp)
+    stamp_list.remove('Z')
+    new_stamp = ""
+    for i in stamp_list:
+        new_stamp += i
+
+    return new_stamp
 
 
 def extract_time(data):
@@ -139,20 +154,7 @@ def interpolate_positions(positions, data):
         new_data (DataFrame): data with the addition of the positions dataframe interpolated to match 1.92s intervals
 
     """
-
     new_data = data.copy()
-
-    new_stamps = []
-
-    for stamp in np.array(positions['TIME']):
-        stamp_list = list(stamp)
-        stamp_list.remove('Z')
-        new_stamp = ""
-        for i in stamp_list:
-            new_stamp += i
-        new_stamps.append(new_stamp)
-
-    positions['TIME'] = new_stamps
 
     positions, time = extract_time(positions)
 
@@ -197,13 +199,12 @@ def calc_variances(data_column, peak_indices, kernel, threshold, deleted):
     return deleted
 
 
-def find_dodgy_data(data, data_columns, columns_to_clean, det_kernel, thres_kernel, threshold):
+def find_dodgy_data(data, data_columns, det_kernel, thres_kernel, threshold):
     """Function to find non-physical data points and remove them
 
     Args:
         data (DataFrame): Data to be cleaned of non-physical data
         data_columns ([str]): List of the heading names of columns containing data in the DataFrame
-        columns_to_clean ([str]): List of the names of columns of data to clean
         det_kernel (int): Kernel size for the detection of local maxima/ minima. Must be a positive odd integer
         thres_kernel ([int]): List of kernel sizes to pass over data (must be an integer odd number)
         threshold (float): Fraction of the global min-max range to use as the threshold to determine if a point
@@ -233,7 +234,7 @@ def find_dodgy_data(data, data_columns, columns_to_clean, det_kernel, thres_kern
     loc_min = list(dict.fromkeys(loc_min))
     loc_max = list(dict.fromkeys(loc_max))
 
-    for i in columns_to_clean:
+    for i in data_columns:
         print('\nCleaning %s' % i)
         data_min = np.min(data[i])
         data_max = np.max(data[i])
@@ -348,23 +349,26 @@ def main():
 
     data = interpolate_positions(position, data)
 
-    raw_data = data.copy()
-
-    print('Size of raw data: %d' % len(raw_data))
+    print('Size of raw data: %d' % len(data))
 
     print('\nFirst removing non-physical data via local extrema')
-    cleaned_data = find_dodgy_data(data, data_columns, ['BR', 'BTH', 'BPH', 'BMAG'], 5, (3, 5, 9, 15), 0.01)
+    cleaned_data = find_dodgy_data(data, data_columns, 5, (3, 5, 9), 0.01)
 
     print('Size of cleaned data: %d' % len(cleaned_data))
 
     cldt = cleaned_data.copy()
 
-    norm_data = pow_normalise(cldt, a=6.0e5, b=5.0e4, c=400.0)
+    norm_data = pow_normalise(cldt, a=6.0e4, b=1.0e3, c=100.0)
 
     print('\nWRITING DATA TO FILE')
     norm_data.drop(columns=['TIME', 'R'], inplace=True)
     norm_data.reset_index(drop=True)
     norm_data.to_csv('%s/VOY2_data.csv' % data_path)
+
+    # Plot using inbuilt Pandas function
+    norm_data.plot(y=['BR', 'BPH', 'BTH', 'BMAG'], kind='line')
+    plt.legend(['BR', 'BPH', 'BTH', 'BMAG'], loc='upper right')
+    plt.show()
 
 
 if __name__ == '__main__':
