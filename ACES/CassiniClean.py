@@ -142,7 +142,7 @@ def interpolate_positions(positions, data):
         data (DataFrame): Magnetometer data
 
     Returns:
-        new_data (DataFrame): data with the addition of the positions dataframe interpolated to match 1.92s intervals
+        new_data (DataFrame): data with the addition of the positions interpolated to match 1.0s
 
     """
 
@@ -203,8 +203,10 @@ def pow_normalise(data, a=4.0e5, b=200.0, c=35.0):
 # =====================================================================================================================
 def main():
 
+    rev_num = sys.argv[1]
+
     print("\nLoading data")
-    data, data_columns, position = load_data(sys.argv[1], sys.argv[2])
+    data, data_columns, position = load_data('Cassini_RAW_Rev%s.TAB' % rev_num, 'Cassini_POS_Rev%s.DAT' % rev_num)
 
     print("\nExtracting time stamps")
     data = extract_time(data)
@@ -213,12 +215,12 @@ def main():
     data = interpolate_positions(position, data)
 
     print("\nNormalising data")
-    norm_data = pow_normalise(data, a=3.0e4, b=0.35e3, c=160.0)
+    norm_data = pow_normalise(data, a=4.0e4, b=2.0e3, c=220.0)
 
     print('\nWRITING DATA TO FILE')
     norm_data.drop(columns=['TIME', 'R'], inplace=True)
     norm_data.reset_index(drop=True)
-    norm_data.to_csv('%s/%s' % (proc_data_path, sys.argv[3]))
+    norm_data.to_csv('%s/%s' % (proc_data_path, 'CASSINI_Rev%s_PROC.csv' % rev_num))
 
     # Create Matplotlib datetime64 type date-time column from UNIX time
     norm_data['DATETIME'] = pd.to_datetime(norm_data['UNIX TIME'], unit='s')

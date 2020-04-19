@@ -167,7 +167,11 @@ def main():
 
     print('\nLOADING DATA')
     data, classes = load_labels('%s/CASSINI_Rev%s_PROC.csv' % (data_path, rev_num),
-                                '%s/Cassini_Labels_Rev%s.csv' % (labels_path, rev_num))
+                                '%s/Cassini_Labels_Rev%s.csv' % (labels_path, rev_num),
+                                resample='2S')
+
+    print(data)
+    print(pd.Index(data.index).is_monotonic_increasing)
 
     print('\nRE-NORMALISING DATA')
     data = renormalise(data)

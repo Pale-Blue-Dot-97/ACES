@@ -25,11 +25,12 @@ header = ['CLASS', 'START', 'STOP']
 # =====================================================================================================================
 #                                                     METHODS
 # =====================================================================================================================
-def load_data(filename):
+def load_data(filename, resample=None):
     """Load in cleaned and normalised data from file
 
     Args:
         filename (str): Name of file to be loaded
+        resample (str): Resampling frequency
 
     Returns:
         data (DataFrame): Table of all the cleaned and normalised data from file
@@ -48,15 +49,22 @@ def load_data(filename):
     data.index = data['DATETIME']
     del data['DATETIME']
 
-    return data
+    if resample is not None:
+        new_data = data.resample('%s' % resample).mean()
+        print(new_data)
+        return new_data
+
+    if resample is None:
+        return data
 
 
-def load_labels(data_filename, labels_filename):
+def load_labels(data_filename, labels_filename, resample=None):
     """
 
     Args:
         data_filename (str): Name of file containing data
         labels_filename (str): Name of file containing labels
+        resample (str): Resampling frequency
 
     Returns:
         labelled_data (DataFrame): Labelled data
@@ -65,7 +73,7 @@ def load_labels(data_filename, labels_filename):
     """
 
     # Loads in data
-    data = load_data(data_filename)
+    data = load_data(data_filename, resample)
 
     # Loads the start and endpoints of the labelled regions of the data
     labels = pd.read_csv(labels_filename, names=header, dtype=str, header=0, sep=',', index_col='CLASS')
