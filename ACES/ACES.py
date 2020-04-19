@@ -622,7 +622,7 @@ def main():
     verbose = 1
     batch_size = 32
 
-    in_filters = [16]
+    in_filters = [64]
     filt_mult = [2]
 
     fn_neurons = [32]
@@ -640,7 +640,7 @@ def main():
 
     print('\nLOAD LABELS')
     # Load in accompanying labels into separate randomly ordered DataFrame
-    labels, n_classes, classes, identity = load_labels('VOY1_Block_Labels.csv')
+    labels, n_classes, classes, identity = load_labels('Voyager1/VOY1_Block_Labels.csv')
 
     # Merges data and labels together
     data = pd.merge(data, labels, on='NAME')
@@ -656,8 +656,8 @@ def main():
     train_images, val_images, train_labels, val_labels = split_data(data, 0.7)
 
     print('\nLOAD IN TEST DATA')
-    test_data_df = load_images('Cassini_Rev20_Blocks/', load_all=True)
-    test_labels_df, x, y, z = load_labels('Cassini_Block_Labels/Cassini_Rev20_Block_Labels.csv',
+    test_data_df = load_images('Voyager2_Blocks/', load_all=True)
+    test_labels_df, x, y, z = load_labels('Voyager2/VOY2_Block_Labels.csv',
                                           classes=classes, n_classes=n_classes, identity=identity)
 
     test_data = pd.merge(test_data_df, test_labels_df, on='NAME')

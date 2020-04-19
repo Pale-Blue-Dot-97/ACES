@@ -33,7 +33,7 @@ def load_data():
     data_names = ['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR',
                   'RMS_BTH', 'RMS_BPH', 'NUM_PTS']
 
-    data = pd.read_csv('S3_1_92S.TAB', names=data_names, na_values=-9999.999)
+    data = pd.read_csv('Voyager1/S3_1_92S.TAB', names=data_names, na_values=-9999.999)
 
     data.drop(columns=['SCLK', 'MAG_ID', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH', 'NUM_PTS'],
               inplace=True)

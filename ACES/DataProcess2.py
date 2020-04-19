@@ -14,6 +14,7 @@ from PIL import Image
 import random
 from collections import Counter
 from Labeller import load_labels
+import sys
 
 
 # =====================================================================================================================
@@ -165,19 +166,20 @@ def data_perturb(data, mode):
     return
 
 
-def blocks_to_images(blocks, name):
+def blocks_to_images(blocks, name, block_dir):
     """Converts each block in a series to 8-bit greyscale png images and saves to file
 
     Args:
         blocks: Series of blocks of data
-        name: Name of the series to identify images with
+        name (str): Name of the series to identify images with
+        block_dir (str): Name of directory to save images to
 
     Returns:
         None
     """
 
     for block in blocks:
-        Image.fromarray((block[2] * 255).astype(np.uint8), mode='L').save('Voyager1_Blocks/%s_%s.png' % (block[0], name))
+        Image.fromarray((block[2] * 255).astype(np.uint8), mode='L').save('%s/%s_%s.png' % (block_dir, block[0], name))
 
     return
 
@@ -196,7 +198,17 @@ def block_to_image(block):
     return image
 
 
-def labels_to_file(all_blocks, all_names):
+def labels_to_file(all_blocks, all_names, voy_num):
+    """
+
+    Args:
+        all_blocks ():
+        all_names ([str]): List of names of data pertubations
+        voy_num (str): 1 or 2 to identify which Voyager mission this is
+
+    Returns:
+
+    """
 
     names = []
     labels = []
@@ -209,7 +221,7 @@ def labels_to_file(all_blocks, all_names):
     data = pd.DataFrame()
     data['NAME'] = names
     data['LABEL'] = labels
-    data.to_csv('VOY1_Block_Labels.csv')
+    data.to_csv('Voyager%s/VOY%s_Block_Labels.csv' % (voy_num, voy_num))
 
     return
 
@@ -220,8 +232,12 @@ def labels_to_file(all_blocks, all_names):
 def main():
     print('*************************** WELCOME TO DATAPROCESS2 *************************************')
 
+    voy_num = sys.argv[1]
+    block_dir = 'Voyager%s_Blocks' % voy_num
+
     print('\nLOADING DATA')
-    data, classes = load_labels('VOY1_data.csv', 'VOY1_Labels.csv')
+    data, classes = load_labels('Voyager%s/VOY%s_data.csv' % (voy_num, voy_num),
+                                'Voyager%s/VOY%s_Labels.csv' % (voy_num, voy_num))
 
     print('\nRE-NORMALISING DATA')
     stan_data = renormalise(data)
@@ -254,19 +270,19 @@ def main():
     print('\nCONVERTING BLOCKS TO IMAGES:')
 
     print('\t-STANDARD DATA')
-    blocks_to_images(blocks, 'OG')
+    blocks_to_images(blocks, 'OG', block_dir)
 
     print('\t-MIRRORED DATA')
-    blocks_to_images(mir_blocks, 'MIR')
+    blocks_to_images(mir_blocks, 'MIR', block_dir)
 
     print('\t-REVERSED DATA')
-    blocks_to_images(rev_blocks, 'REV')
+    blocks_to_images(rev_blocks, 'REV', block_dir)
 
     print('\t-MIRRORED AND REVERSED DATA')
-    blocks_to_images(mir_rev_blocks, 'MIR_REV')
+    blocks_to_images(mir_rev_blocks, 'MIR_REV', block_dir)
 
     print('\nEXPORTING LABELS TO FILE')
-    labels_to_file((blocks, mir_blocks, rev_blocks, mir_rev_blocks), ('OG', 'MIR', 'REV', 'MIR_REV'))
+    labels_to_file((blocks, mir_blocks, rev_blocks, mir_rev_blocks), ('OG', 'MIR', 'REV', 'MIR_REV'), voy_num)
     
     print('\nFINISHED')
 
