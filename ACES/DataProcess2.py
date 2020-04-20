@@ -24,7 +24,7 @@ import sys
 threshold_fraction = 0.5
 
 # Number of blocks to create for each data perturbation
-n = 20000
+n = 1500
 
 # Length of each block
 block_length = 2048
@@ -179,23 +179,10 @@ def blocks_to_images(blocks, name, block_dir):
     """
 
     for block in blocks:
-        Image.fromarray((block[2] * 255).astype(np.uint8), mode='L').save('%s/%s_%s.png' % (block_dir, block[0], name))
+        Image.fromarray((block[2] * 65535).astype(np.uint16), mode='I;16')\
+            .save('%s/%s_%s.png' % (block_dir, block[0], name))
 
     return
-
-
-def block_to_image(block):
-    """Takes a n_length long block of the data and converts to a greyscale image
-
-    Args:
-        block ([[float]]): 2D numpy array of 4 rows of data n_length points long
-
-    Returns:
-        image (Image): A n_length x n_channel greyscale Image
-
-    """
-    image = Image.fromarray((block * 255).astype(np.uint8), mode='L')
-    return image
 
 
 def labels_to_file(all_blocks, all_names, voy_num):
@@ -234,6 +221,7 @@ def main():
 
     voy_num = sys.argv[1]
     block_dir = 'Voyager%s_Blocks' % voy_num
+    perturb_names = ('VOY%s_OG' % voy_num, 'VOY%s_MIR' % voy_num, 'VOY%s_REV' % voy_num, 'VOY%s_MIR_REV' % voy_num)
 
     print('\nLOADING DATA')
     data, classes = load_labels('Voyager%s/VOY%s_data.csv' % (voy_num, voy_num),
@@ -270,19 +258,19 @@ def main():
     print('\nCONVERTING BLOCKS TO IMAGES:')
 
     print('\t-STANDARD DATA')
-    blocks_to_images(blocks, 'OG', block_dir)
+    blocks_to_images(blocks, perturb_names[0], block_dir)
 
     print('\t-MIRRORED DATA')
-    blocks_to_images(mir_blocks, 'MIR', block_dir)
+    blocks_to_images(mir_blocks, perturb_names[1], block_dir)
 
     print('\t-REVERSED DATA')
-    blocks_to_images(rev_blocks, 'REV', block_dir)
+    blocks_to_images(rev_blocks, perturb_names[2], block_dir)
 
     print('\t-MIRRORED AND REVERSED DATA')
-    blocks_to_images(mir_rev_blocks, 'MIR_REV', block_dir)
+    blocks_to_images(mir_rev_blocks, perturb_names[3], block_dir)
 
     print('\nEXPORTING LABELS TO FILE')
-    labels_to_file((blocks, mir_blocks, rev_blocks, mir_rev_blocks), ('OG', 'MIR', 'REV', 'MIR_REV'), voy_num)
+    labels_to_file((blocks, mir_blocks, rev_blocks, mir_rev_blocks), perturb_names, voy_num)
     
     print('\nFINISHED')
 

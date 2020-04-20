@@ -11,13 +11,13 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import tensorflow as tf
 from tensorflow.keras import layers, models, callbacks, backend, utils
 import matplotlib.pyplot as plt
-from matplotlib import image
 import pandas as pd
 import numpy as np
 import random
 import os
 from collections import Counter
 import seaborn as sns
+from PIL import Image
 
 # =====================================================================================================================
 #                                                     GLOBALS
@@ -52,7 +52,7 @@ def load_images(path, n_images=40000, load_all=False):
     if load_all:
         for name in filenames:
             # Normalize pixel values to be between 0 and 1
-            images.append([image.imread(fname=(path + name), format='PNG') / 255.0])
+            images.append(np.asarray(Image.open(path + name)).astype(np.uint16) / 65535.0)
             names.append(name.replace(path, '').replace('.png', ''))
 
     if not load_all:
@@ -65,7 +65,7 @@ def load_images(path, n_images=40000, load_all=False):
             name = filenames[i]
 
             # Normalize pixel values to be between 0 and 1
-            images.append([image.imread(fname=(path + name), format='PNG') / 255.0])
+            images.append(np.asarray(Image.open(path + name)).astype(np.uint16) / 65535.0)
             names.append(name.replace(path, '').replace('.png', ''))
 
     # Construct DataFrame matching images to their names
@@ -247,7 +247,7 @@ def split_data(data, train_frac, val_test_frac=None, verbose=0):
             print('Length of validation images: %s' % len(val_images))
             print('Length of validation labels: %s' % len(val_labels))
 
-        return reorder(train_images), reorder(val_images), train_labels, val_labels
+        return train_images, val_images, train_labels, val_labels
 
     else:
         # Finds the number of images to randomly select as validation split from test
@@ -279,7 +279,7 @@ def split_data(data, train_frac, val_test_frac=None, verbose=0):
             print('Length of test images: %s' % len(test_images))
             print('Length of test labels: %s' % len(test_labels))
 
-        return reorder(train_images), reorder(val_images), reorder(test_images), train_labels, val_labels, test_labels
+        return train_images, val_images, test_images, train_labels, val_labels, test_labels
 
 
 def set_optimiser(optimiser):
@@ -632,29 +632,63 @@ def main():
     n_conv = [3]
     n_dense = [3]
 
-    optimisers = [('Adagrad', 0.01), ('Adamax', 0.01), ('Nadam', 2e-5), ('SGD', 0.01, 0.5)]
+    optimisers = [('Adagrad', 0.01), ('Nadam', 2e-5), ('SGD', 0.01, 0.5)]
 
-    print('\nLOAD IMAGES')
+    print('\nLOAD VOY1 IMAGES')
     # Load in images
-    data = load_images('Voyager1_Blocks/', 20000)
+    v1_data = load_images('Voyager1_Blocks/', load_all=True)
 
-    print('\nLOAD LABELS')
+    print('\nLOAD VOY 1 LABELS')
     # Load in accompanying labels into separate randomly ordered DataFrame
-    labels, n_classes, classes, identity = load_labels('Voyager1/VOY1_Block_Labels.csv')
+    v1_labels, n_classes, classes, identity = load_labels('Voyager1/VOY1_Block_Labels.csv')
 
     # Merges data and labels together
-    data = pd.merge(data, labels, on='NAME')
+    v1_data = pd.merge(v1_data, v1_labels, on='NAME')
 
     # Deletes un-needed variable
-    del labels
+    del v1_labels
+
+    print('\nLOAD VOY2 IMAGES')
+    # Load in images
+    v2_data = load_images('Voyager2_Blocks/', load_all=True)
+
+    print('\nLOAD VOY2 LABELS')
+    # Load in accompanying labels into separate randomly ordered DataFrame
+    v2_labels, x, y, z = load_labels('Voyager2/VOY2_Block_Labels.csv', classes=classes, n_classes=n_classes,
+                                     identity=identity)
+
+    # Merges data and labels together
+    v2_data = pd.merge(v2_data, v2_labels, on='NAME')
+
+    # Deletes un-needed variables
+    del v2_labels, x, y, z
+
+    print('\nLOAD CASSINI REV20 IMAGES')
+    # Load in images
+    cas_data = load_images('Cassini_Rev20_Blocks/', load_all=True)
+
+    print('\nLOAD CASSINI REV20 LABELS')
+    # Load in accompanying labels into separate randomly ordered DataFrame
+    cas_labels, x, y, z = load_labels('Cassini_Block_Labels/Cassini_Rev20_Block_Labels.csv',
+                                      classes=classes, n_classes=n_classes, identity=identity)
+
+    # Merges data and labels together
+    cas_data = pd.merge(cas_data, cas_labels, on='NAME')
+
+    # Deletes un-needed variables
+    del cas_labels, x, y, z
+
+    # Append datasets together
+    data = pd.concat([v1_data, v2_data, cas_data])
 
     print('\nBALANCING DATA')
     data = balance_data(data, classes, verbose=0)
 
-    print('\nSPLIT DATA INTO TRAIN AND VALIDATION')
+    print('\nSPLIT DATA INTO TRAIN, VALIDATION AND TEST')
     # Split images into test and train
-    train_images, val_images, train_labels, val_labels = split_data(data, 0.7)
+    train_images, val_images, test_images, train_labels, val_labels, test_labels = split_data(data, 0.7, 0.2)
 
+    """
     print('\nLOAD IN TEST DATA')
     test_data_df = load_images('Voyager2_Blocks/', load_all=True)
     test_labels_df, x, y, z = load_labels('Voyager2/VOY2_Block_Labels.csv',
@@ -667,6 +701,8 @@ def main():
 
     test_images = reorder(np.array(test_data['IMAGE'].tolist()))
     test_labels = np.array(test_data['LABEL'].tolist())
+    
+    """
 
     # Corrects shape of images
     train_images = np.swapaxes(train_images, 1, 2)

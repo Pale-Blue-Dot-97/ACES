@@ -1,7 +1,6 @@
-"""Script to simulate the recording of data by Cassini in near real-time as a test for neural networks
+"""Script to process Cassini data for neural networks
 
 TODO:
-    * Re-work for Cassini data in ordered blocks rather than randomised blocks
     * Streamline code
 
 """
@@ -13,6 +12,7 @@ import pandas as pd
 import numpy as np
 from PIL import Image
 import sys
+import random
 from collections import Counter
 from Labeller import load_labels, plot_labelled_data
 
@@ -22,6 +22,9 @@ from Labeller import load_labels, plot_labelled_data
 # =====================================================================================================================
 # Fraction of a block to be threshold to reach for block to labelled as such
 threshold_fraction = 0.5
+
+# Number of blocks to create for each data perturbation
+n = 2000
 
 # Length of each block
 block_length = 2048
@@ -57,36 +60,32 @@ def renormalise(data):
     return new_data.reset_index(drop=True)
 
 
-def create_blocks(data, stride=2):
-    """Slices dataset into blocks of image_length in order, at strides apart
+def create_random_blocks(data):
+    """Selects n number of random block_length long blocks from the data as numpy arrays
 
         Args:
             data (DataFrame): Table containing data to split into blocks
-            stride (int): Number of blocks per block length to create
 
         Returns:
-            blocks ([[[float]]]): 3D array containing blocks of image_length * n_channels values
+            blocks ([[[float]]]): 3D array containing blocks of 4096 * 4 values
 
     """
     data = data.copy()
     data.reset_index(drop=True)
 
-    # Threshold number of points of a class in a block for whole block to be classified as such
+    # Threshold number of interesting points in block to be considered interesting
     thres = int(threshold_fraction * block_length)
+
+    # Sets seed number at 42 to produce same selection of indices every run
+    random.seed(42)
 
     blocks = []
 
-    # Starting index of every block which is set at stride apart
-    indices = np.arange(int(len(data) * stride / block_length)) * int(block_length/stride)
-
-    elements_delete = range(len(indices) - stride - 1, len(indices))
-
-    # Removes last few elements to prevent out-of-bounds errors
-    indices = np.delete(indices, elements_delete)
+    ran_indices = random.sample(range(len(data[data_columns[0]]) - block_length), n)
 
     # Slices DataFrame into blocks
-    for i in indices:
-        block_slice = data[i: i + block_length]
+    for i in ran_indices:
+        block_slice = data[i: (i + block_length)]
 
         # Assume block label is False initially
         label = False
@@ -120,41 +119,104 @@ def create_blocks(data, stride=2):
             if len(channel) != block_length:
                 print('%s: %s' % (k, len(channel)))
 
-        # Adds tuple of the starting index of the block, label of the block, and the block itself
+        # Adds tuple of the first index of the block, and the block
         blocks.append((i, label, np.array(block)))
 
     return blocks
 
 
-def blocks_to_images(blocks, block_folder):
+def reverse_data(data):
+    """Reverses the order of the DataFrame
+
+    Args:
+        data (DataFrame): Table of data
+
+    Returns:
+        data(DataFrame): Backwards ordering of data
+
+    """
+    data = data.copy()
+
+    return data[::-1].reset_index(drop=True)
+
+
+def mirror_data(data):
+    """Switches sign of data (excluding magnitude and time of course)
+
+        Args:
+            data (DataFrame): Table of data
+
+        Returns:
+            data(DataFrame): Data mirrored in x-axis
+
+    """
+    data = data.copy()
+
+    data['BR'] = data['BR'].multiply(-1)
+    data['BTH'] = data['BTH'].multiply(-1)
+    data['BPH'] = data['BPH'].multiply(-1)
+
+    return data.reset_index(drop=True)
+
+
+def data_perturb(data, mode):
+
+    # reverse data
+    if mode == 'reverse':
+        return reverse_data(data)
+
+    # mirror data
+    if mode == 'mirror':
+        return mirror_data(data)
+
+    return
+
+
+def blocks_to_images(blocks, name, block_dir):
     """Converts each block in a series to 8-bit greyscale png images and saves to file
 
     Args:
         blocks: Series of blocks of data
+        name (str): Name of the series to identify images with
+        block_dir (str): Name of directory to save images to
 
     Returns:
         None
     """
 
     for block in blocks:
-        Image.fromarray((block[2] * 255).astype(np.uint8), mode='L').save('%s/%s.png' % (block_folder, block[0]))
+        Image.fromarray((block[2] * 65535).astype(np.uint16), mode='I;16')\
+            .save('%s/%s_%s.png' % (block_dir, block[0], name))
 
     return
 
 
-def labels_to_file(blocks, filename):
+def labels_to_file(all_blocks, all_names, rev_num):
+    """
+
+    Args:
+        all_blocks ():
+        all_names ([str]): List of names of data pertubations
+        rev_num (str): Cassini revolution number
+
+    Returns:
+
+    """
 
     names = []
     labels = []
 
-    for block in blocks:
-        names.append('%s' % block[0])
-        labels.append(block[1])
+    for i in range(len(all_names)):
+        for block in all_blocks[i]:
+            names.append('%s_%s' % (block[0], all_names[i]))
+            labels.append(block[1])
 
     data = pd.DataFrame()
     data['NAME'] = names
     data['LABEL'] = labels
-    data.to_csv('%s/%s' % (block_labels_path, filename))
+    data.to_csv('%s/Cassini_Labels_Rev%s.csv' % (block_labels_path, rev_num))
+
+    return
 
 
 # =====================================================================================================================
@@ -164,26 +226,59 @@ def main():
     print('*************************** WELCOME TO CASSINISIM *************************************')
 
     rev_num = sys.argv[1]
+    block_dir = 'Cassini_Rev%s_Blocks' % rev_num
+    perturb_names = ('CASREV%s_OG' % rev_num, 'CASREV%s_MIR' % rev_num,
+                     'CASREV%s_REV' % rev_num, 'CASREV%s_MIR_REV' % rev_num)
 
     print('\nLOADING DATA')
     data, classes = load_labels('%s/CASSINI_Rev%s_PROC.csv' % (data_path, rev_num),
                                 '%s/Cassini_Labels_Rev%s.csv' % (labels_path, rev_num),
                                 resample='2S')
 
-    print(data)
-    print(pd.Index(data.index).is_monotonic_increasing)
-
     print('\nRE-NORMALISING DATA')
-    data = renormalise(data)
+    stan_data = renormalise(data)
 
-    print('\nCREATING BLOCKS:')
-    blocks = create_blocks(data, stride=int(sys.argv[2]))
+    print('\nPERTURBING DATA:')
+
+    print('\t-MIRRORING DATA')
+    mir_dat = data_perturb(stan_data, 'mirror')
+
+    print('\t-REVERSING DATA')
+    rev_dat = data_perturb(stan_data, 'reverse')
+
+    print('\t-MIRRORING AND REVERSING DATA')
+    mir_rev_dat = data_perturb(mir_dat, 'reverse')
+
+    print('\nCREATING RANDOMISED BLOCKS:')
+
+    print('\t-STANDARD DATA')
+    blocks = create_random_blocks(stan_data)
+
+    print('\t-MIRRORED DATA')
+    mir_blocks = create_random_blocks(mir_dat)
+
+    print('\t-REVERSED DATA')
+    rev_blocks = create_random_blocks(rev_dat)
+
+    print('\t-MIRRORED AND REVERSED DATA')
+    mir_rev_blocks = create_random_blocks(mir_rev_dat)
 
     print('\nCONVERTING BLOCKS TO IMAGES:')
-    blocks_to_images(blocks, 'Cassini_Rev%s_Blocks' % rev_num)
+
+    print('\t-STANDARD DATA')
+    blocks_to_images(blocks, perturb_names[0], block_dir)
+
+    print('\t-MIRRORED DATA')
+    blocks_to_images(mir_blocks, perturb_names[1], block_dir)
+
+    print('\t-REVERSED DATA')
+    blocks_to_images(rev_blocks, perturb_names[2], block_dir)
+
+    print('\t-MIRRORED AND REVERSED DATA')
+    blocks_to_images(mir_rev_blocks, perturb_names[3], block_dir)
 
     print('\nEXPORTING LABELS TO FILE')
-    labels_to_file(blocks, 'Cassini_Rev%s_Block_Labels.csv' % rev_num)
+    labels_to_file((blocks, mir_blocks, rev_blocks, mir_rev_blocks), perturb_names, rev_num)
 
     print('\nPLOTTING DATA WITH LABELS')
     plot_labelled_data(data, classes)
