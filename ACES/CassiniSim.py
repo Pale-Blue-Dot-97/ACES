@@ -14,7 +14,7 @@ from PIL import Image
 import sys
 import random
 from collections import Counter
-from Labeller import load_labels, plot_labelled_data
+from Labeller import label_data
 
 
 # =====================================================================================================================
@@ -231,9 +231,9 @@ def main():
                      'CASREV%s_REV' % rev_num, 'CASREV%s_MIR_REV' % rev_num)
 
     print('\nLOADING DATA')
-    data, classes = load_labels('%s/CASSINI_Rev%s_PROC.csv' % (data_path, rev_num),
-                                '%s/Cassini_Labels_Rev%s.csv' % (labels_path, rev_num),
-                                resample='2S')
+    data, classes = label_data('%s/CASSINI_Rev%s_PROC.csv' % (data_path, rev_num),
+                               '%s/Cassini_Labels_Rev%s.csv' % (labels_path, rev_num),
+                               resample='2S')
 
     print('\nRE-NORMALISING DATA')
     stan_data = renormalise(data)
@@ -279,9 +279,6 @@ def main():
 
     print('\nEXPORTING LABELS TO FILE')
     labels_to_file((blocks, mir_blocks, rev_blocks, mir_rev_blocks), perturb_names, rev_num)
-
-    print('\nPLOTTING DATA WITH LABELS')
-    plot_labelled_data(data, classes)
 
     print('\nFINISHED')
 

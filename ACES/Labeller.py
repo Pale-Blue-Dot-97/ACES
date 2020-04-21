@@ -58,7 +58,7 @@ def load_data(filename, resample=None):
         return data
 
 
-def load_labels(data_filename, labels_filename, resample=None):
+def label_data(data_filename, labels_filename, resample=None):
     """
 
     Args:
@@ -115,17 +115,34 @@ def load_labels(data_filename, labels_filename, resample=None):
     # Labels any remaining points as False
     labelled_data['LABELS'].fillna(False, inplace=True)
 
+    plot_labelled_data(data, labels, classes)
+
     return labelled_data, classes
 
 
-def plot_labelled_data(data, classes):
+def plot_labelled_data(data, labels, classes):
 
     # Plot using inbuilt Pandas function
-    data.plot(y=['BR', 'BTH', 'BPH', 'BMAG'], kind='line')
+    data.plot(y=['BR', 'BTH', 'BPH', 'BMAG'], kind='line', alpha=0.7)
 
+    colours = {}
+
+    default_cmap = plt.get_cmap('tab10')
+
+    for i in range(len(classes)):
+        colours[classes[i]] = default_cmap(4 + i)
+
+    for i in range(len(labels)):
+        start = labels['START'][i]
+        stop = labels['STOP'][i]
+        classification = labels.index[i]
+        plt.axvspan(start, stop, alpha=0.5, color=colours[classification], label='_' * i + classification)
+
+    """
     for classification in classes:
         plt.plot(data.loc[data['LABELS'] == classification].index.to_list(),
                  (data.loc[data['LABELS'] == classification]['BMAG']), 'o', ms=0.5, alpha=0.8)
+    """
 
     plt.legend(['BR', 'BTH', 'BPH', 'BMAG'] + classes, loc='upper right')
     plt.show()
@@ -136,10 +153,7 @@ def plot_labelled_data(data, classes):
 # =====================================================================================================================
 def main():
     print('LOADING DATA AND LABELS')
-    data, classes = load_labels(sys.argv[1], sys.argv[2])
-
-    print('\nPLOTTING DATA WITH LABELS')
-    plot_labelled_data(data, classes)
+    label_data(sys.argv[1], sys.argv[2])
 
 
 if __name__ == '__main__':

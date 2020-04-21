@@ -13,7 +13,7 @@ import numpy as np
 from PIL import Image
 import random
 from collections import Counter
-from Labeller import load_labels
+from Labeller import label_data
 import sys
 
 
@@ -224,8 +224,8 @@ def main():
     perturb_names = ('VOY%s_OG' % event, 'VOY%s_MIR' % event, 'VOY%s_REV' % event, 'VOY%s_MIR_REV' % event)
 
     print('\nLOADING DATA')
-    data, classes = load_labels('Voyager%s/VOY%s_data.csv' % (event, event),
-                                'Voyager%s/VOY%s_Labels.csv' % (event, event))
+    data, classes = label_data('Voyager%s/VOY%s_data.csv' % (event, event),
+                               'Voyager%s/VOY%s_Labels.csv' % (event, event))
 
     print('\nRE-NORMALISING DATA')
     stan_data = renormalise(data)
