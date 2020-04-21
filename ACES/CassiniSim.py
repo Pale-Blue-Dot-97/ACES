@@ -214,7 +214,7 @@ def labels_to_file(all_blocks, all_names, rev_num):
     data = pd.DataFrame()
     data['NAME'] = names
     data['LABEL'] = labels
-    data.to_csv('%s/Cassini_Labels_Rev%s.csv' % (block_labels_path, rev_num))
+    data.to_csv('%s/Cassini_Rev%s_Block_Labels.csv' % (block_labels_path, rev_num))
 
     return
 

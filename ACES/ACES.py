@@ -175,10 +175,6 @@ def balance_data(data, classes, verbose=0):
     return new_data
 
 
-def reorder(images):
-    return images.reshape((len(images), n_channels, image_length))
-
-
 def split_data(data, train_frac, val_test_frac=None, verbose=0):
     """Splits data into training, validation and testing data
 
@@ -618,7 +614,7 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, 
 def main():
     print('***************************** ACES ********************************************')
     model_type = 'sequential'
-    epochs = 40
+    epochs = 10
     verbose = 1
     batch_size = 32
 
@@ -632,7 +628,7 @@ def main():
     n_conv = [3]
     n_dense = [3]
 
-    optimisers = [('Adagrad', 0.01), ('Nadam', 2e-5), ('SGD', 0.01, 0.5)]
+    optimisers = [('Adagrad', 0.01), ('Nadam', 0.01), ('SGD', 0.01, 0.5)]
 
     print('\nLOAD VOY1 IMAGES')
     # Load in images
@@ -681,28 +677,32 @@ def main():
     # Append datasets together
     data = pd.concat([v1_data, v2_data, cas_data])
 
-    print('\nBALANCING DATA')
-    data = balance_data(data, classes, verbose=0)
+    #print('\nBALANCING DATA')
+    #data = balance_data(data, classes, verbose=0)
+    plot_subpopulations(data['CLASS'])
 
     print('\nSPLIT DATA INTO TRAIN, VALIDATION AND TEST')
     # Split images into test and train
-    train_images, val_images, test_images, train_labels, val_labels, test_labels = split_data(data, 0.7, 0.2)
+    #train_images, val_images, test_images, train_labels, val_labels, test_labels = split_data(data, 0.7, 0.2)
+    train_images, val_images, train_labels, val_labels = split_data(data, 0.8)
 
-    """
     print('\nLOAD IN TEST DATA')
-    test_data_df = load_images('Voyager2_Blocks/', load_all=True)
-    test_labels_df, x, y, z = load_labels('Voyager2/VOY2_Block_Labels.csv',
-                                          classes=classes, n_classes=n_classes, identity=identity)
+    casrev21_data_df = load_images('Cassini_Rev21_Blocks/', load_all=True)
+    casrev21_labels_df, x, y, z = load_labels('Cassini_Block_Labels/Cassini_Rev21_Block_Labels.csv',
+                                              classes=classes, n_classes=n_classes, identity=identity)
 
-    test_data = pd.merge(test_data_df, test_labels_df, on='NAME')
+    test_data = pd.merge(casrev21_data_df, casrev21_labels_df, on='NAME')
 
     # Deletes un-needed variables
-    del test_data_df, test_labels_df, x, y, z
+    del casrev21_data_df, casrev21_labels_df, x, y, z
 
-    test_images = reorder(np.array(test_data['IMAGE'].tolist()))
+    #casrev21_images = np.array(test_data['IMAGE'].tolist())
+    #casrev21_labels = np.array(test_data['LABEL'].tolist())
+    test_images = np.array(test_data['IMAGE'].tolist())
     test_labels = np.array(test_data['LABEL'].tolist())
-    
-    """
+
+    #test_images = np.concatenate((test_images, casrev21_images), axis=0)
+    #test_labels = np.concatenate((test_labels, casrev21_labels), axis=0)
 
     # Corrects shape of images
     train_images = np.swapaxes(train_images, 1, 2)
