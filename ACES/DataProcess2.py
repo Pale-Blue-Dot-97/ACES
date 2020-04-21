@@ -219,13 +219,13 @@ def labels_to_file(all_blocks, all_names, voy_num):
 def main():
     print('*************************** WELCOME TO DATAPROCESS2 *************************************')
 
-    voy_num = sys.argv[1]
-    block_dir = 'Voyager%s_Blocks' % voy_num
-    perturb_names = ('VOY%s_OG' % voy_num, 'VOY%s_MIR' % voy_num, 'VOY%s_REV' % voy_num, 'VOY%s_MIR_REV' % voy_num)
+    event = sys.argv[1]
+    block_dir = 'Voyager%s_Blocks' % event
+    perturb_names = ('VOY%s_OG' % event, 'VOY%s_MIR' % event, 'VOY%s_REV' % event, 'VOY%s_MIR_REV' % event)
 
     print('\nLOADING DATA')
-    data, classes = load_labels('Voyager%s/VOY%s_data.csv' % (voy_num, voy_num),
-                                'Voyager%s/VOY%s_Labels.csv' % (voy_num, voy_num))
+    data, classes = load_labels('Voyager%s/VOY%s_data.csv' % (event, event),
+                                'Voyager%s/VOY%s_Labels.csv' % (event, event))
 
     print('\nRE-NORMALISING DATA')
     stan_data = renormalise(data)
@@ -270,7 +270,7 @@ def main():
     blocks_to_images(mir_rev_blocks, perturb_names[3], block_dir)
 
     print('\nEXPORTING LABELS TO FILE')
-    labels_to_file((blocks, mir_blocks, rev_blocks, mir_rev_blocks), perturb_names, voy_num)
+    labels_to_file((blocks, mir_blocks, rev_blocks, mir_rev_blocks), perturb_names, event)
     
     print('\nFINISHED')
 

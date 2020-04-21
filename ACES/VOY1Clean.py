@@ -33,7 +33,7 @@ def load_data():
     data_names = ['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR',
                   'RMS_BTH', 'RMS_BPH', 'NUM_PTS']
 
-    data = pd.read_csv('Voyager1/S3_1_92S.TAB', names=data_names, na_values=-9999.999)
+    data = pd.read_csv('Voyager1-JE/S3_1_92S.TAB', names=data_names, na_values=-9999.999)
 
     data.drop(columns=['SCLK', 'MAG_ID', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH', 'NUM_PTS'],
               inplace=True)
@@ -356,7 +356,7 @@ def main():
     print('\nWRITING DATA TO FILE')
     norm_data.drop(columns=['TIME', 'R'], inplace=True)
     norm_data.reset_index(drop=True)
-    norm_data.to_csv('VOY1_data.csv')
+    norm_data.to_csv('VOY1-JE_data.csv')
 
 
 if __name__ == '__main__':

@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 # =====================================================================================================================
 #                                                     GLOBAL
 # =====================================================================================================================
-data_path = 'Voyager2'
+data_path = 'Voyager2-JE'
 
 
 # =====================================================================================================================
@@ -363,7 +363,7 @@ def main():
     print('\nWRITING DATA TO FILE')
     norm_data.drop(columns=['TIME', 'R'], inplace=True)
     norm_data.reset_index(drop=True)
-    norm_data.to_csv('%s/VOY2_data.csv' % data_path)
+    norm_data.to_csv('%s/VOY2-JE_data.csv' % data_path)
 
     # Plot using inbuilt Pandas function
     norm_data.plot(y=['BR', 'BPH', 'BTH', 'BMAG'], kind='line')

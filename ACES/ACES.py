@@ -632,11 +632,11 @@ def main():
 
     print('\nLOAD VOY1 IMAGES')
     # Load in images
-    v1_data = load_images('Voyager1_Blocks/', load_all=True)
+    v1_data = load_images('Voyager1-JE_Blocks/', load_all=True)
 
     print('\nLOAD VOY 1 LABELS')
     # Load in accompanying labels into separate randomly ordered DataFrame
-    v1_labels, n_classes, classes, identity = load_labels('Voyager1/VOY1_Block_Labels.csv')
+    v1_labels, n_classes, classes, identity = load_labels('Voyager1-JE/VOY1-JE_Block_Labels.csv')
 
     # Merges data and labels together
     v1_data = pd.merge(v1_data, v1_labels, on='NAME')
@@ -646,11 +646,11 @@ def main():
 
     print('\nLOAD VOY2 IMAGES')
     # Load in images
-    v2_data = load_images('Voyager2_Blocks/', load_all=True)
+    v2_data = load_images('Voyager2-JE_Blocks/', load_all=True)
 
     print('\nLOAD VOY2 LABELS')
     # Load in accompanying labels into separate randomly ordered DataFrame
-    v2_labels, x, y, z = load_labels('Voyager2/VOY2_Block_Labels.csv', classes=classes, n_classes=n_classes,
+    v2_labels, x, y, z = load_labels('Voyager2-JE/VOY2-JE_Block_Labels.csv', classes=classes, n_classes=n_classes,
                                      identity=identity)
 
     # Merges data and labels together
