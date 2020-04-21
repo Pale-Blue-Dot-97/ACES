@@ -14,19 +14,18 @@ import scipy.interpolate as ip
 import scipy.signal as sg
 import datetime
 import matplotlib.pyplot as plt
-
-
-# =====================================================================================================================
-#                                                     GLOBAL
-# =====================================================================================================================
-data_path = 'Voyager2-JE'
+import sys
 
 
 # =====================================================================================================================
 #                                                     METHODS
 # =====================================================================================================================
-def load_data():
+def load_data(data_name, pos_name):
     """Load in data from PDS archive. Column headers come from the LBL meta data
+
+    Args:
+        data_name (str): Path and name of file containing raw data
+        pos_name (str): Path and name of file containing positional data
 
     Returns:
         data (DataFrame): Table of the magnetometer data time-series
@@ -35,10 +34,10 @@ def load_data():
 
     """
 
-    data_names = ['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR',
+    column_headers = ['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR',
                   'RMS_BTH', 'RMS_BPH', 'NUM_PTS']
 
-    data = pd.read_table('%s/RAW_Voyager2_JE.TAB' % data_path, names=data_names, delim_whitespace=True,
+    data = pd.read_table(data_name, names=column_headers, delim_whitespace=True,
                          na_values=9999.999)
 
     data.drop(columns=['SCLK', 'MAG_ID', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH', 'NUM_PTS'],
@@ -55,7 +54,7 @@ def load_data():
 
     position_names = ['TIME', 'R', 'LAT', 'LON', 'LOCTIME']
 
-    position = pd.read_table('%s/Voyager2_JE_POS.TAB' % data_path, delim_whitespace=True, names=position_names,
+    position = pd.read_table(pos_name, delim_whitespace=True, names=position_names,
                              na_values=-999.999)
 
     position.drop(columns=['LAT', 'LON', 'LOCTIME'], inplace=True)
@@ -343,7 +342,13 @@ def pow_normalise(data, a=4.0e5, b=200.0, c=35.0):
 #                                                       MAIN
 # =====================================================================================================================
 def main():
-    data, data_columns, position = load_data()
+    event = sys.argv[1]
+
+    event_dir = 'Voyager%s' % event
+    data_name = '%s/VOY%s_RAW.TAB' % (event_dir, event)
+    pos_name = '%s/VOY%s_POS.TAB' % (event_dir, event)
+
+    data, data_columns, position = load_data(data_name, pos_name)
 
     data, times = extract_time(data)
 
@@ -358,12 +363,12 @@ def main():
 
     cldt = cleaned_data.copy()
 
-    norm_data = pow_normalise(cldt, a=6.0e4, b=1.0e3, c=100.0)
+    norm_data = pow_normalise(cldt, a=8.0e4, b=2.0e3, c=150.0)
 
     print('\nWRITING DATA TO FILE')
     norm_data.drop(columns=['TIME', 'R'], inplace=True)
     norm_data.reset_index(drop=True)
-    norm_data.to_csv('%s/VOY2-JE_data.csv' % data_path)
+    norm_data.to_csv('%s/VOY%s_data.csv' % (event_dir, event))
 
     # Plot using inbuilt Pandas function
     norm_data.plot(y=['BR', 'BPH', 'BTH', 'BMAG'], kind='line')

@@ -121,13 +121,13 @@ def load_labels(data_filename, labels_filename, resample=None):
 def plot_labelled_data(data, classes):
 
     # Plot using inbuilt Pandas function
-    data.plot(y=['BR', 'BMAG'], kind='line')
+    data.plot(y=['BR', 'BTH', 'BPH', 'BMAG'], kind='line')
 
     for classification in classes:
         plt.plot(data.loc[data['LABELS'] == classification].index.to_list(),
                  (data.loc[data['LABELS'] == classification]['BMAG']), 'o', ms=0.5, alpha=0.8)
 
-    plt.legend(['BR', 'BMAG'] + classes, loc='upper right')
+    plt.legend(['BR', 'BTH', 'BPH', 'BMAG'] + classes, loc='upper right')
     plt.show()
 
 

@@ -1,4 +1,4 @@
-"""Script to load Voyager magnetometer data in from file and clean, interpolate and work on
+"""Script to load Voyager 1 magnetometer data in from file and clean, interpolate and work on
 and process ready for training
 
 TODO:
@@ -10,18 +10,22 @@ TODO:
 # =====================================================================================================================
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import scipy.interpolate as ip
 import scipy.signal as sg
 import datetime
+import sys
 
 
 # =====================================================================================================================
 #                                                     METHODS
 # =====================================================================================================================
-
-
-def load_data():
+def load_data(data_name, pos_name):
     """Load in data from PDS archive. Column headers come from the LBL meta data
+
+    Args:
+        data_name (str): Path and name of file containing raw data
+        pos_name (str): Path and name of file containing positional data
 
     Returns:
         data (DataFrame): Table of the magnetometer data time-series
@@ -33,7 +37,7 @@ def load_data():
     data_names = ['TIME', 'SCLK', 'MAG_ID', 'BR', 'BTH', 'BPH', 'BMAG', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR',
                   'RMS_BTH', 'RMS_BPH', 'NUM_PTS']
 
-    data = pd.read_csv('Voyager1-JE/S3_1_92S.TAB', names=data_names, na_values=-9999.999)
+    data = pd.read_csv(data_name, names=data_names, na_values=-9999.999)
 
     data.drop(columns=['SCLK', 'MAG_ID', 'AVG_BMAG', 'DELTA', 'LAMBDA', 'RMS_BR', 'RMS_BTH', 'RMS_BPH', 'NUM_PTS'],
               inplace=True)
@@ -49,7 +53,7 @@ def load_data():
 
     position_names = ['TIME', 'R', 'LAT', 'LON', 'LOCTIME']
 
-    position = pd.read_table('SPICE062_071.TAB', delim_whitespace=True, names=position_names, na_values=-999.999)
+    position = pd.read_table(pos_name, delim_whitespace=True, names=position_names, na_values=-999.999)
 
     return data, data_columns, position
 
@@ -334,7 +338,14 @@ def pow_normalise(data, a=4.0e5, b=200.0, c=35.0):
 #                                                       MAIN
 # =====================================================================================================================
 def main():
-    data, data_columns, position = load_data()
+
+    event = sys.argv[1]
+
+    event_dir = 'Voyager%s' % event
+    data_name = '%s/VOY%s_RAW.csv' % (event_dir, event)
+    pos_name = '%s/VOY%s_POS.TAB' % (event_dir, event)
+
+    data, data_columns, position = load_data(data_name, pos_name)
 
     data, times = extract_time(data)
 
@@ -345,18 +356,23 @@ def main():
     print('Size of raw data: %d' % len(raw_data))
 
     print('\nFirst removing non-physical data via local extrema')
-    cleaned_data = find_dodgy_data(data, data_columns, ['BR', 'BTH', 'BPH', 'BMAG'], 5, (3, 5, 9, 15), 0.01)
+    cleaned_data = find_dodgy_data(data, data_columns, ['BR', 'BTH', 'BPH', 'BMAG'], 5, (3, 5), 0.01)
 
     print('Size of cleaned data: %d' % len(cleaned_data))
 
     cldt = cleaned_data.copy()
 
-    norm_data = pow_normalise(cldt, a=6.0e5, b=5.0e4, c=400.0)
+    norm_data = pow_normalise(cldt, a=5.0e4, b=2.0e3, c=250.0)
 
     print('\nWRITING DATA TO FILE')
     norm_data.drop(columns=['TIME', 'R'], inplace=True)
     norm_data.reset_index(drop=True)
-    norm_data.to_csv('VOY1-JE_data.csv')
+    norm_data.to_csv('%s/VOY%s_data.csv' % (event_dir, event))
+
+    # Plot using inbuilt Pandas function
+    norm_data.plot(y=['BR', 'BPH', 'BTH', 'BMAG'], kind='line')
+    plt.legend(['BR', 'BPH', 'BTH', 'BMAG'], loc='upper right')
+    plt.show()
 
 
 if __name__ == '__main__':
