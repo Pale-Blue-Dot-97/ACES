@@ -25,12 +25,13 @@ header = ['CLASS', 'START', 'STOP']
 # =====================================================================================================================
 #                                                     METHODS
 # =====================================================================================================================
-def load_data(filename, resample=None):
+def load_data(filename, resample=None, mode=None):
     """Load in cleaned and normalised data from file
 
     Args:
         filename (str): Name of file to be loaded
         resample (str): Resampling frequency
+        mode (str): Mode of resampling. Either up or down
 
     Returns:
         data (DataFrame): Table of all the cleaned and normalised data from file
@@ -50,21 +51,26 @@ def load_data(filename, resample=None):
     del data['DATETIME']
 
     if resample is not None:
-        new_data = data.resample('%s' % resample).mean()
-        print(new_data)
-        return new_data
+        if mode is 'up':
+            new_data = data.resample('%s' % resample).bfill()
+            return new_data
+
+        if mode is 'down':
+            new_data = data.resample('%s' % resample).mean()
+            return new_data
 
     if resample is None:
         return data
 
 
-def label_data(data_filename, labels_filename, resample=None):
+def label_data(data_filename, labels_filename, resample=None, mode=None):
     """
 
     Args:
         data_filename (str): Name of file containing data
         labels_filename (str): Name of file containing labels
         resample (str): Resampling frequency
+        mode (str): Mode of resampling. Either up or down
 
     Returns:
         labelled_data (DataFrame): Labelled data
@@ -73,7 +79,7 @@ def label_data(data_filename, labels_filename, resample=None):
     """
 
     # Loads in data
-    data = load_data(data_filename, resample)
+    data = load_data(data_filename, resample, mode)
 
     # Loads the start and endpoints of the labelled regions of the data
     labels = pd.read_csv(labels_filename, names=header, dtype=str, header=0, sep=',', index_col='CLASS')
