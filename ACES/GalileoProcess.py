@@ -20,8 +20,8 @@ from Labeller import label_data
 # =====================================================================================================================
 #                                                     GLOBAL
 # =====================================================================================================================
-data_path = 'Ulysses'
-block_path = 'Ulysses_Blocks'
+data_path = 'Galileo'
+block_path = 'Galileo_Blocks'
 
 # Fraction of a block to be threshold to reach for block to labelled as such
 threshold_fraction = 0.5
@@ -34,7 +34,7 @@ block_length = 2048
 
 data_columns = ['BR', 'BTH', 'BPH', 'BMAG']
 
-perturb_names = ('ULY_OG', 'ULY_MIR', 'ULY_REV', 'ULY_MIR_REV')
+perturb_names = ('GAL_OG', 'GAL_MIR', 'GAL_REV', 'GAL_MIR_REV')
 
 
 # =====================================================================================================================
@@ -50,9 +50,11 @@ def load_data():
 
     """
 
-    data_names = ['TIME', 'BR', 'BTH', 'BPH', 'BMAG']
+    column_names = ['TIME', 'SAMPLE TIME', 'BR', 'BTH', 'BPH', 'BMAG', 'R', 'LAT', 'E-LON', 'W-LON']
+    data_names = ['TIME', 'BR', 'BTH', 'BPH', 'BMAG', 'R']
 
-    data = pd.read_table('%s/FGM38_40.TAB' % data_path, delim_whitespace=True, names=data_names, na_values=-9999.999)
+    data = pd.read_table('%s/ORB00_SYS3.TAB' % data_path, delim_whitespace=True, names=column_names,
+                         na_values=999999.999, usecols=data_names)
 
     print('Number of NaNs: %d' % data.isnull().sum().sum())
 
@@ -61,12 +63,7 @@ def load_data():
         data.drop(data[data.isnull()[i]].index, inplace=True)
         data.reset_index(inplace=True, drop=True)
 
-    position_names = ['TIME', 'R', 'LAT', 'LON', 'LOCTIME']
-
-    position = pd.read_table('%s/SPK28_45.TAB' % data_path, delim_whitespace=True, names=position_names)
-    position.drop(columns=['LAT', 'LON', 'LOCTIME'], inplace=True)
-
-    return data, position
+    return data
 
 
 def extract_time(data):
@@ -80,7 +77,7 @@ def extract_time(data):
     """
 
     def get_UNIX_time(row):
-        dt = datetime.datetime.strptime(row['TIME'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        dt = datetime.datetime.strptime(row['TIME'], '%Y-%m-%dT%H:%M:%S.%f')
         return (dt - datetime.datetime(1970, 1, 1)).total_seconds()
 
     new_data = data.copy()
@@ -97,25 +94,6 @@ def extract_time(data):
     return new_data
 
 
-def match_positions(positions, data):
-    """Matches positional data to match time intervals of main data
-
-    Args:
-        positions (DataFrame): Positions of the spacecraft
-        data (DataFrame): Magnetometer data
-
-    Returns:
-        new_data (DataFrame): data with the addition of the positions interpolated to match 1.0s
-
-    """
-
-    positions = extract_time(positions)
-
-    new_data = data.merge(positions, how='left', left_on='UNIX TIME', right_on='UNIX TIME')
-
-    return new_data
-
-
 def plot_data(data):
     # Create Matplotlib datetime64 type date-time column from UNIX time
     data['DATETIME'] = pd.to_datetime(data['UNIX TIME'], unit='s')
@@ -124,9 +102,11 @@ def plot_data(data):
     data.index = data['DATETIME']
     del data['DATETIME']
 
-    data.plot(y=['BR', 'BTH', 'BPH', 'BMAG'], kind='line')
+    data.plot(y=data_columns, kind='line')
 
-    plt.legend(['BR', 'BTH', 'BPH', 'BMAG'], loc='upper right')
+    plt.legend(data_columns, loc='upper right')
+    plt.xlabel('UTC')
+    plt.ylabel('B')
     plt.show()
 
 
@@ -161,10 +141,8 @@ def pow_normalise(data, a=4.0e5, b=200.0, c=35.0):
 
     # More complex polynomial approach
     print('\nApplying power series normalisation to data')
-    norm_data['BR'] = power_series_norm(data['BR'], data['R'])
-    norm_data['BTH'] = power_series_norm(data['BTH'], data['R'])
-    norm_data['BPH'] = power_series_norm(data['BPH'], data['R'])
-    norm_data['BMAG'] = power_series_norm(data['BMAG'], data['R'])
+    for var in data_columns:
+        norm_data[var] = power_series_norm(data[var], data['R'])
 
     return norm_data
 
@@ -352,13 +330,10 @@ def labels_to_file(all_blocks, all_names):
 def main():
 
     print("\nLoading data")
-    data, position = load_data()
+    data = load_data()
 
     print("\nExtracting time stamps")
     data = extract_time(data)
-
-    print("\nMatching data")
-    data = match_positions(position, data)
 
     print("\nNormalising data")
     norm_data = pow_normalise(data, a=5.0e5, b=5.0e4, c=220.0)
@@ -366,7 +341,7 @@ def main():
     print('\nWRITING DATA TO FILE')
     norm_data.drop(columns=['R'], inplace=True)
     norm_data.reset_index(drop=True)
-    norm_data.to_csv('%s/Ulysses_PROC.csv' % data_path)
+    norm_data.to_csv('%s/Galileo_PROC.csv' % data_path)
 
     # Create Matplotlib datetime64 type date-time column from UNIX time
     norm_data['DATETIME'] = pd.to_datetime(norm_data['UNIX TIME'], unit='s')
@@ -375,22 +350,24 @@ def main():
     norm_data.index = norm_data['DATETIME']
     del norm_data['DATETIME']
 
-    norm_data.plot(y=['BR', 'BTH', 'BPH', 'BMAG'], kind='line')
+    norm_data.plot(y=data_columns, kind='line')
 
-    plt.legend(['BR', 'BTH', 'BPH', 'BMAG'], loc='upper right')
+    plt.legend(data_columns, loc='upper right')
     plt.show()
 
     del data, norm_data
 
     print('\nLOADING DATA')
-    data, classes = label_data('%s/Ulysses_PROC.csv' % data_path, '%s/Ulysses_Labels.csv' % data_path,
+    data, classes = label_data('%s/Galileo_PROC.csv' % data_path, '%s/Galileo_Labels.csv' % data_path,
                                resample='2S', mode='up')
 
     print(data)
 
-    data.plot(y=['BR', 'BTH', 'BPH', 'BMAG'], kind='line')
+    data.plot(y=data_columns, kind='line')
 
-    plt.legend(['BR', 'BTH', 'BPH', 'BMAG'], loc='upper right')
+    plt.legend(data_columns, loc='upper right')
+    plt.xlabel('UTC')
+    plt.ylabel('B')
     plt.show()
 
     print('\nRE-NORMALISING DATA')

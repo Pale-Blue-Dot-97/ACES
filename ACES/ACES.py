@@ -1,7 +1,7 @@
 """ACES - Autonomous Communications Enhancement System
 
 TODO:
-    * Implement Cassini data as test
+
 """
 
 # =====================================================================================================================
@@ -614,7 +614,7 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, 
 def main():
     print('***************************** ACES ********************************************')
     model_type = 'sequential'
-    epochs = 10
+    epochs = 30
     verbose = 1
     batch_size = 32
 
@@ -691,18 +691,27 @@ def main():
     casrev21_labels_df, x, y, z = load_labels('Cassini_Block_Labels/Cassini_Rev21_Block_Labels.csv',
                                               classes=classes, n_classes=n_classes, identity=identity)
 
-    test_data = pd.merge(casrev21_data_df, casrev21_labels_df, on='NAME')
+    casrev21_data = pd.merge(casrev21_data_df, casrev21_labels_df, on='NAME')
 
     # Deletes un-needed variables
     del casrev21_data_df, casrev21_labels_df, x, y, z
 
-    #casrev21_images = np.array(test_data['IMAGE'].tolist())
-    #casrev21_labels = np.array(test_data['LABEL'].tolist())
-    test_images = np.array(test_data['IMAGE'].tolist())
-    test_labels = np.array(test_data['LABEL'].tolist())
+    ulys_data_df = load_images('Ulysses_Blocks/', load_all=True)
+    ulys_labels_df, x, y, z = load_labels('Ulysses/ULYS_Block_Labels.csv', classes=classes, n_classes=n_classes,
+                                          identity=identity)
 
-    #test_images = np.concatenate((test_images, casrev21_images), axis=0)
-    #test_labels = np.concatenate((test_labels, casrev21_labels), axis=0)
+    ulys_data = pd.merge(ulys_data_df, ulys_labels_df, on='NAME')
+
+    # Deletes un-needed variables
+    del ulys_data_df, ulys_labels_df, x, y, z
+
+    casrev21_images = np.array(casrev21_data['IMAGE'].tolist())
+    casrev21_labels = np.array(casrev21_data['LABEL'].tolist())
+    ulys_images = np.array(ulys_data['IMAGE'].tolist())
+    ulys_labels = np.array(ulys_data['LABEL'].tolist())
+
+    test_images = np.concatenate((ulys_images, casrev21_images), axis=0)
+    test_labels = np.concatenate((ulys_labels, casrev21_labels), axis=0)
 
     # Corrects shape of images
     train_images = np.swapaxes(train_images, 1, 2)
@@ -729,7 +738,8 @@ def main():
                                     optimiser, optimiser_name = set_optimiser(e)
 
                                     # Unique model ID to use for logging and output
-                                    model_name = '%sM_%sK_%sF_%sC_%sD_%s_%sfm_%sd' % (i, a, b, c, d, optimiser_name, f, g)
+                                    model_name = 'NEW_%sM_%sK_%sF_%sC_%sD_%s_%sfm_%sd' % (i, a, b, c, d, optimiser_name, 
+                                                                                          f, g)
 
                                     print('\nMODEL NUMBER: %s' % i)
                                     print('Kernel: %s' % a)

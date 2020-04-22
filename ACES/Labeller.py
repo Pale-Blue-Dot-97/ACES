@@ -21,6 +21,9 @@ pd.plotting.register_matplotlib_converters()
 # Header names in the labels file
 header = ['CLASS', 'START', 'STOP']
 
+# List of variables
+variables = ['BR', 'BTH', 'BPH', 'BMAG']
+
 
 # =====================================================================================================================
 #                                                     METHODS
@@ -52,7 +55,7 @@ def load_data(filename, resample=None, mode=None):
 
     if resample is not None:
         if mode is 'up':
-            new_data = data.resample('%s' % resample).bfill()
+            new_data = data.resample('%s' % resample).interpolate(method='time', order=2)
             return new_data
 
         if mode is 'down':
@@ -128,29 +131,38 @@ def label_data(data_filename, labels_filename, resample=None, mode=None):
 
 def plot_labelled_data(data, labels, classes):
 
+    classes.append('False')
+
     # Plot using inbuilt Pandas function
-    data.plot(y=['BR', 'BTH', 'BPH', 'BMAG'], kind='line', alpha=0.7)
+    var_handles = data.plot(y=variables, kind='line', alpha=0.7)
+
+    handles_dict = {}
+
+    for i in range(len(variables)):
+        handles_dict[variables[i]] = var_handles.lines[i]
 
     colours = {}
 
-    default_cmap = plt.get_cmap('tab10')
+    cmap = plt.get_cmap('Set2')
 
     for i in range(len(classes)):
-        colours[classes[i]] = default_cmap(4 + i)
+        colours[classes[i]] = cmap(i)
 
     for i in range(len(labels)):
         start = labels['START'][i]
         stop = labels['STOP'][i]
         classification = labels.index[i]
-        plt.axvspan(start, stop, alpha=0.5, color=colours[classification], label='_' * i + classification)
+        handle = plt.axvspan(start, stop, alpha=0.5, color=colours[classification])
 
-    """
-    for classification in classes:
-        plt.plot(data.loc[data['LABELS'] == classification].index.to_list(),
-                 (data.loc[data['LABELS'] == classification]['BMAG']), 'o', ms=0.5, alpha=0.8)
-    """
+        if classification not in handles_dict:
+            handles_dict[classification] = handle
 
-    plt.legend(['BR', 'BTH', 'BPH', 'BMAG'] + classes, loc='upper right')
+    handles = handles_dict.values()
+    leg_labels = handles_dict.keys()
+
+    plt.legend(handles=handles, labels=leg_labels, loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=len(leg_labels))
+    plt.xlabel('UTC')
+    plt.ylabel('B')
     plt.show()
 
 
