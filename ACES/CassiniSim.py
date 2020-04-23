@@ -233,7 +233,7 @@ def main():
     print('\nLOADING DATA')
     data, classes = label_data('%s/CASSINI_Rev%s_PROC.csv' % (data_path, rev_num),
                                '%s/Cassini_Labels_Rev%s.csv' % (labels_path, rev_num),
-                               resample='2S')
+                               resample='2S', mode='down')
 
     print('\nRE-NORMALISING DATA')
     stan_data = renormalise(data)

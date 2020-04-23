@@ -167,7 +167,7 @@ def data_perturb(data, mode):
 
 
 def blocks_to_images(blocks, name, block_dir):
-    """Converts each block in a series to 8-bit greyscale png images and saves to file
+    """Converts each block in a series to 16-bit greyscale png images and saves to file
 
     Args:
         blocks: Series of blocks of data

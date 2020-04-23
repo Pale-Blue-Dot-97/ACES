@@ -10,6 +10,7 @@ TODO:
 from __future__ import absolute_import, division, print_function, unicode_literals
 import tensorflow as tf
 from tensorflow.keras import layers, models, callbacks, backend, utils
+import sklearn as skl
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -18,6 +19,7 @@ import os
 from collections import Counter
 import seaborn as sns
 from PIL import Image
+from datetime import datetime
 
 # =====================================================================================================================
 #                                                     GLOBALS
@@ -584,6 +586,8 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, 
     # Uses model to make predictions on the images supplied
     pred_labels = model.predict_classes(test_images, batch_size=batch_size)
 
+    print(skl.metrics.classification_report(np.argmax(test_labels, axis=1), pred_labels))
+    
     # Creates the confusion matrix based on these predictions and the corresponding ground truth labels
     conf_matrix = tf.math.confusion_matrix(labels=np.argmax(test_labels, axis=1), predictions=pred_labels).numpy()
 
@@ -661,21 +665,31 @@ def main():
 
     print('\nLOAD CASSINI REV20 IMAGES')
     # Load in images
-    cas_data = load_images('Cassini_Rev20_Blocks/', load_all=True)
+    casrev20_data = load_images('Cassini_Rev20_Blocks/', load_all=True)
 
     print('\nLOAD CASSINI REV20 LABELS')
     # Load in accompanying labels into separate randomly ordered DataFrame
-    cas_labels, x, y, z = load_labels('Cassini_Block_Labels/Cassini_Rev20_Block_Labels.csv',
-                                      classes=classes, n_classes=n_classes, identity=identity)
+    casrev20_labels, x, y, z = load_labels('Cassini_Block_Labels/Cassini_Rev20_Block_Labels.csv',
+                                           classes=classes, n_classes=n_classes, identity=identity)
 
     # Merges data and labels together
-    cas_data = pd.merge(cas_data, cas_labels, on='NAME')
+    casrev20_data = pd.merge(casrev20_data, casrev20_labels, on='NAME')
 
     # Deletes un-needed variables
-    del cas_labels, x, y, z
+    del casrev20_labels, x, y, z
+
+    print('\nLOAD CASSINI REV-21')
+    casrev21_data_df = load_images('Cassini_Rev21_Blocks/', load_all=True)
+    casrev21_labels_df, x, y, z = load_labels('Cassini_Block_Labels/Cassini_Rev21_Block_Labels.csv',
+                                              classes=classes, n_classes=n_classes, identity=identity)
+
+    casrev21_data = pd.merge(casrev21_data_df, casrev21_labels_df, on='NAME')
+
+    # Deletes un-needed variables
+    del casrev21_data_df, casrev21_labels_df, x, y, z
 
     # Append datasets together
-    data = pd.concat([v1_data, v2_data, cas_data])
+    data = pd.concat([v1_data, v2_data, casrev20_data, casrev21_data])
 
     #print('\nBALANCING DATA')
     #data = balance_data(data, classes, verbose=0)
@@ -687,14 +701,14 @@ def main():
     train_images, val_images, train_labels, val_labels = split_data(data, 0.8)
 
     print('\nLOAD IN TEST DATA')
-    casrev21_data_df = load_images('Cassini_Rev21_Blocks/', load_all=True)
-    casrev21_labels_df, x, y, z = load_labels('Cassini_Block_Labels/Cassini_Rev21_Block_Labels.csv',
+    casrev22_data_df = load_images('Cassini_Rev22_Blocks/', load_all=True)
+    casrev22_labels_df, x, y, z = load_labels('Cassini_Block_Labels/Cassini_Rev22_Block_Labels.csv',
                                               classes=classes, n_classes=n_classes, identity=identity)
 
-    casrev21_data = pd.merge(casrev21_data_df, casrev21_labels_df, on='NAME')
+    casrev22_data = pd.merge(casrev22_data_df, casrev22_labels_df, on='NAME')
 
     # Deletes un-needed variables
-    del casrev21_data_df, casrev21_labels_df, x, y, z
+    del casrev22_data_df, casrev22_labels_df, x, y, z
 
     ulys_data_df = load_images('Ulysses_Blocks/', load_all=True)
     ulys_labels_df, x, y, z = load_labels('Ulysses/ULYS_Block_Labels.csv', classes=classes, n_classes=n_classes,
@@ -705,13 +719,13 @@ def main():
     # Deletes un-needed variables
     del ulys_data_df, ulys_labels_df, x, y, z
 
-    casrev21_images = np.array(casrev21_data['IMAGE'].tolist())
-    casrev21_labels = np.array(casrev21_data['LABEL'].tolist())
+    casrev22_images = np.array(casrev22_data['IMAGE'].tolist())
+    casrev22_labels = np.array(casrev22_data['LABEL'].tolist())
     ulys_images = np.array(ulys_data['IMAGE'].tolist())
     ulys_labels = np.array(ulys_data['LABEL'].tolist())
 
-    test_images = np.concatenate((ulys_images, casrev21_images), axis=0)
-    test_labels = np.concatenate((ulys_labels, casrev21_labels), axis=0)
+    test_images = np.concatenate((ulys_images, casrev22_images), axis=0)
+    test_labels = np.concatenate((ulys_labels, casrev22_labels), axis=0)
 
     # Corrects shape of images
     train_images = np.swapaxes(train_images, 1, 2)
@@ -737,9 +751,12 @@ def main():
                                     # Determines optimiser
                                     optimiser, optimiser_name = set_optimiser(e)
 
+                                    # Current date and time
+                                    timestamp = datetime.now().strftime('%Y-%m-%d_%H%M')
+
                                     # Unique model ID to use for logging and output
-                                    model_name = 'NEW_%sM_%sK_%sF_%sC_%sD_%s_%sfm_%sd' % (i, a, b, c, d, optimiser_name, 
-                                                                                          f, g)
+                                    model_name = '%s_%sM_%sK_%sF_%sC_%sD_%s_%sfm_%sd' % (timestamp, i, a, b, c, d,
+                                                                                         optimiser_name, f, g)
 
                                     print('\nMODEL NUMBER: %s' % i)
                                     print('Kernel: %s' % a)
@@ -758,7 +775,8 @@ def main():
                                                                     filename='Logs/%s.csv' % model_name, log=True)
 
                                     # Plots the history of the model fitting and saves to file
-                                    plot_history(history, 'ROCs/%s-ROC.png' % model_name, show=False, save=True)
+                                    plot_history(history, 'Model_Histories/%s-MH.png' % model_name, show=False,
+                                                 save=True)
 
                                     # Creates the confusion matrix of the model and saves to file
                                     make_confusion_matrix(model, test_images, test_labels, batch_size, classes,
