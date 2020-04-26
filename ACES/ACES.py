@@ -636,7 +636,7 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, 
         plt.close()
 
     # Plots binary cm
-    plt.figure(figsize=(13, 10.5))
+    plt.figure()#figsize=(13, 10.5))
     sns.heatmap(binary_cm_df, annot=True, square=True, cmap=plt.cm.get_cmap('Blues'))
     plt.ylabel('Ground Truth')
     plt.xlabel('Predicted')
@@ -713,8 +713,8 @@ def roc_curve(model, test_images, test_labels, batch_size, filename, classes, sh
         new_pred_labels = []
         new_test_labels = []
         for j in range(len(pred_labels)):
-            new_pred_labels.append(one_vs_else(pred_labels[j], i))
-            new_test_labels.append(one_vs_else(test_labels[j], i))
+            new_pred_labels.append(one_vs_else(int(pred_labels[j]), i))
+            new_test_labels.append(one_vs_else(int(test_labels[j]), i))
 
         pred_labels_dict[classes[i]] = new_pred_labels
         test_labels_dict[classes[i]] = new_test_labels
@@ -730,7 +730,7 @@ def roc_curve(model, test_images, test_labels, batch_size, filename, classes, sh
         plt.plot(fpr[classification], tpr[classification],
                  label='%s vs all else ROC curve (AUC = %0.2f)' % (classification, roc_auc[classification]))
 
-    plt.plot([0, 0], [1, 1], 'k--')
+    plt.plot([0, 1], [0, 1], 'k--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
@@ -751,7 +751,7 @@ def roc_curve(model, test_images, test_labels, batch_size, filename, classes, sh
 def main():
     print('***************************** ACES ********************************************')
     model_type = 'sequential'
-    epochs = 20
+    epochs = 70
     verbose = 1
     batch_size = 32
 
@@ -841,10 +841,10 @@ def main():
     del ulys_data_df, ulys_labels_df, x, y, z
     
     # Append datasets together
-    test_data = pd.concat([casrev21_data, ulys_data])
+    test_data = pd.concat([ulys_data])#casrev21_data])#, ulys_data])
 
     # Append datasets together
-    data = pd.concat([v1_data, v2_data, casrev20_data, casrev22_data])
+    data = pd.concat([v1_data, v2_data, casrev20_data])#, casrev22_data])
 
     print('\nBALANCING DATA')
     data = balance_data(data, verbose=0)
@@ -920,8 +920,8 @@ def main():
                                     report(model, test_images, test_labels, batch_size, 'Scores/%s' % model_name,
                                            classes, show=True, save=True)
 
-                                    report(model, test_images, test_labels, batch_size, 'ROC/%s' % model_name,
-                                           classes, show=True, save=True)
+                                    roc_curve(model, test_images, test_labels, batch_size,
+                                              'ROC/%s_ROC.png' % model_name, classes, show=False, save=True)
 
 
 if __name__ == '__main__':
