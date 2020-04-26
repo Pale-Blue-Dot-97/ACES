@@ -144,3 +144,5 @@ ACES/Voyager2-JE/VOY2-JE_data.csv
 ACES/Voyager1-SE/VOY1-SE_data.csv
 ACES/Voyager2-SE/VOY2-SE_data.csv
 ACES/Voyager2-SE/VOY2-SE_RAW.TAB
+ACES/Scores/*
+ACES/ROC/*

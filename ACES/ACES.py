@@ -10,7 +10,7 @@ TODO:
 from __future__ import absolute_import, division, print_function, unicode_literals
 import tensorflow as tf
 from tensorflow.keras import layers, models, callbacks, backend, utils
-import sklearn as skl
+from sklearn import metrics
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -129,12 +129,11 @@ def load_labels(filename, classes=None, n_classes=None, identity=None):
     return labels, n_classes, classes, identity
 
 
-def balance_data(data, classes, verbose=0):
+def balance_data(data, verbose=0):
     """Balances data into equally sized class sub-populations
 
     Args:
         data (DataFrame): DataFrame containing all the data with labels
-        classes ([str]): List of all class names
         verbose (int): Setting for level of output and analysis
 
     Returns:
@@ -147,6 +146,12 @@ def balance_data(data, classes, verbose=0):
 
     # Find distribution of class sub-populations within data
     modes = Counter(data['CLASS']).most_common()
+
+    classes = []
+
+    # For each class, find the percentage of data that is that class and the total counts for that class
+    for label in modes:
+        classes.append(label[0])
 
     # Find the smallest class
     min_size = modes[len(modes) - 1][1]
@@ -449,7 +454,7 @@ def sequential_CNN(train_images, train_labels, val_images, val_labels, test_imag
 
     # Build convolutional layers
     model = models.Sequential()
-    model.add(layers.Conv1D(filters=in_filt, kernel_size=9, activation='relu', batch_size=batch_size,
+    model.add(layers.Conv1D(filters=in_filt, kernel_size=kernel, activation='relu', batch_size=batch_size,
                             input_shape=(image_length, n_channels)))
     model.add(layers.MaxPooling1D(2, strides=filt_mult))
 
@@ -566,6 +571,16 @@ def plot_predictions(model, test_images, batch_size, n_classes, classes):
     plot_subpopulations(class_labels)
 
 
+def multi_to_binary(label):
+    if label > 0:
+        return 1
+    elif label is 0:
+        return 0
+    else:
+        print('ERROR')
+        return 1
+
+
 def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, filename, show=True, save=False):
     """Creates a heat-map of the confusion matrix of the given model
 
@@ -586,23 +601,141 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, 
     # Uses model to make predictions on the images supplied
     pred_labels = model.predict_classes(test_images, batch_size=batch_size)
 
-    print(skl.metrics.classification_report(np.argmax(test_labels, axis=1), pred_labels))
-    
     # Creates the confusion matrix based on these predictions and the corresponding ground truth labels
-    conf_matrix = tf.math.confusion_matrix(labels=np.argmax(test_labels, axis=1), predictions=pred_labels).numpy()
+    multi_class_cm = tf.math.confusion_matrix(labels=np.argmax(test_labels, axis=1), predictions=pred_labels).numpy()
+
+    # Creates an alternative binary cm
+    binary_test = pd.DataFrame()
+    binary_test['PRED'] = pred_labels
+    binary_test['TRUTH'] = np.argmax(test_labels, axis=1)
+    binary_test['PRED'] = binary_test['PRED'].apply(multi_to_binary)
+    binary_test['TRUTH'] = binary_test['TRUTH'].apply(multi_to_binary)
+
+    binary_cm = tf.math.confusion_matrix(labels=binary_test['TRUTH'], predictions=binary_test['PRED']).numpy()
 
     # Normalises confusion matrix
-    conf_matrix_norm = np.around(conf_matrix.astype('float') / conf_matrix.sum(axis=1)[:, np.newaxis], decimals=2)
+    multi_class_cm_norm = np.around(multi_class_cm.astype('float') / multi_class_cm.sum(axis=1)[:, np.newaxis],
+                                    decimals=2)
+    binary_cm_norm = np.around(binary_cm.astype('float') / binary_cm.sum(axis=1)[:, np.newaxis], decimals=2)
 
     # Converts confusion matrix to Pandas.DataFrame
-    con_mat_df = pd.DataFrame(conf_matrix_norm, index=classes, columns=classes)
+    multi_class_cm_df = pd.DataFrame(multi_class_cm_norm, index=classes, columns=classes)
+    binary_cm_df = pd.DataFrame(binary_cm_norm, index=['False', 'True'], columns=['False', 'True'])
 
     # Plots figure
-    plt.figure(figsize=(9, 9))
-    sns.heatmap(con_mat_df, annot=True, square=True, cmap=plt.cm.get_cmap('Blues'))
-    plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
+    plt.figure(figsize=(13, 10.5))
+    sns.heatmap(multi_class_cm_df, annot=True, square=True, cmap=plt.cm.get_cmap('Blues'))
+    plt.ylabel('Ground Truth')
+    plt.xlabel('Predicted')
+
+    # Shows and/or saves plot
+    if show:
+        plt.show()
+    if save:
+        plt.savefig('%s_multi.png' % filename)
+        plt.close()
+
+    # Plots binary cm
+    plt.figure(figsize=(13, 10.5))
+    sns.heatmap(binary_cm_df, annot=True, square=True, cmap=plt.cm.get_cmap('Blues'))
+    plt.ylabel('Ground Truth')
+    plt.xlabel('Predicted')
+
+    # Shows and/or saves plot
+    if show:
+        plt.show()
+    if save:
+        plt.savefig('%s_binary.png' % filename)
+        plt.close()
+
+
+def report(model, test_images, test_labels, batch_size, filename, classes, show=True, save=False):
+    """Scores the model based on testing
+
+        Args:
+            model (keras.Model):
+            test_images ([[[float]]]): Images for testing model post-fitting
+            test_labels ([[int]]): Accompanying labels for testing images
+            batch_size (int): Number of images in each batch for network input
+            filename (str): Name of file to save plot to
+            classes ([str]): List of all class names
+            show (bool): Whether to show report
+            save (bool): Whether to save report to file
+
+        Returns:
+            None
+        """
+
+    # Uses model to make predictions on the images supplied
+    pred_labels = model.predict_classes(test_images, batch_size=batch_size)
+
+    # Creates an alternative binary cm
+    binary_test = pd.DataFrame()
+    binary_test['PRED'] = pred_labels
+    binary_test['TRUTH'] = np.argmax(test_labels, axis=1)
+    binary_test['PRED'] = binary_test['PRED'].apply(multi_to_binary)
+    binary_test['TRUTH'] = binary_test['TRUTH'].apply(multi_to_binary)
+
+    multi_scores = metrics.classification_report(np.argmax(test_labels, axis=1), pred_labels, target_names=classes)
+    binary_scores = metrics.classification_report(binary_test['TRUTH'], binary_test['PRED'],
+                                                  target_names=['FALSE', 'TRUE'])
+
+    if show:
+        print(multi_scores)
+        print(binary_scores)
+
+    if save:
+        multi_file = open('%s_multi.txt' % filename, 'w')
+        multi_file.write(multi_scores)
+        binary_file = open('%s_multi.txt' % filename, 'w')
+        binary_file.write(binary_scores)
+
+
+def roc_curve(model, test_images, test_labels, batch_size, filename, classes, show=True, save=False):
+    def one_vs_else(label, one):
+        if label is one:
+            return 1
+        elif label is not one:
+            return 0
+        else:
+            print('ERROR')
+            return 0
+
+    # Uses model to make predictions on the images supplied
+    pred_labels = model.predict_classes(test_images, batch_size=batch_size)
+
+    test_labels = np.argmax(test_labels, axis=1)
+
+    pred_labels_dict = {}
+    test_labels_dict = {}
+
+    for i in range(len(classes)):
+        new_pred_labels = []
+        new_test_labels = []
+        for j in range(len(pred_labels)):
+            new_pred_labels.append(one_vs_else(pred_labels[j], i))
+            new_test_labels.append(one_vs_else(test_labels[j], i))
+
+        pred_labels_dict[classes[i]] = new_pred_labels
+        test_labels_dict[classes[i]] = new_test_labels
+
+    # Compute ROC curve and ROC area for each class
+    fpr = {}
+    tpr = {}
+    roc_auc = {}
+    for classification in classes:
+        fpr[classification], tpr[classification], _ = metrics.roc_curve(test_labels_dict[classification],
+                                                                        pred_labels_dict[classification])
+        roc_auc[classification] = metrics.auc(fpr[classification], tpr[classification])
+        plt.plot(fpr[classification], tpr[classification],
+                 label='%s vs all else ROC curve (AUC = %0.2f)' % (classification, roc_auc[classification]))
+
+    plt.plot([0, 0], [1, 1], 'k--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.legend(loc="lower right")
 
     # Shows and/or saves plot
     if show:
@@ -618,21 +751,21 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, 
 def main():
     print('***************************** ACES ********************************************')
     model_type = 'sequential'
-    epochs = 30
+    epochs = 20
     verbose = 1
     batch_size = 32
 
-    in_filters = [64]
+    in_filters = [128]
     filt_mult = [2]
 
     fn_neurons = [32]
 
     kernels = [9]
 
-    n_conv = [3]
+    n_conv = [4]
     n_dense = [3]
 
-    optimisers = [('Adagrad', 0.01), ('Nadam', 0.01), ('SGD', 0.01, 0.5)]
+    optimisers = [('SGD', 0.01, 0.5)]
 
     print('\nLOAD VOY1 IMAGES')
     # Load in images
@@ -688,18 +821,6 @@ def main():
     # Deletes un-needed variables
     del casrev21_data_df, casrev21_labels_df, x, y, z
 
-    # Append datasets together
-    data = pd.concat([v1_data, v2_data, casrev20_data, casrev21_data])
-
-    #print('\nBALANCING DATA')
-    #data = balance_data(data, classes, verbose=0)
-    plot_subpopulations(data['CLASS'])
-
-    print('\nSPLIT DATA INTO TRAIN, VALIDATION AND TEST')
-    # Split images into test and train
-    #train_images, val_images, test_images, train_labels, val_labels, test_labels = split_data(data, 0.7, 0.2)
-    train_images, val_images, train_labels, val_labels = split_data(data, 0.8)
-
     print('\nLOAD IN TEST DATA')
     casrev22_data_df = load_images('Cassini_Rev22_Blocks/', load_all=True)
     casrev22_labels_df, x, y, z = load_labels('Cassini_Block_Labels/Cassini_Rev22_Block_Labels.csv',
@@ -718,14 +839,27 @@ def main():
 
     # Deletes un-needed variables
     del ulys_data_df, ulys_labels_df, x, y, z
+    
+    # Append datasets together
+    test_data = pd.concat([casrev21_data, ulys_data])
 
-    casrev22_images = np.array(casrev22_data['IMAGE'].tolist())
-    casrev22_labels = np.array(casrev22_data['LABEL'].tolist())
-    ulys_images = np.array(ulys_data['IMAGE'].tolist())
-    ulys_labels = np.array(ulys_data['LABEL'].tolist())
+    # Append datasets together
+    data = pd.concat([v1_data, v2_data, casrev20_data, casrev22_data])
 
-    test_images = np.concatenate((ulys_images, casrev22_images), axis=0)
-    test_labels = np.concatenate((ulys_labels, casrev22_labels), axis=0)
+    print('\nBALANCING DATA')
+    data = balance_data(data, verbose=0)
+    # plot_subpopulations(data['CLASS'])
+
+    print('\nSPLIT DATA INTO TRAIN, VALIDATION AND TEST')
+    # Split images into test and train
+    # train_images, val_images, test_images, train_labels, val_labels, test_labels = split_data(data, 0.7, 0.2)
+    train_images, val_images, train_labels, val_labels = split_data(data, 0.8)
+
+    print('\nBALANCING DATA')
+    test_data = balance_data(test_data, verbose=0)
+
+    test_images = np.array(test_data['IMAGE'].tolist())
+    test_labels = np.array(test_data['LABEL'].tolist())
 
     # Corrects shape of images
     train_images = np.swapaxes(train_images, 1, 2)
@@ -780,8 +914,14 @@ def main():
 
                                     # Creates the confusion matrix of the model and saves to file
                                     make_confusion_matrix(model, test_images, test_labels, batch_size, classes,
-                                                          'Confusion_Matrices/%s-CM.png' % model_name, show=False,
+                                                          'Confusion_Matrices/%s-CM' % model_name, show=False,
                                                           save=True)
+
+                                    report(model, test_images, test_labels, batch_size, 'Scores/%s' % model_name,
+                                           classes, show=True, save=True)
+
+                                    report(model, test_images, test_labels, batch_size, 'ROC/%s' % model_name,
+                                           classes, show=True, save=True)
 
 
 if __name__ == '__main__':
