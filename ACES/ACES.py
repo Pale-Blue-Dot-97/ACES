@@ -623,8 +623,8 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, 
     binary_cm_df = pd.DataFrame(binary_cm_norm, index=['False', 'True'], columns=['False', 'True'])
 
     # Plots figure
-    plt.figure(figsize=(13, 10.5))
-    sns.heatmap(multi_class_cm_df, annot=True, square=True, cmap=plt.cm.get_cmap('Blues'))
+    plt.figure()
+    sns.heatmap(multi_class_cm_df, annot=True, square=True, cmap=plt.cm.get_cmap('Blues'), vmin=0.0, vmax=1.0)
     plt.ylabel('Ground Truth')
     plt.xlabel('Predicted')
 
@@ -636,8 +636,8 @@ def make_confusion_matrix(model, test_images, test_labels, batch_size, classes, 
         plt.close()
 
     # Plots binary cm
-    plt.figure()#figsize=(13, 10.5))
-    sns.heatmap(binary_cm_df, annot=True, square=True, cmap=plt.cm.get_cmap('Blues'))
+    plt.figure()
+    sns.heatmap(binary_cm_df, annot=True, square=True, cmap=plt.cm.get_cmap('Blues'), vmin=0.0, vmax=1.0)
     plt.ylabel('Ground Truth')
     plt.xlabel('Predicted')
 
@@ -751,18 +751,18 @@ def roc_curve(model, test_images, test_labels, batch_size, filename, classes, sh
 def main():
     print('***************************** ACES ********************************************')
     model_type = 'sequential'
-    epochs = 70
+    epochs = 100
     verbose = 1
     batch_size = 32
 
-    in_filters = [128]
+    in_filters = [64]
     filt_mult = [2]
 
     fn_neurons = [32]
 
     kernels = [9]
 
-    n_conv = [4]
+    n_conv = [3]
     n_dense = [3]
 
     optimisers = [('SGD', 0.01, 0.5)]
