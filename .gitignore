@@ -137,7 +137,7 @@ ACES/Logs/*
 ACES/Raw_Cassini_Data/*
 ACES/Processed_Cassini_Data/*
 ACES/Cassini_Rev20_Blocks/*
-ACES/Voyager2-JE/RAW_Voyager2_JE.TAB
+ACES/Voyager2-JE/VOY2-JE_RAW.TAB
 ACES/Voyager2-JE/VOY2-JE_data.csv
 ACES/Voyager2-JE/VOY2-JE_Block_Labels.csv
 ACES/Voyager2-JE/VOY2-JE_data.csv

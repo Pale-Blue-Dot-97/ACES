@@ -61,6 +61,8 @@ def load_data():
         data.drop(data[data.isnull()[i]].index, inplace=True)
         data.reset_index(inplace=True, drop=True)
 
+    print('Size of raw data: %d' % len(data))
+
     position_names = ['TIME', 'R', 'LAT', 'LON', 'LOCTIME']
 
     position = pd.read_table('%s/SPK28_45.TAB' % data_path, delim_whitespace=True, names=position_names)

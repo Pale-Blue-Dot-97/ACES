@@ -356,13 +356,13 @@ def main():
     print('Size of raw data: %d' % len(raw_data))
 
     print('\nFirst removing non-physical data via local extrema')
-    cleaned_data = find_dodgy_data(data, data_columns, ['BR', 'BTH', 'BPH', 'BMAG'], 5, (3, 5), 0.01)
+    cleaned_data = find_dodgy_data(data, data_columns, ['BR', 'BTH', 'BPH', 'BMAG'], 5, (3, 5, 7), 0.01)
 
     print('Size of cleaned data: %d' % len(cleaned_data))
 
     cldt = cleaned_data.copy()
 
-    norm_data = pow_normalise(cldt, a=5.0e4, b=2.0e3, c=250.0)
+    norm_data = pow_normalise(cldt, a=6.0e5, b=5.0e4, c=400.0)
 
     print('\nWRITING DATA TO FILE')
     norm_data.drop(columns=['TIME', 'R'], inplace=True)

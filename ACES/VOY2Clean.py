@@ -363,7 +363,7 @@ def main():
 
     cldt = cleaned_data.copy()
 
-    norm_data = pow_normalise(cldt, a=8.0e4, b=2.0e3, c=150.0)
+    norm_data = pow_normalise(cldt, a=6.0e4, b=.0e3, c=100.0)
 
     print('\nWRITING DATA TO FILE')
     norm_data.drop(columns=['TIME', 'R'], inplace=True)

@@ -20,6 +20,8 @@ from collections import Counter
 import seaborn as sns
 from PIL import Image
 from datetime import datetime
+import pydot
+import graphviz
 
 # =====================================================================================================================
 #                                                     GLOBALS
@@ -751,11 +753,11 @@ def roc_curve(model, test_images, test_labels, batch_size, filename, classes, sh
 def main():
     print('***************************** ACES ********************************************')
     model_type = 'sequential'
-    epochs = 100
+    epochs = 5
     verbose = 1
     batch_size = 32
 
-    in_filters = [64]
+    in_filters = [128]
     filt_mult = [2]
 
     fn_neurons = [32]
@@ -841,10 +843,10 @@ def main():
     del ulys_data_df, ulys_labels_df, x, y, z
     
     # Append datasets together
-    test_data = pd.concat([ulys_data])#casrev21_data])#, ulys_data])
+    test_data = pd.concat([casrev21_data])#, ulys_data])
 
     # Append datasets together
-    data = pd.concat([v1_data, v2_data, casrev20_data])#, casrev22_data])
+    data = pd.concat([v1_data, v2_data, casrev20_data, casrev22_data])
 
     print('\nBALANCING DATA')
     data = balance_data(data, verbose=0)
@@ -922,6 +924,8 @@ def main():
 
                                     roc_curve(model, test_images, test_labels, batch_size,
                                               'ROC/%s_ROC.png' % model_name, classes, show=False, save=True)
+
+                                    utils.plot_model(model, show_shapes=True, to_file='Architecture/%s.png' % model_name)
 
 
 if __name__ == '__main__':
